@@ -705,8 +705,13 @@ function TechnicianDashboard({ section = "Tổng quan" }) {
   async function complete(item) {
     try {
       await api.completeMaintenance(item.id);
+      const devices = await api.devices();
       setToast({ message: "Đã hoàn thành công việc bảo trì", type: "success" });
-      setData((current) => ({ ...current, maintenance: current.maintenance.map((row) => row.id === item.id ? { ...row, status: "completed" } : row) }));
+      setData((current) => ({
+        ...current,
+        devices,
+        maintenance: current.maintenance.map((row) => row.id === item.id ? { ...row, status: "completed" } : row),
+      }));
     } catch {
       setToast({ message: "Không thể cập nhật qua API", type: "error" });
     }
