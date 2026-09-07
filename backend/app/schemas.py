@@ -48,6 +48,11 @@ class UserCreate(BaseModel):
     role: str = "user"
 
 
+class PasswordChange(BaseModel):
+    current_password: str = Field(min_length=1)
+    new_password: str = Field(min_length=8, max_length=128)
+
+
 class UserOut(ORMModel):
     id: int; username: str; email: str; full_name: str; role: str; is_active: bool
 

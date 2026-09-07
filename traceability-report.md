@@ -7,6 +7,9 @@
 - Supporting input: `de_tai_23 (1).txt`
 - Non-authoritative input: `docs/customer-requirement.md`
 - Human Gate G1: **PENDING**
+- G3 implementation verification: **PENDING HUMAN REVIEW**
+- Latest full test command: `PYTHONPATH=backend .venv/bin/python -m pytest -q tests/`
+- Latest result: **16 passed**
 
 ## Counts
 
@@ -31,15 +34,15 @@
 | FR-005 | US-002 | AC-003, AC-004 | `backend/app/routers/requests.py`; `tests/test_api.py` | TEST EXECUTED; TEST PASSED |
 | FR-006 | US-004 | AC-007, AC-008 | `backend/app/routers/requests.py` | Approval PASSED; rejection TEST NOT AVAILABLE |
 | FR-007 | US-004, US-005 | AC-009, AC-010 | `backend/app/routers/requests.py`; `backend/app/models.py`; `tests/test_api.py` | Borrow/return PASSED; handover NOT VERIFIED |
-| FR-008 | US-006 | AC-011, AC-012 | `backend/app/routers/maintenance.py`; `tests/test_operations.py` | Completion PASSED; schedule TEST NOT AVAILABLE |
-| FR-009 | US-007 | AC-013 | `backend/app/routers/stats.py`; `tests/test_operations.py` | Aggregate PASSED; time-range/frequency NOT IMPLEMENTED |
-| FR-010 | US-008 | AC-014 | `backend/app/routers/ai.py`; `backend/app/services/ai_service.py`; `tests/test_ai.py` | Fake-provider PASSED; live Ollama TEST NOT AVAILABLE |
+| FR-008 | US-006 | AC-011, AC-012 | `backend/app/routers/maintenance.py`; `tests/test_operations.py`; `tests/test_g3.py` | Availability transition TEST PASSED; schedule TEST NOT AVAILABLE |
+| FR-009 | US-007 | AC-013 | `backend/app/routers/stats.py`; `tests/test_g3.py` | Selected range and usage frequency TEST PASSED; aggregate behavior covered by existing tests |
+| FR-010 | US-008 | AC-014 | `backend/app/routers/ai.py`; `backend/app/services/ai_service.py`; `tests/test_ai.py` | JWT rejection and authenticated service reach TEST PASSED; live Ollama TEST NOT AVAILABLE |
 | FR-011 | US-008 | AC-015 | `backend/app/services/ai_service.py`; `tests/test_ai.py` | TEST EXECUTED; TEST PASSED for keyword retrieval |
 | FR-012 | US-009 | AC-016 | `backend/app/services/ai_service.py` | Dedicated TEST NOT AVAILABLE |
 | FR-013 | US-010 | AC-017 | `backend/app/services/ai_service.py` | Dedicated TEST NOT AVAILABLE |
 | FR-014 | US-011 | AC-018 | `backend/app/models.py`; `DocumentChunk`; `backend/app/services/ai_service.py` | Retrieval exists; management API NOT IMPLEMENTED |
-| FR-015 | US-012 | AC-019 | Endpoint NOT FOUND | NOT IMPLEMENTED; TEST NOT AVAILABLE |
-| FR-016 | US-013 | AC-020 | Account-management endpoint NOT FOUND; `backend/app/routers/users.py` lists users only | NOT IMPLEMENTED; TEST NOT AVAILABLE |
+| FR-015 | US-012 | AC-019 | `backend/app/routers/auth.py`; `backend/app/schemas.py`; `tests/test_g3.py` | IMPLEMENTED + VERIFIED; password workflow TEST PASSED |
+| FR-016 | US-013 | AC-020 | `backend/app/routers/users.py`; `backend/app/auth.py`; `tests/test_g3.py` | IMPLEMENTED + VERIFIED for manager-only account creation authorization; broader role operations remain NOT VERIFIED |
 
 ## NFR evidence
 
@@ -71,22 +74,36 @@
 - FR-006 rejection has no executed test.
 - FR-007 handover has no executed test.
 - FR-008 schedule creation has no executed test.
-- FR-009 time-range/frequency behavior is not implemented or tested.
+- FR-009 selected time-range and usage-frequency behavior is implemented and tested; broader statistics semantics remain limited to the locked contract.
 - FR-010 has no live Ollama test.
 - FR-012 and FR-013 have no dedicated tests.
 - FR-014 has no document-management API evidence.
-- FR-015 and FR-016 are not implemented and have no tests.
+- FR-015 is implemented and verified by `tests/test_g3.py`.
+- FR-016 manager-only account creation authorization is implemented and verified; complete account/role operation coverage remains open.
 - NFR-003 through NFR-009 do not all have executed evidence.
 - BR-001 through BR-003 and BR-007 through BR-014 are not fully covered by executed tests.
 
 ## Unresolved human decisions
 
-- Mapping of technical `admin` to Lab Manager.
-- Exact time-range/frequency metric definition under FR-009.
-- Exact Document Management operation boundary.
+- Final human acceptance of the technical `admin`/`manager` mapping in the implementation.
+- Final human acceptance of the implemented FR-009 query contract.
+- Final human acceptance of the Document Management operation boundary.
 - Availability of `Hướng dẫn quản lý dự án.txt`.
 - Final human acceptance of the normalized requirements baseline.
 
 ## G1
 
 **PENDING.** This report does not approve Human Gate G1.
+
+## G3 implementation verification
+
+| Scope | Implementation evidence | Test evidence | Status |
+|---|---|---|---|
+| AI chat authentication | `backend/app/routers/ai.py` | `tests/test_ai.py` | IMPLEMENTED + VERIFIED |
+| FR-009 selected range and usage frequency | `backend/app/routers/stats.py` | `tests/test_g3.py` | IMPLEMENTED + VERIFIED |
+| Maintenance availability transition | `backend/app/routers/maintenance.py` | `tests/test_g3.py` | IMPLEMENTED + VERIFIED for available -> maintenance -> available |
+| FR-015 password change | `backend/app/routers/auth.py`; `backend/app/schemas.py` | `tests/test_g3.py` | IMPLEMENTED + VERIFIED |
+| FR-016 account authorization | `backend/app/routers/users.py` | `tests/test_g3.py` | PARTIAL: manager-only creation authorization verified |
+| FR-014 document management | Existing `Document`/`DocumentChunk` persistence and retrieval | No new document-management test | PARTIAL: CRUD/upload remains not implemented |
+
+G3 status: **PENDING HUMAN REVIEW**
