@@ -33,6 +33,7 @@ This report records tests that are actually present and executed in this reposit
 | Maintenance completion and statistics | `tests/test_operations.py`, `tests/test_g3.py` | Executed |
 | Keyword retrieval, bounded history and AI authentication | `tests/test_ai.py` | Executed |
 | Password change and account authorization | `tests/test_g3.py` | Executed |
+| ORM/database schema verification | `tests/test_database_schema.py` | Executed |
 | Ollama provider failure through the live provider | Not yet automated | Pending |
 
 ## Execution record
@@ -47,8 +48,8 @@ The pass/fail count below must be updated from the command output after each run
 
 - Last execution: 2026-09-08, local development environment
 - Command: `PYTHONPATH=backend .venv/bin/python -m pytest -q tests/`
-- Tests run: 16
-- Passed: 16
+- Tests run: 20
+- Passed: 20
 - Failed: 0
 - Errors: 0
 - Result: PASS

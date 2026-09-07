@@ -63,7 +63,7 @@ Tài khoản seed cho môi trường local:
 - `user` / `user123`
 - `technician` / `tech123`
 
-Frontend có dữ liệu mẫu để xem giao diện khi API offline. Dữ liệu mẫu không được coi là dữ liệu đã ghi vào database; các thao tác nghiệp vụ mới bị từ chối khi API không khả dụng.
+Frontend có `fallbackData` để hiển thị giao diện khi API offline. Đây chỉ là dữ liệu mẫu/fallback của UI, không phải bằng chứng database và không được hiểu là trạng thái thiết bị thực tế; các thao tác nghiệp vụ mới bị từ chối khi API không khả dụng.
 
 ## Cấu hình AI local
 
@@ -71,6 +71,7 @@ Các biến chính trong `.env`:
 
 ```env
 DATABASE_URL=sqlite:///./lab.db
+JWT_SECRET_KEY=replace-with-a-local-secret
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=qwen2.5:3b
 OLLAMA_NUM_PREDICT=512
@@ -87,7 +88,17 @@ ollama list
 
 ## Docker
 
-`docker-compose.yml` chạy MySQL, FastAPI, React/nginx và Ollama. Backend trong Docker dùng MySQL; chạy local mặc định dùng SQLite theo `.env`.
+`docker-compose.yml` chạy MySQL, FastAPI, React/nginx và Ollama. Backend trong Docker dùng MySQL; chạy local mặc định dùng SQLite theo `.env`. Trước khi chạy Docker, cung cấp các biến môi trường sau bằng `.env` (được ignore) hoặc bằng shell:
+
+```env
+JWT_SECRET_KEY=local-or-deployment-secret
+MYSQL_USER=lab
+MYSQL_PASSWORD=local-password
+MYSQL_ROOT_PASSWORD=local-root-password
+MYSQL_DATABASE=lab
+```
+
+Không đặt secret thật đã commit vào README. `JWT_SECRET_KEY` là bắt buộc cho Docker; local có thể sinh secret tạm thời nếu biến này chưa được khai báo.
 
 ```powershell
 docker compose up --build

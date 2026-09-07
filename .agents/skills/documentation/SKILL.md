@@ -1,6 +1,6 @@
 ---
 name: documentation
-description: Use when starting the documentation phase after security Gate G7 is approved, or when asked to update project documentation for local-lab-ai so it exactly matches the implemented system, including setup, architecture overview, API usage, configuration, deployment, troubleshooting and design decisions.
+description: Use during G5 Documentation & Deployment, or when asked to update project documentation for local-lab-ai so it exactly matches the implemented system, including setup, architecture overview, API usage, configuration, deployment, troubleshooting and design decisions.
 ---
 
 # Documentation Skill
@@ -37,6 +37,5 @@ Create or update:
 PASS if: every documented endpoint exists with matching contract; every env variable appears in `config.py`; setup commands were checked against scripts/compose files; stale claims are fixed or flagged; no unimplemented feature is described as working.
 FAIL if: any documented claim cannot be traced to code or an approved artifact.
 
-## Human Gate (G8)
-A human reviewer (or a peer) follows the quick-start on a clean environment and confirms the docs are accurate and complete.
-- PASS → the SDLC cycle is complete; remaining discrepancies go to a new requirements cycle.
+## Project gate alignment
+Documentation belongs to G5 Documentation & Deployment. A human reviewer follows the quick-start and confirms the docs are accurate and complete. This Skill does not create a new gate.

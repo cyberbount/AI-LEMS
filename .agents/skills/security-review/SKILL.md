@@ -1,6 +1,6 @@
 ---
 name: security-review
-description: Use when starting the security review phase after testing Gate G6 is approved, or when asked to review the implemented local-lab-ai system for security issues, including authentication, authorization, secrets, input validation, RAG/prompt-injection and data leakage, producing evidence-based findings without fixing code.
+description: Use during G3 Implementation & Verification, G4 Integration & System Validation or G5 Documentation & Deployment when asked to review the implemented local-lab-ai system for security issues, including authentication, authorization, secrets, input validation, RAG/prompt-injection and data leakage, producing evidence-based findings without fixing code.
 ---
 
 # Security Review Skill
@@ -26,7 +26,8 @@ Review each applicable area; mark not-applicable areas explicitly with a reason:
    - Data leakage: AI answers must never expose `password_hash` or other sensitive columns; summary mode should expose aggregates only.
    - Secrets: Ollama URL/model config, no external API key (verify), docker-compose default passwords (`root`/`lab`), placeholder hashes in `init.sql`.
 6. Transport/config: CORS `allow_credentials` with configurable origins, debug exposure, error messages leaking internals (502 detail), logging of sensitive data.
-7. Dependencies: known-vulnerability check for requirements (e.g. `pip-audit`) if the environment allows.
+7. File upload: identify whether an upload surface exists; if absent, report NOT VERIFIED/NOT APPLICABLE with the reason rather than inventing one.
+8. Dependencies: inspect declared dependency files and run an available vulnerability scanner only if present; otherwise report NOT VERIFIED.
 
 For every finding record ID (`SEC-001`, ...), severity (CRITICAL/HIGH/MEDIUM/LOW), affected component with `file:line` evidence, recommendation, and how to verify the fix.
 
@@ -45,6 +46,6 @@ Create or update:
 PASS if: every endpoint and every AI path was reviewed; each checklist area has an explicit result (finding or N/A with reason); all findings have severity + evidence.
 FAIL if: a reviewed area is missing, a finding lacks evidence, or the review stayed on generic advice.
 
-## Human Gate (G7)
+## Project gate alignment
 A human reviewer decides the disposition of each finding: fix now, accept risk, or backlog. AI does not decide which risks are acceptable.
-- PASS → documentation may start. FAIL → agreed fixes enter implementation as change requests.
+Security review evidence belongs to the existing G3/G4/G5 process. Do not create G6 or G7. Findings require human disposition before implementation changes.

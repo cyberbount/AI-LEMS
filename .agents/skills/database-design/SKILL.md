@@ -39,6 +39,8 @@ Create or update:
 PASS if: every entity traces to ≥1 FR; PK/FK/NOT NULL/UNIQUE defined; status value sets decided; sensitive columns marked; models and schema.sql consistent; seed mismatch resolved or logged in findings.
 FAIL if: an entity has no requirement source, a key/constraint is missing, or dialect parity is broken.
 
-## Human Gate (G3)
+## Human Gate (G2/G3)
 A human reviewer confirms the entity list covers all requirements and accepts the constraint decisions.
-- PASS → api-design may start. FAIL → stay in this phase with named issues.
+- G2 architecture review establishes the database design boundary; G3 implementation and verification confirms the design is reflected in the implementation. FAIL → stay in this phase with named issues.
+
+Project gate sequence: G1 Requirements, G2 Architecture, G3 Implementation & Verification, G4 Integration & System Validation, G5 Documentation & Deployment.

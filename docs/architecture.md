@@ -1,5 +1,7 @@
 # AI-LEMS Architecture Design
 
+> Historical note: this document records the G2 architecture baseline. G3 subsequently changed the implementation status of several rows below; historical G2 claims are retained for traceability.
+
 ## Status and boundary
 
 - Derived from the locked G1 requirements baseline at commit `ccfa98d`.
@@ -38,8 +40,8 @@ The system is a modular monolith. The frontend is a client, not an authorization
 | ARC-03 | Authentication/RBAC | `backend/app/routers/auth.py`, `backend/app/auth.py`, `backend/app/deps.py`; JWT and `require_roles`. | VERIFIED with resolved mapping: admin/manager -> Lab Manager, user -> Lab User, technician -> Maintenance Technician |
 | ARC-04 | Equipment/catalog domain | Device and catalog routers plus SQLAlchemy models. | PARTIAL: account management and some catalog workflow gaps remain |
 | ARC-05 | Borrow/usage domain | Request router changes request/device state and creates UsageHistory. | PARTIAL: handover semantics require clarification |
-| ARC-06 | Maintenance domain | Maintenance records/schedules routers and models. | PARTIAL: availability impact is a G3 implementation gap |
-| ARC-07 | Statistics | `/api/stats` returns aggregate counts and action counts. | PARTIAL: selected time range and usage-event frequency are G3 implementation gaps |
+| ARC-06 | Maintenance domain | Maintenance records/schedules routers and models. | G2 baseline PARTIAL: availability impact was a G3 implementation gap; G3 now covers the implemented lifecycle transition |
+| ARC-07 | Statistics | `/api/stats` returns aggregate counts and action counts. | G2 baseline PARTIAL: selected range/frequency were G3 gaps; G3 now implements the locked contract |
 | ARC-08 | AI service/provider | `AIService` bounds history, builds context and calls `OllamaProvider`. | PARTIAL: Summary/Alert evidence and live provider verification incomplete |
 | ARC-09 | Local model boundary | `OllamaProvider` calls configured local Ollama HTTP service. | VERIFIED as current implementation; model is configuration, not business scope |
 | ARC-10 | Document retrieval persistence | `Document`/`DocumentChunk` tables and keyword retrieval exist. | GAP for document-management operations |
@@ -98,7 +100,7 @@ authenticated actor -> GET /api/stats
   -> aggregate response
 ```
 
-FR-009 is defined as selected time-range statistics where usage frequency equals the number of usage events within that selected range. The current endpoint does not implement these parameters or calculations. Target status: G3 implementation GAP.
+FR-009 is defined as selected time-range statistics where usage frequency equals the number of usage events within that selected range. G2 recorded the endpoint as a target gap; G3 subsequently implemented the parameters and calculation.
 
 ## AI/RAG flow
 
@@ -145,23 +147,23 @@ The AI service is advisory/read-only. It has no business mutation call for appro
 | FR-006 | Lab Manager | ARC-05 | `routers/requests.py` | `borrow_requests`, `devices` | `/api/requests/{id}/approve`, `/api/requests/{id}/status` | — | PARTIAL; reject test unavailable | VERIFIED after rejection contract/test |
 | FR-007 | Lab User, Lab Manager, System | ARC-05 | `routers/requests.py` | `borrow_requests`, `devices`, `usage_history` | borrow/return/status routes | — | PARTIAL handover | PARTIAL pending handover definition |
 | FR-008 | Lab Manager, Maintenance Technician | ARC-06 | `routers/maintenance.py` | `maintenance_schedules`, `maintenance_records`, `devices`, `users` | maintenance routes | — | PARTIAL | PARTIAL pending schedule/availability verification |
-| FR-009 | Lab Manager, authorized users | ARC-07 | `routers/stats.py` | usage and operational entities | `GET /api/stats` | — | Aggregate only | G3 gap: selected range and usage-event frequency |
-| FR-010 | Lab User, Lab Manager, Maintenance Technician | ARC-08/09 | `routers/ai.py`, `AIService`, `OllamaProvider` | optional context reads | `POST /api/ai/chat` | local chat | PARTIAL; endpoint currently public | G3 gap: JWT authentication |
+| FR-009 | Lab Manager, authorized users | ARC-07 | `routers/stats.py` | usage and operational entities | `GET /api/stats` | — | G2 baseline: aggregate only | G2 historical gap; G3 current implementation adds selected range and usage-event frequency |
+| FR-010 | Lab User, Lab Manager, Maintenance Technician | ARC-08/09 | `routers/ai.py`, `AIService`, `OllamaProvider` | optional context reads | `POST /api/ai/chat` | local chat | G2 baseline: endpoint then public | G2 historical gap; G3 current implementation requires JWT |
 | FR-011 | AI Assistant | ARC-08/10 | `AIService` | `documents`, `document_chunks` | `/api/ai/chat` | keyword retrieval/context | PARTIAL | PARTIAL; no semantic requirement |
 | FR-012 | AI Assistant, Lab Manager/Maintenance Technician | ARC-08 | `AIService` | `devices`, `maintenance_records` | `/api/ai/chat` mode | summary context | PARTIAL | PARTIAL pending evidence contract |
 | FR-013 | AI Assistant, Lab Manager/Maintenance Technician | ARC-08 | `AIService` | `maintenance_records`, `devices` | `/api/ai/chat` mode | inspection context | PARTIAL | PARTIAL pending evidence contract |
 | FR-014 | Lab Manager, authorized staff, System | ARC-10 | models and `AIService` | `documents`, `document_chunks` | No document-management endpoint | persistence and retrieval source | PARTIAL; persistence/retrieval is baseline | G3 gap: document CRUD/upload API |
-| FR-015 | Human actors | ARC-03 | No password-change module | `users` | Endpoint not found | — | GAP | GAP until API contract and implementation exist |
-| FR-016 | Lab Manager | ARC-03/04 | User listing only; account management absent | `users`, `roles` | Endpoint not found | — | GAP | GAP until API contract and implementation exist |
+| FR-015 | Human actors | ARC-03 | No password-change module | `users` | Endpoint not found | — | G2 baseline GAP | G2 historical gap; G3 current implementation adds password change |
+| FR-016 | Lab Manager | ARC-03/04 | User listing only; account management absent | `users`, `roles` | Endpoint not found | — | G2 baseline GAP | G2 historical gap; G3 current implementation adds account creation authorization |
 
 ## G2 status
 
 **READY FOR HUMAN APPROVAL.** G2 is not approved automatically.
 
-## Remaining architecture gaps
+## Remaining architecture gaps at G2 baseline
 
-- Current `/api/ai/chat` authentication does not yet match the resolved JWT target.
-- Current statistics endpoint lacks selected time-range and usage-event frequency behavior.
+- At G2, `/api/ai/chat` authentication did not yet match the resolved JWT target; G3 subsequently implemented JWT protection.
+- At G2, the statistics endpoint lacked selected time-range and usage-event frequency behavior; G3 subsequently implemented the locked contract.
 - Current document persistence/retrieval has no document CRUD/upload API.
-- Maintenance impact on device availability is not fully enforced.
+- At G2, maintenance impact on device availability was not fully enforced; G3 subsequently implemented the covered lifecycle transition.
 - Database migration strategy remains static initialization/create_all; future migration work is not required for G2.

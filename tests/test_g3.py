@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 from app.db import SessionLocal
 from app.main import app
-from app.models import BorrowRequest, Device, MaintenanceRecord, UsageHistory, User
+from app.models import BorrowRequest, Device, MaintenanceRecord, Role, UsageHistory, User
 
 
 class G3ApiTests(unittest.TestCase):
@@ -101,6 +101,48 @@ class G3ApiTests(unittest.TestCase):
         }
         self.assertEqual(self.client.post("/api/users", headers=self.user, json=payload).status_code, 403)
         self.assertEqual(self.client.post("/api/users", headers=self.tech, json=payload).status_code, 403)
+
+    def test_account_role_assignment_matrix(self):
+        manager_name = f"g3rolemanager{self.suffix}"
+        created_names = [manager_name]
+        with SessionLocal() as db:
+            if not db.get(Role, "manager"):
+                db.add(Role(name="manager", description="Lab manager"))
+                db.commit()
+
+        def create_account(headers, suffix, role):
+            username = f"g3role{suffix}{self.suffix}"
+            created_names.append(username)
+            response = self.client.post(
+                "/api/users",
+                headers=headers,
+                json={
+                    "username": username,
+                    "email": f"{username}@lab.local",
+                    "full_name": "G3 role matrix",
+                    "password": "rolepass123",
+                    "role": role,
+                },
+            )
+            return response
+
+        manager = create_account(self.admin, "manager", "manager")
+        self.assertEqual(manager.status_code, 201, manager.text)
+        manager_headers = self._login(manager_name, "rolepass123")
+
+        for role in ("admin", "manager", "technician", "user"):
+            response = create_account(self.admin, f"admin{role}", role)
+            self.assertEqual(response.status_code, 201, response.text)
+
+        self.assertEqual(create_account(manager_headers, "manageradmin", "admin").status_code, 403)
+        self.assertEqual(create_account(manager_headers, "manageruser", "user").status_code, 201)
+        self.assertEqual(create_account(manager_headers, "managertech", "technician").status_code, 201)
+        self.assertEqual(create_account(self.user, "user", "user").status_code, 403)
+        self.assertEqual(create_account(self.tech, "tech", "user").status_code, 403)
+
+        with SessionLocal() as db:
+            db.query(User).filter(User.username.in_(created_names)).delete(synchronize_session=False)
+            db.commit()
 
     def test_maintenance_device_is_unavailable_until_completion(self):
         created = self.client.post(

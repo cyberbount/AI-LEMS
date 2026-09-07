@@ -15,6 +15,13 @@ def users(db: Db, _: Annotated[User, Depends(require_roles("admin", "manager"))]
 @router.post("", response_model=UserOut, status_code=201)
 def create_user(data: UserCreate, db: Db, _: Annotated[User, Depends(require_roles("admin", "manager"))]):
     allowed_roles = {"admin", "manager", "user", "technician"}
+    allowed_roles_by_creator = {
+        "admin": allowed_roles,
+        "manager": {"user", "technician"},
+    }
+    creator_allowed_roles = allowed_roles_by_creator[_.role]
+    if data.role not in creator_allowed_roles:
+        raise HTTPException(403, "Insufficient permissions for requested role")
     if data.role not in allowed_roles or not db.get(Role, data.role):
         raise HTTPException(400, "Unsupported role")
     if db.query(User).filter((User.username == data.username) | (User.email == data.email)).first():

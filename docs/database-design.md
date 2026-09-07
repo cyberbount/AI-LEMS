@@ -1,5 +1,7 @@
 # AI-LEMS Database Design
 
+> Historical note: this document records the G2 database baseline. G3 subsequently implemented several workflows that were listed as gaps; those historical G2 statements are retained for traceability.
+
 ## Status and sources
 
 - Current ORM source: `backend/app/models.py`.
@@ -56,7 +58,7 @@ borrow_requests 1 -> many usage_history (nullable link)
 - Device status is changed by request lifecycle and maintenance operations.
 - Borrow request status is controlled by explicit API transitions.
 - Usage history records transition actions but is not a complete event-sourcing model.
-- Maintenance records distinguish open/completed work; the effect on device availability is a G3 implementation gap.
+- Maintenance records distinguish open/completed work; G2 recorded the availability effect as a G3 implementation gap, and G3 subsequently implemented the covered lifecycle transition.
 - Documents/chunks are read by retrieval; document management operations are not exposed by the current API.
 
 ## Architecture issues
@@ -71,11 +73,11 @@ borrow_requests 1 -> many usage_history (nullable link)
 
 Current entity model coverage: **VERIFIED/PARTIAL**.
 
-Target coverage for FR-001–FR-016: **PARTIAL** because FR-009 time/frequency statistics, FR-015 password change and FR-016 account/role management are not represented by complete implemented workflows.
+Target coverage for FR-001–FR-016 at G2: **PARTIAL** because FR-009 time/frequency statistics, FR-015 password change and FR-016 account/role management were not represented by complete implemented workflows at that gate. G3 later implemented these workflows without adding new database entities.
 
 Human Gate G2: **READY FOR HUMAN APPROVAL**. G2 is not approved automatically.
 
-## G3 implementation gaps
+## G3 implementation gaps recorded at the G2 baseline
 
 - Implement selected time-range and usage-event frequency statistics using the existing usage history model.
 - Implement maintenance effects on device availability according to the approved business lifecycle.

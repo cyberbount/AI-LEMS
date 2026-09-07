@@ -1,6 +1,6 @@
 ---
 name: testing
-description: Use when starting the testing phase after implementation Gate G5 is approved, or when asked to build/run the test suite for local-lab-ai from approved requirements and implementation, including unit, API integration, RBAC, borrow-lifecycle and AI tests with a mocked provider, plus requirement coverage analysis.
+description: Use during G3 Implementation & Verification and G4 Integration & System Validation, or when asked to build/run the test suite for local-lab-ai from approved requirements and implementation, including unit, API integration, RBAC, borrow-lifecycle and AI tests with a mocked provider, plus requirement coverage analysis.
 ---
 
 # Testing Skill
@@ -41,6 +41,8 @@ Create or update:
 PASS if: full suite runs and passes (or every failure has a defect entry); coverage matrix complete; no test was modified to force a pass; AI tests are offline-deterministic.
 FAIL if: any acceptance criterion has no test and no documented reason, or a failing test was hidden.
 
-## Human Gate (G6)
+## Human Gate (G3/G4)
 A human reviewer reads test-report.md, confirms the suite actually ran (output evidence) and accepts deferred/untestable items.
-- PASS → security-review may start. FAIL → fix defects first.
+- G3 covers implementation and verification evidence; G4 covers integration and system validation. PASS → the next project phase may start only after the corresponding human review. FAIL → fix defects first.
+
+Project gate sequence: G1 Requirements, G2 Architecture, G3 Implementation & Verification, G4 Integration & System Validation, G5 Documentation & Deployment.

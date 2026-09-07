@@ -2,22 +2,22 @@ services:
   mysql:
     image: mysql:8.4
     environment:
-      MYSQL_DATABASE: lab
-      MYSQL_USER: lab
-      MYSQL_PASSWORD: lab
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-lab}
+      MYSQL_USER: ${MYSQL_USER:?Set MYSQL_USER in .env}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
     ports: ["3306:3306"]
     volumes: [mysql_data:/var/lib/mysql, ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql:ro]
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -proot"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD}"]
       interval: 5s
       timeout: 5s
       retries: 20
   backend:
     build: { context: ., dockerfile: Dockerfile.backend }
     environment:
-      DATABASE_URL: mysql+pymysql://lab:lab@mysql:3306/lab
-      JWT_SECRET_KEY: change-me-in-production
+      DATABASE_URL: mysql+pymysql://${MYSQL_USER:?Set MYSQL_USER in .env}:${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}@mysql:3306/${MYSQL_DATABASE:-lab}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
       OLLAMA_BASE_URL: http://ollama:11434
       OLLAMA_MODEL: qwen2.5:3b
       CORS_ORIGINS: http://localhost:5173,http://localhost:3000
