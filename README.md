@@ -1,4 +1,4 @@
-# Local Laboratory AI
+# AI-LEMS (AI Laboratory Equipment Management System)
 
 Hệ thống quản lý thiết bị phòng thí nghiệm Điện tử, IoT và Hệ thống nhúng có tích hợp AI local.
 
