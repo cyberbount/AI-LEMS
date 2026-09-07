@@ -1,114 +1,92 @@
-# Traceability Matrix Validation Report
-==================================================
+# AI-LEMS Requirements Traceability Report
 
-## Summary Statistics
-- Total Functional Requirements (FR): 14
-- Total Architecture Components (ARC): 10
-- Total Database Entities (DBT): 6
-- Total API Endpoints (API): 9
-- Total Implementation Items (IMP): 14
-- Total Test Cases (TC): 10
-- Total Security Findings (SEC): 7
-- Total Documentation Items (DOC): 4
+## Baseline
 
-## Traceability Coverage
-- FR → ARC coverage: 14/14 (100.0%)
-- ARC → DBT coverage: 5/10 (50.0%)
-- DBT → API coverage: 6/6 (100.0%)
-- API → IMP coverage: 9/9 (100.0%)
-- FR → TC coverage: 9/14 (64.3%)
-- TC → SEC coverage: 6/10 (60.0%)
-- SEC → DOC coverage: 7/7 (100.0%)
+- Authoritative business source: `BaoCao_UDTTNT.docx`
+- Candidate SDLC baseline: `docs/requirements.md`
+- Supporting input: `de_tai_23 (1).txt`
+- Non-authoritative input: `docs/customer-requirement.md`
+- Human Gate G1: **PENDING**
 
-## Warnings
-- ARC ARC-01 has no traceability to database entities
-- ARC ARC-02 has no traceability to database entities
-- ARC ARC-07 has no traceability to database entities
-- ARC ARC-09 has no traceability to database entities
-- ARC ARC-10 has no traceability to database entities
-- FR FR-003 has no traceability to test cases
-- FR FR-004 has no traceability to test cases
-- FR FR-012 has no traceability to test cases
-- FR FR-013 has no traceability to test cases
-- FR FR-014 has no traceability to test cases
-- TC TC-005 has no traceability to security findings
-- TC TC-006 has no traceability to security findings
-- TC TC-007 has no traceability to security findings
-- TC TC-008 has no traceability to security findings
+## Counts
 
-## Detailed Traceability
+- FR: 16 (`FR-001`–`FR-016`)
+- NFR: 9 (`NFR-001`–`NFR-009`)
+- BR/AI safety rules: 14 (`BR-001`–`BR-014`)
+- US: 13 (`US-001`–`US-013`)
+- AC: 20 (`AC-001`–`AC-020`)
 
-### FR → ARC
-- FR-001 → ARC-03
-- FR-002 → ARC-03
-- FR-003 → ARC-04
-- FR-004 → ARC-04
-- FR-005 → ARC-05
-- FR-006 → ARC-05
-- FR-007 → ARC-05
-- FR-008 → ARC-06
-- FR-009 → ARC-07
-- FR-010 → ARC-08
-- FR-011 → ARC-08
-- FR-012 → ARC-08
-- FR-013 → ARC-08
-- FR-014 → ARC-10
+## Evidence vocabulary
 
-### ARC → DBT
-- ARC-03 → DBT-001
-- ARC-04 → DBT-002
-- ARC-05 → DBT-004
-- ARC-05 → DBT-003
-- ARC-06 → DBT-005
-- ARC-08 → DBT-006
+`CODE EXISTS`, `TEST EXISTS`, `TEST EXECUTED`, `TEST PASSED`, `NOT VERIFIED`, `NOT IMPLEMENTED`, and `TEST NOT AVAILABLE` are separate states. Code existence alone is not test evidence.
 
-### DBT → API
-- DBT-001 → API-001
-- DBT-001 → API-002
-- DBT-002 → API-003
-- DBT-002 → API-004
-- DBT-003 → API-005
-- DBT-004 → API-005
-- DBT-005 → API-006
-- DBT-006 → API-008
+## FR -> US -> AC -> Evidence/Code -> Test Status
 
-### API → IMP
-- API-001 → IMP-002
-- API-002 → IMP-002
-- API-003 → IMP-004
-- API-004 → IMP-004
-- API-005 → IMP-004
-- API-006 → IMP-004
-- API-007 → IMP-005
-- API-008 → IMP-006
-- API-009 → IMP-001
+| FR | US | AC | Evidence/Code | Test status |
+|---|---|---|---|---|
+| FR-001 | US-001 | AC-001 | `backend/app/routers/auth.py`; `tests/test_api.py` | TEST EXISTS; TEST EXECUTED; TEST PASSED |
+| FR-002 | US-001 | AC-002 | `backend/app/deps.py`; protected routers; `tests/test_api.py` | TEST PASSED; business mapping NOT VERIFIED |
+| FR-003 | US-002, US-003 | AC-005 | `backend/app/routers/devices.py`; `frontend/src/App.jsx`; `tests/test_api.py` | Creation/RBAC PASSED; full view matrix NOT VERIFIED |
+| FR-004 | US-002, US-003 | AC-006 | `backend/app/routers/catalog.py` | TEST NOT AVAILABLE |
+| FR-005 | US-002 | AC-003, AC-004 | `backend/app/routers/requests.py`; `tests/test_api.py` | TEST EXECUTED; TEST PASSED |
+| FR-006 | US-004 | AC-007, AC-008 | `backend/app/routers/requests.py` | Approval PASSED; rejection TEST NOT AVAILABLE |
+| FR-007 | US-004, US-005 | AC-009, AC-010 | `backend/app/routers/requests.py`; `backend/app/models.py`; `tests/test_api.py` | Borrow/return PASSED; handover NOT VERIFIED |
+| FR-008 | US-006 | AC-011, AC-012 | `backend/app/routers/maintenance.py`; `tests/test_operations.py` | Completion PASSED; schedule TEST NOT AVAILABLE |
+| FR-009 | US-007 | AC-013 | `backend/app/routers/stats.py`; `tests/test_operations.py` | Aggregate PASSED; time-range/frequency NOT IMPLEMENTED |
+| FR-010 | US-008 | AC-014 | `backend/app/routers/ai.py`; `backend/app/services/ai_service.py`; `tests/test_ai.py` | Fake-provider PASSED; live Ollama TEST NOT AVAILABLE |
+| FR-011 | US-008 | AC-015 | `backend/app/services/ai_service.py`; `tests/test_ai.py` | TEST EXECUTED; TEST PASSED for keyword retrieval |
+| FR-012 | US-009 | AC-016 | `backend/app/services/ai_service.py` | Dedicated TEST NOT AVAILABLE |
+| FR-013 | US-010 | AC-017 | `backend/app/services/ai_service.py` | Dedicated TEST NOT AVAILABLE |
+| FR-014 | US-011 | AC-018 | `backend/app/models.py`; `DocumentChunk`; `backend/app/services/ai_service.py` | Retrieval exists; management API NOT IMPLEMENTED |
+| FR-015 | US-012 | AC-019 | Endpoint NOT FOUND | NOT IMPLEMENTED; TEST NOT AVAILABLE |
+| FR-016 | US-013 | AC-020 | Account-management endpoint NOT FOUND; `backend/app/routers/users.py` lists users only | NOT IMPLEMENTED; TEST NOT AVAILABLE |
 
-### FR → TC
-- FR-001 → TC-001
-- FR-002 → TC-002
-- FR-005 → TC-003
-- FR-005 → TC-004
-- FR-006 → TC-005
-- FR-007 → TC-006
-- FR-008 → TC-007
-- FR-009 → TC-008
-- FR-010 → TC-009
-- FR-011 → TC-010
+## NFR evidence
 
-### TC → SEC
-- TC-001 → SEC-001
-- TC-001 → SEC-006
-- TC-002 → SEC-002
-- TC-003 → SEC-003
-- TC-004 → SEC-004
-- TC-010 → SEC-005
-- TC-009 → SEC-007
+| NFR | Evidence/Code | Verification status |
+|---|---|---|
+| NFR-001 | `backend/app/auth.py`; `tests/test_api.py` | TEST EXECUTED; TEST PASSED |
+| NFR-002 | `backend/app/deps.py`; `tests/test_api.py` | TEST EXECUTED; TEST PASSED |
+| NFR-003 | `backend/app/schemas.py` | CODE EXISTS; comprehensive TEST NOT AVAILABLE |
+| NFR-004 | `docs/security-review.md` | Review exists; automated scan NOT VERIFIED |
+| NFR-005 | `backend/app/models.py`; `database/schema.sql`; workflow tests | Partial; full integrity NOT VERIFIED |
+| NFR-006 | `frontend/src/App.jsx` | CODE EXISTS; UI TEST NOT AVAILABLE |
+| NFR-007 | `backend/app/models.py` | Partial; audit TEST NOT AVAILABLE |
+| NFR-008 | `backend/app/services/ai_service.py`; `tests/test_ai.py` | Matching TEST PASSED; no-context TEST NOT AVAILABLE |
+| NFR-009 | `.env`, Docker configuration and security review | Secret scan NOT VERIFIED |
 
-### SEC → DOC
-- SEC-001 → DOC-001
-- SEC-002 → DOC-002
-- SEC-003 → DOC-002
-- SEC-004 → DOC-002
-- SEC-005 → DOC-003
-- SEC-006 → DOC-001
-- SEC-007 → DOC-004
+## BR evidence
+
+| BR | Evidence/Code | Verification status |
+|---|---|---|
+| BR-001–BR-003 | Account endpoints/models | BR-001 partial; BR-002/BR-003 NOT IMPLEMENTED |
+| BR-004–BR-006 | `backend/app/routers/requests.py`; `tests/test_api.py` | Covered paths TEST PASSED |
+| BR-007–BR-008 | `backend/app/routers/requests.py`; `UsageHistory` | Partial code; handover/condition TEST NOT AVAILABLE |
+| BR-009–BR-010 | `backend/app/routers/maintenance.py`; `tests/test_operations.py` | Completion TEST PASSED; availability impact NOT VERIFIED |
+| BR-011–BR-014 | `backend/app/services/ai_service.py`; `docs/security-review.md` | Advisory behavior documented; negative/workflow tests NOT AVAILABLE |
+
+## Missing traceability links
+
+- FR-004 catalog behavior has no executed test.
+- FR-006 rejection has no executed test.
+- FR-007 handover has no executed test.
+- FR-008 schedule creation has no executed test.
+- FR-009 time-range/frequency behavior is not implemented or tested.
+- FR-010 has no live Ollama test.
+- FR-012 and FR-013 have no dedicated tests.
+- FR-014 has no document-management API evidence.
+- FR-015 and FR-016 are not implemented and have no tests.
+- NFR-003 through NFR-009 do not all have executed evidence.
+- BR-001 through BR-003 and BR-007 through BR-014 are not fully covered by executed tests.
+
+## Unresolved human decisions
+
+- Mapping of technical `admin` to Lab Manager.
+- Exact time-range/frequency metric definition under FR-009.
+- Exact Document Management operation boundary.
+- Availability of `Hướng dẫn quản lý dự án.txt`.
+- Final human acceptance of the normalized requirements baseline.
+
+## G1
+
+**PENDING.** This report does not approve Human Gate G1.

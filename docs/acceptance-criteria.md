@@ -1,14 +1,28 @@
 # Acceptance Criteria
 
-- AC-001: Given valid seeded credentials, when the user signs in, then the API returns a JWT and `/api/auth/me` returns the authenticated user.
-- AC-002: Given a user without manager role, when the user calls a manager-only endpoint, then the API returns HTTP 403.
-- AC-003: Given an available device, when an authenticated user creates a borrow request, then the API creates a pending request.
-- AC-004: Given a non-available device, when a user creates a borrow request, then the API rejects the request with a conflict response.
-- AC-005: Given a pending request, when a manager approves it, then the request becomes approved and the device becomes reserved.
-- AC-006: Given a borrowed request, when the owner returns it, then the request becomes returned and the device becomes available.
-- AC-007: Given an open maintenance record, when an authorized technician completes it successfully, then the record becomes completed.
-- AC-008: Given recorded usage history, when an authenticated user requests statistics, then the response contains counts derived from the database.
-- AC-009: Given Ollama is available, when a user sends an AI chat request, then the response contains the answer, provider, model and mode.
-- AC-010: Given matching document chunks, when a user asks a retrieval question, then the response includes matching source names.
-- AC-011: Given no matching official context, when a user asks for a specific operational fact, then the AI prompt contains no fabricated database fact and the response can state the limitation.
-- AC-012: Given the API is unavailable, when the user views the frontend, then the UI labels the data as fallback data and does not report a new business action as persisted.
+| ID | FR/BR | Given | When | Then | Evidence/status |
+|---|---|---|---|---|---|
+| AC-001 | FR-001 | Valid credentials for an active actor exist | The actor signs in | Token is returned and `/api/auth/me` identifies the actor | `tests/test_api.py`; executed/passed |
+| AC-002 | FR-002 | Actor lacks required technical permission | Actor calls a protected endpoint | API returns HTTP 403 | `tests/test_api.py`; executed/passed; business mapping not verified |
+| AC-003 | FR-005 | Device is available | Lab User creates request | Pending request is created | `tests/test_api.py`; executed/passed |
+| AC-004 | FR-005, BR-004, BR-006 | Device is not available | Lab User creates request | Request is rejected and not created | `tests/test_api.py`; executed/passed |
+| AC-005 | FR-003 | Permitted Lab Manager is authenticated | Manager creates equipment record | Record is persisted and returned | `tests/test_api.py`; executed/passed |
+| AC-006 | FR-004 | Catalog/group/location data exists | Authorized actor requests catalog | Available catalog data is returned | TEST NOT AVAILABLE |
+| AC-007 | FR-006 | Request is pending | Authorized approval actor approves it | Request becomes approved and device reserved | `tests/test_api.py`; executed/passed |
+| AC-008 | FR-006 | Request is pending | Authorized approval actor rejects it | Request becomes rejected without borrowed state | TEST NOT AVAILABLE |
+| AC-009 | FR-007 | Request is approved | Device is recorded as received/borrowed | Lifecycle and usage state are recorded | Code exists; handover TEST NOT AVAILABLE |
+| AC-010 | FR-007, BR-003 | Request is borrowed | Owner returns device | Request becomes returned and device available | `tests/test_api.py`; executed/passed |
+| AC-011 | FR-008 | Authorized maintenance actor is authenticated | Actor creates record | Record identifies device and actor | `tests/test_operations.py`; executed/passed |
+| AC-012 | FR-008 | Maintenance record is open | Authorized actor completes it | Record becomes completed with completion time | `tests/test_operations.py`; executed/passed |
+| AC-013 | FR-009 | Usage data and approved metric definition exist | Lab Manager requests statistics | Database-derived counts are returned for supported time/frequency dimensions | Aggregate passed; time-range/frequency NOT IMPLEMENTED |
+| AC-014 | FR-010 | Authenticated laboratory actor sends valid question | AI service processes request | Answer and metadata are returned | Fake-provider test passed; live Ollama TEST NOT AVAILABLE |
+| AC-015 | FR-011, BR-012 | Matching document chunks exist | Actor asks retrieval question | Matching source names are returned | `tests/test_ai.py`; executed/passed |
+| AC-016 | FR-012 | Official equipment/usage/maintenance evidence exists | Actor requests Summary | Summary is limited to that evidence | TEST NOT AVAILABLE |
+| AC-017 | FR-013, BR-014 | Inspection evidence exists | Actor requests Inspection Alert | Advisory suggestion with evidence is returned without state mutation | TEST NOT AVAILABLE |
+| AC-018 | FR-014 | Managed instructional-document data exists | Retrieval service uses it | Data can provide source context and identity | Tables/retrieval exist; management API NOT IMPLEMENTED |
+| AC-019 | FR-015, BR-003 | Authenticated actor has valid current password | Actor submits new password | Only that account changes and new login works | Endpoint NOT FOUND; TEST NOT AVAILABLE |
+| AC-020 | FR-016, BR-002 | Lab Manager is authenticated | Manager creates account and assigns role | Account/role persist and access is enforced | Endpoint NOT FOUND; TEST NOT AVAILABLE |
+
+## Evidence rules
+
+Code existence does not imply a passing test. Missing tests are `TEST NOT AVAILABLE`; absent behavior is `NOT IMPLEMENTED`; unexecuted behavior is `NOT VERIFIED`.
