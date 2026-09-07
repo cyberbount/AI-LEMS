@@ -1,0 +1,13 @@
+
+> local-lab-ai-frontend@0.1.0 dev
+> vite --host 0.0.0.0 --port 5173
+
+
+  VITE v5.4.21  ready in 182 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://10.255.255.254:5173/
+  ➜  Network: http://172.24.25.100:5173/
+7:46:38 PM [vite] page reload src/App.jsx
+8:04:25 PM [vite] page reload src/App.jsx
+8:37:58 PM [vite] page reload src/App.jsx

@@ -1,0 +1,396 @@
+================================================================================
+  HUONG DAN SU DUNG HE THONG - LAB EQUIPMENT MANAGEMENT WITH AI
+  "Hệ thống quản lý thiết bị phòng thí nghiệm có tích hợp AI"
+================================================================================
+
+Vi tri thu muc: /home/cyberbount/UDTT_K23A/api_local/local-lab-ai/
+
+================================================================================
+1. CAU TRUC THU MUC
+================================================================================
+
+local-lab-ai/
+├── .env                          ← CAU HINH CHINH (sua file nay)
+├── backend/
+│   ├── .env                      ← Cau hinh backend (copy tu .env.example)
+│   ├── .env.example              ← Mau cau hinh
+│   ├── requirements.txt          ← Thu vien Python
+│   ├── init.sql                  ← CSDL MySQL (init khi dung Docker)
+│   └── app/
+│       ├── main.py               ← FastAPI entry point
+│       ├── config.py             ← Doc .env
+│       ├── models.py             ← SQLAlchemy models
+│       ├── schemas.py            ← Pydantic schemas
+│       ├── auth.py               ← JWT + bcrypt
+│       ├── db.py                 ← Database session
+│       ├── deps.py               ← Dependency injection (RBAC)
+│       ├── routers/              ← API routes
+│       └── services/             ← AI Service + Ollama Provider
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx               ← React app (login + 3 dashboards)
+│   │   ├── components/ui.jsx     ← Button, Card, Badge, Input
+│   │   └── lib/api.js            ← API client
+│   └── package.json
+├── scripts/
+│   ├── start-dev.sh              ← KHOI DONG HE THONG (WSL/Linux)
+│   ├── stop-dev.sh               ← DUNG HE THONG
+│   ├── check_environment.sh      ← Kiem tra moi truong
+│   ├── start-dev.ps1             ← Khoi dong (Windows PowerShell)
+│   ├── stop-dev.ps1              ← Dung (Windows PowerShell)
+│   └── test_ollama.py            ← Test Ollama + Backend
+├── docker-compose.yml            ← Docker deployment
+├── Dockerfile.backend
+├── Dockerfile.frontend
+└── nginx.conf
+
+================================================================================
+2. YEU CAU HE THONG
+================================================================================
+
+- OS: WSL2 (Ubuntu) hoac Linux
+- Python: 3.10+
+- Node.js: 18+
+- Ollama: 0.30+ (cai trong WSL)
+- RAM: >= 8GB (khuyen nghi 16GB)
+- GPU: khong bat buoc (co the chay CPU)
+
+================================================================================
+3. CAI DAT LAN DAU
+================================================================================
+
+# Buoc 1: Cai Ollama trong WSL
+curl -fsSL https://ollama.com/install.sh | sh
+ollama --version
+
+# Buoc 2: Pull model AI
+ollama pull qwen2.5:3b
+ollama list
+
+# Buoc 3: Tao Python venv va cai dependencies
+cd /home/cyberbount/UDTT_K23A/api_local/local-lab-ai
+python3 -m venv .venv
+.venv/bin/pip install -r backend/requirements.txt
+
+# Buoc 4: Cai Node.js dependencies
+cd frontend
+npm install
+cd ..
+
+================================================================================
+4. CAU HINH HE THONG
+================================================================================
+
+File cau hinh chinh: .env (o goc project)
+
+# Xem hien tai:
+cat .env
+
+# Noi dung:
+DATABASE_URL=sqlite:///./lab.db          # CSDL (SQLite hoac MySQL)
+OLLAMA_BASE_URL=http://localhost:11434   # Endpoint Ollama
+OLLAMA_MODEL=qwen2.5:3b                  # Model AI su dung
+OLLAMA_NUM_PREDICT=512                   # So token toi da tra ve
+MAX_HISTORY_MESSAGES=12                  # Gioi han chat history
+REQUEST_TIMEOUT_SECONDS=360              # Timeout goi AI (giay)
+CORS_ORIGINS=http://localhost:5173       # Cho phep frontend truy cap
+JWT_SECRET_KEY=dev-local-secret-key      # Secret key JWT
+
+# Doi model AI:
+#   ollama pull qwen3:4b
+#   Sua OLLAMA_MODEL=qwen3:4b trong .env
+#   Restart backend
+
+================================================================================
+5. KHOI DONG HE THONG
+================================================================================
+
+# Cach 1: Dung script (de dung nhat)
+cd /home/cyberbount/UDTT_K23A/api_local/local-lab-ai
+bash scripts/start-dev.sh
+
+# Cach 2: Khoi dong tung thanh phan
+
+# 2a. Khoi dong Ollama (neu chua chay)
+ollama serve &
+sleep 3
+curl http://localhost:11434/api/tags     # Kiem tra
+
+# 2b. Khoi dong Backend (FastAPI)
+cd /home/cyberbount/UDTT_K23A/api_local/local-lab-ai
+.venv/bin/python -m uvicorn app.main:app --app-dir backend --reload --host 0.0.0.0 --port 8000 &
+sleep 3
+curl http://localhost:8000/health        # Kiem tra
+
+# 2c. Khoi dong Frontend (Vite)
+cd /home/cyberbount/UDTT_K23A/api_local/local-lab-ai/frontend
+npm run dev -- --host 0.0.0.0 --port 5173 &
+sleep 3
+curl http://localhost:5173               # Kiem tra
+
+================================================================================
+6. DUNG HE THONG
+================================================================================
+
+# Cach 1: Dung script
+bash scripts/stop-dev.sh
+
+# Cach 2: Dung thu cong
+# Dung Frontend
+fuser -k 5173/tcp
+
+# Dung Backend
+fuser -k 8000/tcp
+
+# Dung Ollama (thuong khong can)
+pkill ollama
+
+================================================================================
+7. TRUY CAP HE THONG
+================================================================================
+
+Frontend:   http://localhost:5173/login
+Backend:    http://localhost:8000
+API Docs:   http://localhost:8000/docs       (Swagger UI)
+Health:     http://localhost:8000/health
+
+================================================================================
+8. DANG NHAP VA PHAN QUYEN
+================================================================================
+
+# 3 role demo (dang nhap bang form hoac API):
+
+# Lab Manager:
+#   Username: admin
+#   Password: admin123
+#   Quyen: QL users, thiet bi, phe duyet, bao tri, bao cao, AI Summary
+
+# Lab User:
+#   Username: user
+#   Password: user123
+#   Quyen: Xem thiet bi, muon/trả, AI Chat
+
+# Maintenance Technician:
+#   Username: technician
+#   Password: tech123
+#   Quyen: QL bao tri, AI Inspection Alert
+
+# Dang nhap qua API:
+curl -X POST http://localhost:8000/api/auth/login \
+  -d "username=admin&password=admin123"
+
+# Tra ve:
+# {"access_token":"eyJ...","token_type":"bearer"}
+
+# Su dung token:
+curl -H "Authorization: Bearer <token>" http://localhost:8000/api/devices
+
+================================================================================
+9. API ENDPOINTS CHINH
+================================================================================
+
+# --- Auth ---
+POST /api/auth/login          Dang nhap (form-data: username, password)
+POST /api/auth/register       Dang ky tai khoan moi (role=user only)
+GET  /api/auth/me             Thong tin nguoi dang nhap
+
+# --- Users ---
+GET  /api/users               Danh sach nguoi dung (admin/manager)
+
+# --- Devices ---
+GET  /api/devices             Danh sach thiet bi
+GET  /api/devices?status=     Loc theo trang thai (available/borrowed/maintenance)
+POST /api/devices             Them thiet bi (admin/manager)
+PATCH /api/devices/{id}/status  Cap nhat trang thai (admin/manager/technician)
+
+# --- Borrow Requests ---
+GET  /api/requests            Danh sach yeu cau muon
+POST /api/requests            Tao yeu cau muon (device_id, purpose)
+PATCH /api/requests/{id}/status?status=  Cap nhat trang thai
+  # Trang thai: pending -> approved -> borrowed -> returned
+  # Hoac: pending -> rejected
+PATCH /api/requests/{id}/approve    Phe duyet (admin/manager)
+PATCH /api/requests/{id}/borrow     Nhan thiet bi
+PATCH /api/requests/{id}/return     Tra thiet bi
+
+# --- Maintenance ---
+GET  /api/maintenance              Danh sach bao tri
+POST /api/maintenance              Tao phieu bao tri (admin/manager/technician)
+PATCH /api/maintenance/{id}/complete   Hoan thanh bao tri
+GET  /api/maintenance/schedules    Lich bao tri
+POST /api/maintenance/schedules    Tao lich bao tri
+
+# --- Stats ---
+GET  /api/stats               Thong ke (users, devices, requests, maintenance, usage)
+
+# --- Catalog ---
+GET  /api/groups              Nhom thiet bi
+POST /api/groups              Them nhom
+GET  /api(locations           Vi tri
+POST /api/locations           Them vi tri
+
+# --- AI ---
+POST /api/ai/chat             Hoi AI (message, history, mode)
+  # mode: "chat" | "rag" | "summary" | "inspection_alert"
+
+POST /api/chat                Hoi AI (khong can auth)
+
+# --- Health ---
+GET  /health                  Trang thai he thong
+
+================================================================================
+10. TEST HE THONG
+================================================================================
+
+# Kiem tra moi truong:
+bash scripts/check_environment.sh
+
+# Test Ollama truc tiep:
+curl http://localhost:11434/api/tags
+ollama run qwen2.5:3b "Xin chao"
+
+# Test Backend:
+curl http://localhost:8000/health
+curl -X POST http://localhost:8000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Xin chao, ban la ai?","history":[]}'
+
+# Test day du (Ollama + Backend):
+.venv/bin/python scripts/test_ollama.py
+
+# Test API voi token:
+TOKEN=$(curl -s -X POST http://localhost:8000/api/auth/login \
+  -d "username=admin&password=admin123" | python3 -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
+
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/devices
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/stats
+
+================================================================================
+11. DOI MODEL AI
+================================================================================
+
+# Xem model hien co:
+ollama list
+
+# Tai model moi:
+ollama pull qwen3:4b
+ollama pull qwen3:1.7b
+ollama pull phi3:mini
+
+# Doi model:
+#   Sua OLLAMA_MODEL trong .env
+#   Restart backend (fuser -k 8000/tcp roi chay lai)
+
+# Kiem tra model moi:
+curl http://localhost:11434/api/tags
+
+================================================================================
+12. CHAY VOI DOCKER ( thay the WSL)
+================================================================================
+
+# Khoi dong toan bo:
+docker compose up -d
+
+# Kiem tra:
+docker compose ps
+curl http://localhost:8000/health
+
+# Dung:
+docker compose down
+
+# Xoa du lieu:
+docker compose down -v
+
+================================================================================
+13. LOI THUONG GAP VA CACH SUA
+================================================================================
+
+# LOI: "Ollama khong ket noi"
+#   Kiem tra: curl http://localhost:11434/api/tags
+#   Sua: ollama serve &
+#   WSL2: neu khong ket noi, dung IP Windows:
+#     ip route | awk '/default/ {print $3}'
+#     export OLLAMA_BASE_URL=http://<WINDOWS_IP>:11434
+
+# LOI: "Model not found"
+#   Kiem tra: ollama list
+#   Sua: ollama pull qwen2.5:3b
+#   Dung ten model dung trong .env
+
+# LOI: "Backend loi 502"
+#   Kiem tra Ollama: curl http://localhost:11434/api/tags
+#   Kiem tra log: cat logs/backend.log
+#   Kiem tra .env: OLLAMA_BASE_URL, OLLAMA_MODEL
+
+# LOI: "No module named uvicorn"
+#   Chua co venv:
+#     python3 -m venv .venv
+#     .venv/bin/pip install -r backend/requirements.txt
+
+# LOI: "Frontend khong ket noi Backend"
+#   Kiem tra backend dang chay: ss -tlnp | grep 8000
+#   Kiem tra CORS trong .env: CORS_ORIGINS=http://localhost:5173
+
+# LOI: "Cau tra loi qua dai hoac timeout"
+#   Giam OLLAMA_NUM_PREDICT (VD: 256)
+#   Tang REQUEST_TIMEOUT_SECONDS (VD: 600)
+
+# LOI: "Lan tra loi dau cham"
+#   Binh thuong - model dang duoc load vao RAM
+#   Cac lan sau se nhanh hon
+
+# LOI: "Permission denied khi chay script"
+#   chmod +x scripts/start-dev.sh scripts/stop-dev.sh
+
+================================================================================
+14. THEM THIET BI MAU VAO CSDL
+================================================================================
+
+# Vao SQLite:
+cd /home/cyberbount/UDTT_K23A/api_local/local-lab-ai
+sqlite3 lab.db
+
+# Xem thiet bi:
+SELECT id, asset_code, name, status FROM devices;
+
+# Them thiet bi moi:
+INSERT INTO devices (asset_code, name, category, status, serial_number)
+VALUES ('DEV-016', 'DSO-X 3024T', 'measurement', 'available', 'SN016');
+
+# Xem nguoi dung:
+SELECT id, username, role FROM users;
+
+# Xem yeu cau muon:
+SELECT id, device_id, status, purpose FROM borrow_requests;
+
+# Thoat:
+.quit
+
+================================================================================
+15. CLI NHANH (COPY-PASTE)
+================================================================================
+
+# Khoi dong:
+cd /home/cyberbount/UDTT_K23A/api_local/local-lab-ai && bash scripts/start-dev.sh
+
+# Dung:
+cd /home/cyberbount/UDTT_K23A/api_local/local-lab-ai && bash scripts/stop-dev.sh
+
+# Kiem tra trang thai:
+ss -tlnp | grep -E ':8000|:5173|:11434'
+
+# Health check:
+curl -s http://localhost:8000/health | python3 -m json.tool
+
+# Test chat:
+curl -s -X POST http://localhost:8000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Giải thích RAG là gì","history":[]}' | python3 -m json.tool
+
+# Xem log backend:
+tail -f /home/cyberbount/UDTT_K23A/api_local/local-lab-ai/logs/backend.log
+
+# Xem log frontend:
+tail -f /home/cyberbount/UDTT_K23A/api_local/local-lab-ai/logs/frontend.log
+
+================================================================================

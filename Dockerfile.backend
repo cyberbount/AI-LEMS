@@ -1,0 +1,8 @@
+FROM python:3.12-slim
+WORKDIR /app
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY backend/app ./app
+COPY backend/init.sql ./init.sql
+EXPOSE 8000
+CMD ["sh", "-c", "until python -c 'from app.db import engine; engine.connect().close()' 2>/dev/null; do sleep 2; done; uvicorn app.main:app --host 0.0.0.0 --port 8000"]
