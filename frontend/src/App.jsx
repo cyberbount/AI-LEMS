@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import {
   AlertTriangle, ArrowRight, BarChart3, Bell, Bot, CheckCircle2, ClipboardCheck, Cpu,
@@ -78,6 +78,44 @@ function downloadReportTXT(stats, devices = [], requests = [], maintenance = [])
 function printReportPDF() {
   window.print();
 }
+
+function downloadAuditLogsTXT(logs = [], title = "NHẬT KÝ KIỂM TOÁN HỆ THỐNG", filename = "Nhat_ky_kiem_toan") {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("vi-VN");
+  const timeStr = now.toLocaleTimeString("vi-VN");
+
+  let content = `=====================================================\n`;
+  content += `           ${title.toUpperCase()}\n`;
+  content += `=====================================================\n`;
+  content += `Thời gian xuất : ${timeStr} - ${dateStr}\n`;
+  content += `Tổng số bản ghi: ${logs.length}\n\n`;
+
+  if (!logs.length) {
+    content += `Chưa có bản ghi nhật ký nào.\n`;
+  } else {
+    logs.forEach((log, i) => {
+      const d = new Date(log.created_at).toLocaleString("vi-VN");
+      content += `[${i + 1}] ${d} | @${log.username} (${log.user_role}) | ${log.action} | ${log.target_type}\n`;
+      content += `    Đối tượng: ${log.target_name || "—"}\n`;
+      if (log.details) content += `    Chi tiết : ${log.details}\n`;
+      content += `-----------------------------------------------------\n`;
+    });
+  }
+  content += `\n=====================================================\n`;
+  content += `      XUẤT TỰ ĐỘNG TỪ HỆ THỐNG KIỂM TOÁN LYXLAB\n`;
+  content += `=====================================================\n`;
+
+  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${filename}_${now.toISOString().slice(0, 10)}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 
 /* ------------------------------------------------------------------ */
 /* Theme context & provider                                            */
@@ -218,6 +256,7 @@ const navItems = {
     ["Thiết bị", Cpu],
     ["Bảo trì", Wrench],
     ["Yêu cầu mượn", ClipboardCheck],
+    ["Nhật ký hệ thống", FileText],
     ["Báo cáo", BarChart3],
     ["Trợ lý AI", Bot],
   ],
@@ -617,6 +656,8 @@ function DashboardLayout({ role }) {
   const [passwordModal, setPasswordModal] = useState(false);
   const [profileModal, setProfileModal] = useState(false);
   const [toast, setToast] = useState(null);
+  const [borrowModal, setBorrowModal] = useState({ open: false, device: null });
+  const [incidentModal, setIncidentModal] = useState({ open: false, item: null });
   const profile = roles[role] || roles.admin;
 
   return (
@@ -698,10 +739,7 @@ function DashboardLayout({ role }) {
           </div>
           <div className="ml-auto flex items-center gap-2.5 sm:gap-3">
             <ThemeToggle />
-            <button className="relative rounded-lg p-2 text-muted-foreground transition hover:bg-surface-elevated hover:text-foreground" aria-label="Thông báo">
-              <Bell size={19} />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-blue-600" />
-            </button>
+            <NotificationDropdown onNavigate={setActive} role={role} />
             <button 
               type="button"
               onClick={() => setProfileModal(true)} 
@@ -736,7 +774,7 @@ function DashboardLayout({ role }) {
       />
 
       <FloatingAssistant />
-      <Toast message={toast?.message} type={toast?.type} />
+      <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
     </div>
   );
 }
@@ -822,6 +860,7 @@ function WorkspaceSection({ section, role, data, onBorrow, onComplete, onSchedul
     "Lịch sử": ["Lịch sử bảo trì", "Các bản ghi đã hoàn thành và đang xử lý."],
     "Yêu cầu mượn": ["Yêu cầu mượn", "Theo dõi các yêu cầu mượn thiết bị."],
     "Lượt mượn của tôi": ["Lượt mượn của tôi", "Các yêu cầu mượn gắn với tài khoản hiện tại."],
+    "Nhật ký hệ thống": ["Nhật ký hệ thống & Kiểm toán", "Truy vết toàn diện lịch sử mượn trả, bảo trì và thay đổi cấu hình."],
     "Báo cáo": ["Báo cáo vận hành", "Số liệu được lấy từ API thống kê của hệ thống."],
   };
   const [title, description] = titles[section] || [section, "Nội dung đang được tải từ hệ thống."];
@@ -838,7 +877,7 @@ function WorkspaceSection({ section, role, data, onBorrow, onComplete, onSchedul
           <SectionTitle title={title} />
           <p className="-mt-2 text-sm text-slate-500 dark:text-slate-400 break-words">{description}</p>
         </div>
-        {(section === "Báo cáo" || (role === "technician" && section === "Lịch sử")) && (
+        {(section === "Báo cáo" || (role === "technician" && section === "Lịch sử") || (role === "user" && section === "Lượt mượn của tôi")) && (
           <div className="flex items-center gap-2">
             <Button size="sm" variant="outline" onClick={() => onDownloadReportTXT(data.stats, data.devices, data.requests, data.maintenance)}>
               <FileDown size={14} /> Xuất .TXT
@@ -872,7 +911,7 @@ function WorkspaceSection({ section, role, data, onBorrow, onComplete, onSchedul
           </div>
         ))}</div> : <Empty text="Chưa có thiết bị từ API." />
       )}
-      {(section === "Yêu cầu mượn" || section === "Lượt mượn của tôi") && (data.requests.length ? <RequestList items={data.requests} role={role} onReturn={role === "user" ? data.onReturn : undefined} onHandover={data.onHandover} /> : <Empty text="Chưa có yêu cầu mượn." />)}
+      {(section === "Yêu cầu mượn" || section === "Lượt mượn của tôi") && (data.requests.length ? <RequestList items={data.requests} devices={data.devices} users={data.users} role={role} onReturn={role === "user" ? data.onReturn : undefined} onHandover={data.onHandover} /> : <Empty text="Chưa có yêu cầu mượn." />)}
       {(section === "Bảo trì" || section === "Lịch sử") && (maintenanceItems.length ? maintenanceItems.map((item) => (
         <div key={item.id} className="flex flex-wrap items-center gap-3 border-b border-border py-4 last:border-0 min-w-0">
           <Settings2 size={17} className="text-blue-600 dark:text-blue-400 shrink-0" />
@@ -881,7 +920,7 @@ function WorkspaceSection({ section, role, data, onBorrow, onComplete, onSchedul
           {role === "technician" && item.status !== "completed" && <Button size="sm" variant="outline" onClick={() => onComplete(item)} className="shrink-0">Cập nhật</Button>}
         </div>
       )) : <Empty text="Chưa có bản ghi bảo trì từ API." />)}
-      {(section === "Báo cáo" || (role === "technician" && section === "Lịch sử")) && (
+      {section === "Báo cáo" && (
         <>
           <UsageChart usage={data.stats.usage_by_action} />
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -922,7 +961,20 @@ function WorkspaceSection({ section, role, data, onBorrow, onComplete, onSchedul
               )}
             </div>
           </div>
+          <div className="mt-6">
+            <AuditLogViewer title="Nhật ký kiểm toán toàn diện (Audit Trail)" />
+          </div>
         </>
+      )}
+      {role === "technician" && (section === "Lịch sử" || section === "Bảo trì") && (
+        <div className="mt-6">
+          <AuditLogViewer targetType="MAINTENANCE" title="Nhật ký bảo trì & Kiểm toán thiết bị" />
+        </div>
+      )}
+      {role === "user" && section === "Lượt mượn của tôi" && (
+        <div className="mt-6">
+          <AuditLogViewer targetType="REQUEST" title="Lịch sử mượn trả & Sự cố cá nhân" />
+        </div>
       )}
       {section === "Người dùng" && <Empty text="Chưa có dữ liệu người dùng từ API." />}
     </Card>
@@ -932,6 +984,437 @@ function WorkspaceSection({ section, role, data, onBorrow, onComplete, onSchedul
 /* ------------------------------------------------------------------ */
 /* Admin Section (Full User CRUD: Add, Edit, Reset, Lock, Delete)     */
 /* ------------------------------------------------------------------ */
+
+function NotificationDropdown({ onNavigate, role }) {
+  const { data } = useDashboardData();
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [readIds, setReadIds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("lab_read_notifs") || "[]");
+    } catch {
+      return [];
+    }
+  });
+
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const notifications = useMemo(() => {
+    const list = [];
+    const now = new Date();
+
+    // 1. Quá hạn
+    (data.requests || []).forEach((r) => {
+      if (r.status === "borrowed" && r.requested_to) {
+        const dueDate = new Date(r.requested_to);
+        if (dueDate < now) {
+          const diffHours = Math.round((now - dueDate) / (1000 * 60 * 60));
+          const diffDays = Math.floor(diffHours / 24);
+          const timeText = diffDays > 0 ? `${diffDays} ngày` : `${diffHours} giờ`;
+          
+          if (role === "user" && r.user_id !== user?.id) return;
+
+          const dev = (data.devices || []).find(d => d.id === r.device_id) || {};
+          list.push({
+            id: `overdue-${r.id}`,
+            title: `Cảnh báo quá hạn: ${dev.name || `Thiết bị #${r.device_id}`}`,
+            message: `Thiết bị đã quá hạn trả ${timeText} (Hạn chót: ${dueDate.toLocaleDateString("vi-VN")}). Vui lòng kiểm tra hoàn trả.`,
+            time: `Quá hạn ${timeText}`,
+            type: "danger",
+            targetSection: role === "user" ? "Lượt mượn của tôi" : "Yêu cầu mượn",
+            icon: AlertTriangle,
+          });
+        }
+      }
+    });
+
+    // 2. Chờ duyệt (Admin / Manager)
+    if (role === "admin") {
+      const pending = (data.requests || []).filter(r => r.status === "pending");
+      if (pending.length > 0) {
+        list.push({
+          id: `pending-${pending.length}`,
+          title: `Yêu cầu mượn chờ duyệt (${pending.length})`,
+          message: `Hiện có ${pending.length} yêu cầu mượn thiết bị mới đang chờ Quản lý phê duyệt.`,
+          time: "Chờ xử lý",
+          type: "warning",
+          targetSection: "Yêu cầu mượn",
+          icon: ClipboardCheck,
+        });
+      }
+    }
+
+    // 3. Đã duyệt sẵn sàng nhận máy (User)
+    if (role === "user") {
+      (data.requests || []).filter(r => r.status === "approved" && r.user_id === user?.id).forEach((r) => {
+        const dev = (data.devices || []).find(d => d.id === r.device_id) || {};
+        list.push({
+          id: `approved-${r.id}`,
+          title: `Đã duyệt mượn: ${dev.name || `Thiết bị #${r.device_id}`}`,
+          message: `Yêu cầu mượn đã được phê duyệt. Vui lòng đến phòng lab để nhận bàn giao thiết bị.`,
+          time: new Date(r.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
+          type: "success",
+          targetSection: "Lượt mượn của tôi",
+          icon: CheckCircle2,
+        });
+      });
+    }
+
+    // 4. Sự cố khẩn cấp (Technician & Admin)
+    if (role === "technician" || role === "admin") {
+      (data.maintenance || []).filter(m => m.kind === "incident" && m.status === "open").forEach((m) => {
+        const dev = (data.devices || []).find(d => d.id === m.device_id) || {};
+        list.push({
+          id: `incident-${m.id}`,
+          title: `Báo cáo sự cố: ${dev.name || `Thiết bị #${m.device_id}`}`,
+          message: m.notes || "Thiết bị được báo sự cố khẩn cấp từ người dùng.",
+          time: "Cần kiểm tra gấp",
+          type: "danger",
+          targetSection: "Bảo trì",
+          icon: AlertTriangle,
+        });
+      });
+    }
+
+    return list;
+  }, [data, role, user]);
+
+  const unreadCount = notifications.filter(n => !readIds.includes(n.id)).length;
+
+  const markAllAsRead = () => {
+    const allIds = notifications.map(n => n.id);
+    setReadIds(allIds);
+    localStorage.setItem("lab_read_notifs", JSON.stringify(allIds));
+  };
+
+  const handleSelect = (n) => {
+    if (!readIds.includes(n.id)) {
+      const next = [...readIds, n.id];
+      setReadIds(next);
+      localStorage.setItem("lab_read_notifs", JSON.stringify(next));
+    }
+    setOpen(false);
+    if (onNavigate && n.targetSection) {
+      onNavigate(n.targetSection);
+    }
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="relative rounded-lg p-2 text-muted-foreground transition hover:bg-surface-elevated hover:text-foreground focus:outline-none"
+        aria-label="Thông báo"
+        title="Xem thông báo hệ thống"
+      >
+        <Bell size={19} />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white shadow-sm animate-pulse">
+            {unreadCount}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-border bg-surface p-3 shadow-2xl z-50 animate-slide-up text-foreground">
+          <div className="flex items-center justify-between px-2 py-1.5 border-b border-border mb-2">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm">Thông báo hệ thống</span>
+              {unreadCount > 0 && (
+                <span className="rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 font-bold text-[11px] px-2 py-0.5">
+                  {unreadCount} mới
+                </span>
+              )}
+            </div>
+            {notifications.length > 0 && (
+              <button
+                type="button"
+                onClick={markAllAsRead}
+                className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 font-semibold"
+              >
+                Đã đọc tất cả
+              </button>
+            )}
+          </div>
+
+          <div className="max-h-80 overflow-y-auto space-y-1.5 pr-1">
+            {notifications.length === 0 ? (
+              <div className="py-6 text-center text-xs text-muted-foreground">
+                <CheckCircle2 size={24} className="mx-auto text-emerald-500 mb-1.5 opacity-60" />
+                Không có cảnh báo hoặc thông báo mới nào.
+              </div>
+            ) : (
+              notifications.map((n) => {
+                const isRead = readIds.includes(n.id);
+                const Icon = n.icon || Bell;
+                const toneBg = n.type === "danger" 
+                  ? "bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400" 
+                  : n.type === "warning" 
+                  ? "bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400" 
+                  : "bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400";
+
+                return (
+                  <div
+                    key={n.id}
+                    onClick={() => handleSelect(n)}
+                    className={`flex items-start gap-2.5 p-2.5 rounded-xl cursor-pointer transition hover:bg-surface-elevated ${isRead ? "opacity-60" : "bg-surface-elevated/40"}`}
+                  >
+                    <div className={`grid h-8 w-8 place-items-center rounded-lg shrink-0 mt-0.5 ${toneBg}`}>
+                      <Icon size={16} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <p className="font-bold text-xs truncate text-foreground">{n.title}</p>
+                        <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0">{n.time}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{n.message}</p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+function AdminAuditCenter({ onPrintReportPDF }) {
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [targetTypeFilter, setTargetTypeFilter] = useState("all");
+  const [actionFilter, setActionFilter] = useState("all");
+  const [timeFilter, setTimeFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [submittedSearch, setSubmittedSearch] = useState("");
+
+  const fetchLogs = () => {
+    setLoading(true);
+    api.auditLogs({ target_type: targetTypeFilter !== "all" ? targetTypeFilter : undefined })
+      .then(res => { setLogs(res); setLoading(false); })
+      .catch(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchLogs();
+  }, [targetTypeFilter]);
+
+  const filteredLogs = useMemo(() => {
+    const now = new Date();
+    return logs.filter(log => {
+      if (actionFilter !== "all" && log.action !== actionFilter) return false;
+      if (timeFilter !== "all") {
+        const logDate = new Date(log.created_at);
+        const diffDays = (now - logDate) / (1000 * 60 * 60 * 24);
+        if (timeFilter === "today" && diffDays > 1) return false;
+        if (timeFilter === "7days" && diffDays > 7) return false;
+        if (timeFilter === "30days" && diffDays > 30) return false;
+      }
+      if (submittedSearch.trim()) {
+        const q = removeVietnameseTones(submittedSearch.trim());
+        const target = removeVietnameseTones(`${log.username} ${log.action} ${log.target_name} ${log.details}`);
+        if (!target.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [logs, actionFilter, timeFilter, submittedSearch]);
+
+  const stats = useMemo(() => {
+    return {
+      total: logs.length,
+      requests: logs.filter(l => l.target_type === "REQUEST").length,
+      maintenance: logs.filter(l => l.target_type === "MAINTENANCE" || l.action === "INCIDENT_REPORT").length,
+      system: logs.filter(l => l.target_type === "DEVICE" || l.target_type === "USER").length,
+    };
+  }, [logs]);
+
+  const actionMeta = {
+    CREATE: { label: "Tạo mới", tone: "blue" },
+    UPDATE: { label: "Cập nhật", tone: "blue" },
+    DELETE: { label: "Xóa / Thanh lý", tone: "red" },
+    STATUS_CHANGE: { label: "Đổi trạng thái", tone: "amber" },
+    BORROW_REQUEST: { label: "Yêu cầu mượn", tone: "amber" },
+    APPROVE: { label: "Duyệt mượn", tone: "green" },
+    REJECT: { label: "Từ chối", tone: "red" },
+    HANDOVER: { label: "Bàn giao máy", tone: "blue" },
+    RETURN: { label: "Hoàn trả máy", tone: "green" },
+    INCIDENT_REPORT: { label: "Báo sự cố", tone: "red" },
+    RESET_PASSWORD: { label: "Đặt lại MK", tone: "amber" },
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setSubmittedSearch(search);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KPICard label="Tổng lượt ghi log" value={stats.total} icon={FileText} />
+        <KPICard label="Lượt mượn & trả máy" value={stats.requests} icon={ClipboardCheck} tone="blue" />
+        <KPICard label="Bảo trì & Sự cố" value={stats.maintenance} icon={Wrench} tone="amber" />
+        <KPICard label="Biến động Thiết bị & User" value={stats.system} icon={Users} tone="green" />
+      </div>
+
+      <Card className="p-4 sm:p-5 overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <SectionTitle title="Bộ lọc kiểm toán & Truy vết nhật ký" />
+            <p className="-mt-3 text-xs text-muted-foreground">Theo dõi chính xác tài khoản thao tác, thời gian, sự kiện và đối tượng tác động.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => downloadAuditLogsTXT(filteredLogs, "BÁO CÁO KIỂM TOÁN HỆ THỐNG PHÒNG LAB", "Bao_cao_kiem_toan")}>
+              <FileDown size={14} /> Xuất .TXT
+            </Button>
+            <Button size="sm" variant="outline" onClick={onPrintReportPDF}>
+              <Printer size={14} /> In / Xuất PDF
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <form onSubmit={handleSearchSubmit} className="sm:col-span-2 flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Tìm theo tài khoản, tên thiết bị, nội dung..."
+                className="h-10 w-full rounded-xl border border-border bg-surface pl-10 pr-3.5 text-xs text-foreground placeholder:text-muted-foreground outline-none transition focus:border-blue-500"
+              />
+            </div>
+            <Button type="submit" size="sm" className="gap-1.5 shrink-0">
+              <Search size={14} /> Tìm kiếm
+            </Button>
+          </form>
+
+          <Select
+            value={targetTypeFilter}
+            onChange={(e) => setTargetTypeFilter(e.target.value)}
+            className="h-10 text-xs"
+          >
+            <option value="all">Tất cả phân loại</option>
+            <option value="REQUEST">Mượn trả & Quá hạn</option>
+            <option value="MAINTENANCE">Bảo trì & Sự cố</option>
+            <option value="DEVICE">Quản trị Thiết bị</option>
+            <option value="USER">Quản trị Người dùng</option>
+          </Select>
+
+          <Select
+            value={actionFilter}
+            onChange={(e) => setActionFilter(e.target.value)}
+            className="h-10 text-xs"
+          >
+            <option value="all">Tất cả hành động</option>
+            {Object.entries(actionMeta).map(([k, v]) => (
+              <option key={k} value={k}>{v.label}</option>
+            ))}
+          </Select>
+
+          <Select
+            value={timeFilter}
+            onChange={(e) => setTimeFilter(e.target.value)}
+            className="h-10 text-xs"
+          >
+            <option value="all">Tất cả thời gian</option>
+            <option value="today">Hôm nay (24 giờ qua)</option>
+            <option value="7days">7 ngày gần nhất</option>
+            <option value="30days">30 ngày gần nhất</option>
+          </Select>
+        </div>
+      </Card>
+
+      <Card className="p-5 sm:p-6 overflow-hidden">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-base text-foreground">Bảng dữ liệu kiểm toán hệ thống</h3>
+            <Badge tone="blue">{filteredLogs.length} bản ghi</Badge>
+          </div>
+          {submittedSearch && (
+            <button
+              onClick={() => { setSearch(""); setSubmittedSearch(""); }}
+              className="text-xs text-blue-600 hover:underline"
+            >
+              Xóa bộ lọc tìm kiếm "{submittedSearch}"
+            </button>
+          )}
+        </div>
+
+        {loading ? (
+          <p className="text-sm text-muted-foreground py-6 text-center">Đang tải dữ liệu kiểm toán...</p>
+        ) : filteredLogs.length ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-surface-elevated uppercase text-muted-foreground font-semibold">
+                <tr>
+                  <th className="px-4 py-3">Thời gian chính xác</th>
+                  <th className="px-4 py-3">Tài khoản thao tác</th>
+                  <th className="px-4 py-3">Hành động</th>
+                  <th className="px-4 py-3">Đối tượng</th>
+                  <th className="px-4 py-3">Nội dung chi tiết / Truy vết</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filteredLogs.map((log) => {
+                  const meta = actionMeta[log.action] || { label: log.action, tone: "slate" };
+                  const badgeColor = meta.tone === "green" 
+                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                    : meta.tone === "red"
+                    ? "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
+                    : meta.tone === "amber"
+                    ? "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
+                    : "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300";
+
+                  return (
+                    <tr key={log.id} className="hover:bg-surface-elevated/40 transition">
+                      <td className="px-4 py-3 font-mono text-muted-foreground whitespace-nowrap">
+                        {new Date(log.created_at).toLocaleString("vi-VN", {
+                          day: "2-digit", month: "2-digit", year: "numeric",
+                          hour: "2-digit", minute: "2-digit", second: "2-digit"
+                        })}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className="font-bold text-foreground">@{log.username || "system"}</span>
+                        <span className="ml-1.5 text-[11px] text-muted-foreground font-medium">({log.user_role || "hệ thống"})</span>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`inline-block px-2.5 py-1 rounded-md text-[11px] font-bold ${badgeColor}`}>
+                          {meta.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-medium text-foreground max-w-[220px] truncate" title={log.target_name}>
+                        {log.target_name || `#${log.target_id || "—"}`}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground max-w-[340px] truncate font-sans" title={log.details}>
+                        {log.details || "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <Empty text="Không tìm thấy bản ghi nhật ký nào phù hợp với bộ lọc." />
+        )}
+      </Card>
+    </div>
+  );
+}
+
 function AdminSection({ 
   section, 
   data, 
@@ -1063,15 +1546,20 @@ function AdminSection({
 
         {/* Enhanced Search & Filter Bar */}
         <div className="p-4 border-b border-border bg-surface-elevated flex flex-wrap gap-3 items-center">
-          <div className="relative flex-1 min-w-[240px]">
-            <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              value={deviceSearch}
-              onChange={(e) => setDeviceSearch(e.target.value)}
-              placeholder="Tìm theo tên máy, mã EQ-xxx, nhóm thiết bị..."
-              className="h-10 w-full rounded-xl border border-border bg-surface pl-10 pr-3.5 text-xs text-foreground placeholder:text-muted-foreground outline-none transition focus:border-blue-500"
-            />
-          </div>
+          <form onSubmit={(e) => e.preventDefault()} className="flex items-center gap-2 flex-1 min-w-[240px]">
+            <div className="relative flex-1">
+              <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={deviceSearch}
+                onChange={(e) => setDeviceSearch(e.target.value)}
+                placeholder="Tìm theo tên máy, mã EQ-xxx, nhóm thiết bị..."
+                className="h-10 w-full rounded-xl border border-border bg-surface pl-10 pr-3.5 text-xs text-foreground placeholder:text-muted-foreground outline-none transition focus:border-blue-500"
+              />
+            </div>
+            <Button type="submit" size="sm" className="gap-1.5 shrink-0">
+              <Search size={14} /> Tìm kiếm
+            </Button>
+          </form>
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-400 flex items-center gap-1 shrink-0"><Filter size={13} /> Trạng thái:</span>
             <Select 
@@ -1099,6 +1587,7 @@ function AdminSection({
                   <th className="px-5 py-3">Nhóm thiết bị</th>
                   <th className="px-5 py-3">Tình trạng</th>
                   <th className="px-5 py-3">Trạng thái</th>
+                  <th className="px-5 py-3 text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -1116,6 +1605,26 @@ function AdminSection({
                           <option value={status} key={status}>{statusMeta[status].label}</option>
                         ))}
                       </Select>
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => onOpenEditDevice && onOpenEditDevice(item)}
+                          className="grid h-8 w-8 place-items-center rounded-lg border border-border bg-surface text-slate-600 hover:border-blue-500 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 transition"
+                          title="Sửa thông tin thiết bị"
+                        >
+                          <Edit2 size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onDeleteDevice && onDeleteDevice(item)}
+                          className="grid h-8 w-8 place-items-center rounded-lg border border-border bg-surface text-slate-600 hover:border-red-500 hover:text-red-600 dark:text-slate-300 dark:hover:text-red-400 transition"
+                          title="Thanh lý / Xóa thiết bị"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -1135,6 +1644,8 @@ function AdminSection({
       {data.requests.length ? (
         <RequestList 
           items={data.requests} 
+          devices={data.devices}
+          users={data.users}
           role="admin"
           onApprove={(item) => onRequestStatus(item, "approved")} 
           onReject={(item) => onRequestStatus(item, "rejected")} 
@@ -1209,6 +1720,10 @@ function AdminSection({
     );
   }
 
+  if (section === "Nhật ký hệ thống") {
+    return <AdminAuditCenter onPrintReportPDF={onPrintReportPDF} />;
+  }
+
   return (
     <WorkspaceSection 
       section={section} 
@@ -1218,6 +1733,349 @@ function AdminSection({
       onPrintReportPDF={onPrintReportPDF}
       onNavigate={onNavigate}
     />
+  );
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Audit Log & Advanced Action Modals                                  */
+/* ------------------------------------------------------------------ */
+function AuditLogViewer({ targetType = null, title = "Nhật ký hoạt động & Kiểm toán (Audit Trail)" }) {
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filterAction, setFilterAction] = useState("all");
+
+  const fetchLogs = () => {
+    setLoading(true);
+    api.auditLogs({ target_type: targetType || undefined })
+      .then(res => { setLogs(res); setLoading(false); })
+      .catch(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchLogs();
+  }, [targetType]);
+
+  const filtered = filterAction === "all" ? logs : logs.filter(l => l.action === filterAction);
+
+  const actionLabels = {
+    CREATE: "Tạo mới",
+    UPDATE: "Cập nhật",
+    DELETE: "Xóa / Thanh lý",
+    STATUS_CHANGE: "Đổi trạng thái",
+    BORROW_REQUEST: "Yêu cầu mượn",
+    APPROVE: "Duyệt mượn",
+    REJECT: "Từ chối",
+    HANDOVER: "Bàn giao",
+    RETURN: "Hoàn trả",
+    INCIDENT_REPORT: "Báo sự cố",
+    RESET_PASSWORD: "Đặt lại MK",
+  };
+
+  return (
+    <Card className="mt-6 p-5 sm:p-6 overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+          <SectionTitle title={title} />
+          <p className="-mt-2 text-xs text-muted-foreground">Truy vết thời gian, người thực hiện và dữ liệu biến động trên hệ thống.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Select value={filterAction} onChange={(e) => setFilterAction(e.target.value)} className="h-9 text-xs w-36">
+            <option value="all">Tất cả hành động</option>
+            {Object.entries(actionLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </Select>
+          <Button size="sm" variant="outline" onClick={() => downloadAuditLogsTXT(filtered, title, "Nhat_ky_kiem_toan")}>
+            <FileDown size={14} /> Xuất Log .TXT
+          </Button>
+          <Button size="sm" variant="outline" onClick={printReportPDF}>
+            <Printer size={14} /> In PDF
+          </Button>
+        </div>
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-muted-foreground py-4">Đang tải dữ liệu nhật ký...</p>
+      ) : filtered.length ? (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-surface-elevated uppercase text-muted-foreground">
+              <tr>
+                <th className="px-4 py-2.5">Thời gian</th>
+                <th className="px-4 py-2.5">Người thực hiện</th>
+                <th className="px-4 py-2.5">Hành động</th>
+                <th className="px-4 py-2.5">Đối tượng</th>
+                <th className="px-4 py-2.5">Chi tiết</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {filtered.slice(0, 50).map((log) => (
+                <tr key={log.id} className="hover:bg-surface-elevated/40">
+                  <td className="px-4 py-2.5 font-mono text-muted-foreground whitespace-nowrap">
+                    {new Date(log.created_at).toLocaleString("vi-VN")}
+                  </td>
+                  <td className="px-4 py-2.5 font-semibold text-foreground whitespace-nowrap">
+                    @{log.username} <span className="text-[10px] text-muted-foreground font-normal">({log.user_role})</span>
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                      {actionLabels[log.action] || log.action}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 font-medium text-foreground truncate max-w-[200px]" title={log.target_name}>
+                    {log.target_name || `#${log.target_id || "—"}`}
+                  </td>
+                  <td className="px-4 py-2.5 text-muted-foreground max-w-[320px] truncate" title={log.details}>
+                    {log.details || "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <Empty text="Chưa có bản ghi nhật ký hoạt động nào." />
+      )}
+    </Card>
+  );
+}
+
+function BorrowModal({ open, device, onClose, onSubmit }) {
+  const [form, setForm] = useState({ 
+    purpose: "Thực hành phòng thí nghiệm", 
+    requested_from: "", 
+    requested_to: "" 
+  });
+  const [error, setError] = useState("");
+  const [minDT, setMinDT] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, "0");
+      const formatDT = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      
+      const current = formatDT(now);
+      setMinDT(current);
+
+      const due = new Date();
+      due.setDate(due.getDate() + 7);
+      due.setHours(17, 0, 0, 0);
+
+      setForm({ 
+        purpose: "Thực hành phòng thí nghiệm", 
+        requested_from: current, 
+        requested_to: formatDT(due) 
+      });
+      setError("");
+    }
+  }, [open]);
+
+  if (!open || !device) return null;
+
+  function handleFormSubmit(e) {
+    e?.preventDefault?.();
+    if (!form.purpose.trim()) {
+      setError("Vui lòng nhập rõ mục đích mượn thiết bị.");
+      return;
+    }
+    if (!form.requested_from) {
+      setError("Vui lòng chọn ngày giờ bắt đầu mượn.");
+      return;
+    }
+    if (!form.requested_to) {
+      setError("Vui lòng chọn ngày giờ hẹn trả thiết bị.");
+      return;
+    }
+
+    const fromDate = new Date(form.requested_from);
+    const toDate = new Date(form.requested_to);
+    const nowThreshold = new Date(Date.now() - 5 * 60 * 1000); // dung sai 5 phút
+
+    if (fromDate < nowThreshold) {
+      setError("Lỗi logic thời gian: Ngày giờ bắt đầu mượn không thể ở trong quá khứ! Vui lòng chọn từ thời điểm hiện tại trở đi.");
+      return;
+    }
+
+    if (toDate <= fromDate) {
+      setError("Lỗi logic thời gian: Ngày giờ hẹn trả máy phải sau thời gian bắt đầu mượn ít nhất 15 phút.");
+      return;
+    }
+
+    setError("");
+    onSubmit(form);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-lg rounded-2xl bg-surface p-6 shadow-2xl border border-border">
+        <h3 className="mb-1.5 text-lg font-bold text-foreground">Đăng ký mượn thiết bị</h3>
+        <p className="text-xs text-muted-foreground mb-4">
+          Thiết bị: <span className="font-semibold text-foreground">{device.name}</span> ({device.asset_code})
+        </p>
+
+        <form onSubmit={handleFormSubmit} className="space-y-4">
+          {error && (
+            <div className="p-3 rounded-xl border border-rose-500/30 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2">
+              <AlertTriangle size={15} className="shrink-0 text-rose-600" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-foreground">Mục đích sử dụng</label>
+            <textarea
+              value={form.purpose}
+              onChange={(e) => { setForm({ ...form, purpose: e.target.value }); setError(""); }}
+              className="w-full rounded-lg border border-input bg-surface-elevated p-2.5 text-sm focus:border-blue-500 focus:outline-none"
+              rows={2}
+              placeholder="Nêu rõ bài thực hành, đề tài hoặc mục đích mượn..."
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-foreground">
+                Ngày giờ bắt đầu mượn <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="datetime-local"
+                min={minDT}
+                value={form.requested_from}
+                onChange={(e) => { setForm({ ...form, requested_from: e.target.value }); setError(""); }}
+                className="w-full rounded-lg border border-input bg-surface-elevated p-2 text-xs font-mono focus:border-blue-500 focus:outline-none"
+                required
+              />
+              <span className="text-[10px] text-muted-foreground mt-0.5 block">Tối thiểu từ thời điểm hiện tại</span>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-foreground">
+                Ngày giờ hẹn trả máy <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="datetime-local"
+                min={form.requested_from || minDT}
+                value={form.requested_to}
+                onChange={(e) => { setForm({ ...form, requested_to: e.target.value }); setError(""); }}
+                className="w-full rounded-lg border border-input bg-surface-elevated p-2 text-xs font-mono focus:border-blue-500 focus:outline-none"
+                required
+              />
+              <span className="text-[10px] text-muted-foreground mt-0.5 block">Sau thời gian bắt đầu mượn</span>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-xs text-blue-700 dark:text-blue-300">
+            Cam kết: Sử dụng thiết bị đúng quy trình kỹ thuật, ngắt nguồn khi không dùng và hoàn trả đúng ngày giờ hẹn.
+          </div>
+
+          <div className="mt-6 flex justify-end gap-3">
+            <Button type="button" size="sm" variant="outline" onClick={onClose}>Hủy</Button>
+            <Button type="submit" size="sm">Gửi yêu cầu mượn</Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function IncidentModal({ open, item, onClose, onSubmit }) {
+  const [description, setDescription] = useState("");
+
+  useEffect(() => {
+    if (open) setDescription("");
+  }, [open]);
+
+  if (!open || !item) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md rounded-2xl bg-surface p-6 shadow-2xl border-2 border-red-500/30">
+        <div className="flex items-center gap-2 mb-2 text-red-600 dark:text-red-400">
+          <AlertTriangle size={20} />
+          <h3 className="text-lg font-bold text-foreground">Báo cáo sự cố thiết bị</h3>
+        </div>
+        <p className="text-xs text-muted-foreground mb-4">
+          Thiết bị #{item.device_id}: Hệ thống sẽ gửi cảnh báo khẩn cấp đến Kỹ thuật viên và chuyển máy sang trạng thái bảo trì.
+        </p>
+
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-foreground">Mô tả chi tiết sự cố / lỗi hỏng</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full rounded-lg border border-input bg-surface-elevated p-2 text-sm focus:border-red-500 focus:outline-none"
+              rows={4}
+              placeholder="Ví dụ: Thiết bị không lên nguồn, chập que đo, cháy cầu chì, màn hình hiển thị lỗi..."
+            />
+          </div>
+
+          <div className="mt-6 flex justify-end gap-3">
+            <Button size="sm" variant="outline" onClick={onClose}>Hủy</Button>
+            <Button size="sm" variant="danger" onClick={() => onSubmit(description)} disabled={!description.trim()}>
+              Gửi báo cáo sự cố
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DeviceEditModal({ open, device, onClose, onSave }) {
+  const [form, setForm] = useState({ name: "", category: "", condition: "", serial_number: "" });
+
+  useEffect(() => {
+    if (open && device) {
+      setForm({
+        name: device.name || "",
+        category: device.category || RESEARCH_CATEGORIES[0].value,
+        condition: device.condition || "Mới nguyên hộp",
+        serial_number: device.serial_number || "",
+      });
+    }
+  }, [open, device]);
+
+  if (!open || !device) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-lg rounded-2xl bg-surface p-6 shadow-2xl">
+        <h3 className="mb-4 text-lg font-bold text-foreground">Chỉnh sửa thông tin thiết bị</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-foreground">Mã tài sản (Cố định)</label>
+            <input value={device.asset_code} disabled className="w-full rounded-lg border border-border bg-surface-elevated/50 p-2 text-sm text-muted-foreground font-mono" />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-foreground">Tên thiết bị</label>
+            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full rounded-lg border border-input bg-surface-elevated p-2 text-sm focus:border-blue-500 focus:outline-none" />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-foreground">Nhóm phân loại</label>
+            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full rounded-lg border border-input bg-surface-elevated p-2 text-sm focus:border-blue-500 focus:outline-none">
+              {RESEARCH_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-foreground">Tình trạng vật lý</label>
+            <select value={form.condition} onChange={(e) => setForm({ ...form, condition: e.target.value })} className="w-full rounded-lg border border-input bg-surface-elevated p-2 text-sm focus:border-blue-500 focus:outline-none">
+              {DEVICE_CONDITIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-foreground">Số Sê-ri (Serial Number)</label>
+            <input value={form.serial_number} onChange={(e) => setForm({ ...form, serial_number: e.target.value })} className="w-full rounded-lg border border-input bg-surface-elevated p-2 text-sm focus:border-blue-500 focus:outline-none" placeholder="SN-xxxxx" />
+          </div>
+          <div className="mt-6 flex justify-end gap-3">
+            <Button size="sm" variant="outline" onClick={onClose}>Hủy</Button>
+            <Button size="sm" onClick={() => onSave(device.id, form)}>Lưu thay đổi</Button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1443,6 +2301,7 @@ function UserCreateModal({ open, onClose, onSubmit }) {
 }
 
 function UserEditModal({ open, user, onClose, onSave }) {
+  const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("user");
@@ -1452,6 +2311,7 @@ function UserEditModal({ open, user, onClose, onSave }) {
 
   useEffect(() => {
     if (user) {
+      setUsername(user.username || "");
       setFullName(user.full_name || "");
       setEmail(user.email || "");
       setRole(user.role || "user");
@@ -1462,10 +2322,16 @@ function UserEditModal({ open, user, onClose, onSave }) {
 
   async function submit(e) {
     e.preventDefault();
-    if (!fullName.trim()) return;
+    if (!fullName.trim() || !username.trim()) return;
     setBusy(true);
     try {
-      await onSave(user.id, { full_name: fullName.trim(), email: email.trim(), role, is_active: isActive });
+      await onSave(user.id, { 
+        username: username.trim(),
+        full_name: fullName.trim(), 
+        email: email.trim(), 
+        role, 
+        is_active: isActive 
+      });
       onClose();
     } catch (err) {
       setError(err.message || "Không thể cập nhật tài khoản.");
@@ -1481,9 +2347,9 @@ function UserEditModal({ open, user, onClose, onSave }) {
       title={`Chỉnh sửa tài khoản: @${user?.username || ""}`}
       footer={
         <>
-          <Button variant="outline" onClick={onClose}>Hủy</Button>
-          <Button onClick={submit} disabled={busy || !fullName.trim()}>
-            {busy ? "Đang lưu..." : "Cập nhật tài khoản"}
+          <Button variant="outline" size="sm" onClick={onClose}>Đóng</Button>
+          <Button size="sm" onClick={submit} disabled={busy || !fullName.trim() || !username.trim()}>
+            {busy ? "Đang lưu..." : "Lưu thay đổi"}
           </Button>
         </>
       }
@@ -1494,6 +2360,15 @@ function UserEditModal({ open, user, onClose, onSave }) {
             {error}
           </div>
         )}
+        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+          Tên đăng nhập (Username)
+          <Input
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="mt-1.5"
+            required
+          />
+        </label>
         <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
           Họ và tên
           <Input
@@ -1981,9 +2856,13 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
   const { data, offline, setData, refresh } = useDashboardData(true);
   const { user } = useAuth();
   const [toast, setToast] = useState(null);
+  const [borrowModal, setBorrowModal] = useState({ open: false, device: null });
+  const [incidentModal, setIncidentModal] = useState({ open: false, item: null });
 
   // Modals
   const [deviceModal, setDeviceModal] = useState(false);
+  const [editDeviceModal, setEditDeviceModal] = useState(false);
+  const [selectedDevice, setSelectedDevice] = useState(null);
   const [deviceForm, setDeviceForm] = useState({ 
     asset_code: "", 
     name: "", 
@@ -2041,6 +2920,28 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
   async function recallDevice(item) {
     if (!window.confirm(`Bạn có chắc chắn muốn gửi yêu cầu thu hồi thiết bị #${item.device_id} ngay lập tức?`)) return;
     setToast({ message: `Đã phát yêu cầu thu hồi đối với thiết bị #${item.device_id}.`, type: "info" });
+  }
+
+  async function handleUpdateDevice(id, payload) {
+    try {
+      const updated = await api.updateDevice(id, payload);
+      setData((current) => ({ ...current, devices: current.devices.map((d) => d.id === id ? updated : d) }));
+      setToast({ message: `Đã cập nhật thiết bị ${updated.name}`, type: "success" });
+      setEditDeviceModal(false);
+    } catch (error) {
+      setToast({ message: error.message || "Không thể cập nhật thiết bị.", type: "error" });
+    }
+  }
+
+  async function handleDeleteDevice(item) {
+    if (!window.confirm(`Bạn có chắc chắn muốn thanh lý / xóa thiết bị "${item.name}" (${item.asset_code}) không?`)) return;
+    try {
+      await api.deleteDevice(item.id);
+      setData((current) => ({ ...current, devices: current.devices.filter((d) => d.id !== item.id) }));
+      setToast({ message: `Đã thanh lý/xóa thiết bị ${item.name}`, type: "success" });
+    } catch (error) {
+      setToast({ message: error.message || "Không thể xóa thiết bị.", type: "error" });
+    }
   }
 
   async function createDevice() {
@@ -2127,6 +3028,8 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
       onRecallDevice={recallDevice}
       onOpenDeviceForm={() => setDeviceModal(true)} 
       onDeviceStatus={updateDeviceStatus}
+      onOpenEditDevice={(dev) => { setSelectedDevice(dev); setEditDeviceModal(true); }}
+      onDeleteDevice={handleDeleteDevice}
       onOpenUserForm={() => setUserModal(true)}
       onOpenEditUser={(target) => { setSelectedUser(target); setEditUserModal(true); }}
       onOpenResetPassword={(target) => { setSelectedUser(target); setResetPwdModal(true); }}
@@ -2148,10 +3051,11 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
       {offline && <OfflineNotice />}
       {adminSection}
       <DeviceModal open={deviceModal} form={deviceForm} setForm={setDeviceForm} onClose={() => setDeviceModal(false)} onSubmit={createDevice} />
+      <DeviceEditModal open={editDeviceModal} device={selectedDevice} onClose={() => setEditDeviceModal(false)} onSave={handleUpdateDevice} />
       <UserCreateModal open={userModal} onClose={() => setUserModal(false)} onSubmit={createUser} />
       <UserEditModal open={editUserModal} user={selectedUser} onClose={() => setEditUserModal(false)} onSave={handleUpdateUser} />
       <AdminResetPasswordModal open={resetPwdModal} user={selectedUser} onClose={() => setResetPwdModal(false)} onReset={handleResetPassword} />
-      <Toast message={toast?.message} type={toast?.type} />
+      <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
     </>
   );
 
@@ -2192,6 +3096,8 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
           {data.requests.length ? (
             <RequestList 
               items={data.requests} 
+              devices={data.devices}
+              users={data.users}
               role="admin"
               onApprove={(item) => updateRequest(item, "approved")} 
               onReject={(item) => updateRequest(item, "rejected")} 
@@ -2212,7 +3118,7 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
       <div className="mt-6">
         <AIChatPanel title="AI Summary" mode="summary" starter="Tôi có thể tóm tắt tình trạng thiết bị, yêu cầu và bảo trì từ dữ liệu hiện có." />
       </div>
-      <Toast message={toast?.message} type={toast?.type} />
+      <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
     </>
   );
 }
@@ -2226,6 +3132,8 @@ function UserDashboard({ section = "Tổng quan", onNavigate }) {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [toast, setToast] = useState(null);
+  const [borrowModal, setBorrowModal] = useState({ open: false, device: null });
+  const [incidentModal, setIncidentModal] = useState({ open: false, item: null });
 
   const categories = useMemo(() => {
     const set = new Set(data.devices.map((d) => d.category).filter(Boolean));
@@ -2243,15 +3151,30 @@ function UserDashboard({ section = "Tổng quan", onNavigate }) {
   // Active loans for the current user
   const myActiveLoans = data.requests.filter((r) => r.status === "borrowed" || r.status === "approved");
 
-  async function borrow(device) {
-    const purpose = window.prompt("Mục đích mượn thiết bị:", "Thực hành phòng thí nghiệm");
-    if (!purpose) return;
+  function borrow(device) {
+    setBorrowModal({ open: true, device });
+  }
+
+  async function handleConfirmBorrow(form) {
     try {
-      const item = await api.borrow(device.id, purpose);
+      const item = await api.borrow(borrowModal.device.id, form.purpose, form.requested_to, form.requested_from);
       setData((current) => ({ ...current, requests: [...current.requests, item] }));
       setToast({ message: "Đã gửi yêu cầu mượn thành công. Vui lòng chờ Quản lý duyệt.", type: "success" });
+      setBorrowModal({ open: false, device: null });
     } catch (error) {
       setToast({ message: error.message || "Không thể gửi yêu cầu mượn khi API chưa khả dụng", type: "error" });
+    }
+  }
+
+  async function handleReportIncident(description) {
+    try {
+      const updated = await api.reportIncident(incidentModal.item.id, description);
+      const [devices, requests] = await Promise.all([api.devices(), api.requests()]);
+      setData((current) => ({ ...current, devices, requests }));
+      setToast({ message: "Đã gửi báo cáo sự cố khẩn cấp thành công. Kỹ thuật viên sẽ kiểm tra máy.", type: "success" });
+      setIncidentModal({ open: false, item: null });
+    } catch (error) {
+      setToast({ message: error.message || "Không thể gửi báo cáo sự cố.", type: "error" });
     }
   }
 
@@ -2283,9 +3206,14 @@ function UserDashboard({ section = "Tổng quan", onNavigate }) {
     }
   }
 
-  if (section !== "Tổng quan") return (
+  
+  const myPending = data.requests.filter((r) => r.status === "pending").length;
+  const myBorrowed = data.requests.filter((r) => r.status === "borrowed").length;
+  const myReturned = data.requests.filter((r) => r.status === "returned").length;
+
+  if (section === "Lượt mượn của tôi" || section === "Trợ lý AI") return (
     <>
-      <PageHeader eyebrow="Khu vực người sử dụng" title={section} description="Tra cứu thiết bị và theo dõi các lượt mượn của bạn." />
+      <PageHeader eyebrow="Khu vực người sử dụng" title={section} description="Theo dõi các lượt mượn của bạn và tra cứu thông tin." />
       {offline && <OfflineNotice />}
       <WorkspaceSection 
         section={section} 
@@ -2296,13 +3224,79 @@ function UserDashboard({ section = "Tổng quan", onNavigate }) {
         onPrintReportPDF={printReportPDF} 
         onNavigate={onNavigate}
       />
+      <BorrowModal open={borrowModal.open} device={borrowModal.device} onClose={() => setBorrowModal({ open: false, device: null })} onSubmit={handleConfirmBorrow} />
+      <IncidentModal open={incidentModal.open} item={incidentModal.item} onClose={() => setIncidentModal({ open: false, item: null })} onSubmit={handleReportIncident} />
+      <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
     </>
   );
 
-  const myPending = data.requests.filter((r) => r.status === "pending").length;
-  const myBorrowed = data.requests.filter((r) => r.status === "borrowed").length;
-  const myReturned = data.requests.filter((r) => r.status === "returned").length;
+  if (section === "Thiết bị") return (
+    <>
+      <PageHeader eyebrow="Khu vực người sử dụng" title="Tra cứu Thiết bị" description="Tìm kiếm thiết bị khả dụng trong phòng thí nghiệm để đăng ký mượn." />
+      {offline && <OfflineNotice />}
+      
+      <Card className="mt-6 p-4 overflow-hidden">
+        <div className="flex flex-wrap items-center gap-3">
+          <form onSubmit={(e) => e.preventDefault()} className="flex items-center gap-2 flex-1 min-w-[240px]">
+            <div className="relative flex-1">
+              <Search size={17} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Tìm thiết bị theo tên, mã tài sản, nhóm..."
+                className="h-10 w-full rounded-xl border border-border bg-surface pl-10 pr-3.5 text-xs text-foreground placeholder:text-muted-foreground outline-none transition focus:border-blue-500"
+              />
+            </div>
+            <Button type="submit" size="sm" className="gap-1.5 shrink-0">
+              <Search size={14} /> Tìm kiếm
+            </Button>
+          </form>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 shrink-0"><Filter size={13} /> Nhóm:</span>
+            <Select 
+              value={categoryFilter} 
+              onChange={(e) => setCategoryFilter(e.target.value)} 
+              className="h-10 w-36 text-xs"
+            >
+              {categories.map((cat) => (
+                <option value={cat} key={cat}>{cat === "all" ? "Tất cả nhóm" : cat}</option>
+              ))}
+            </Select>
+          </div>
+          <Badge tone="slate" className="shrink-0">{filteredDevices.length} thiết bị sẵn sàng</Badge>
+        </div>
+      </Card>
 
+      <Card className="mt-6 p-5 sm:p-6 overflow-hidden">
+        <SectionTitle title="Kho thiết bị sẵn sàng mượn" />
+        {filteredDevices.length ? (
+          <div className="grid gap-3 md:grid-cols-2 mt-4">
+            {filteredDevices.map((device) => (
+              <div className="flex items-center gap-3 rounded-xl border border-slate-100 p-3 transition hover:border-slate-200 dark:border-slate-800 dark:hover:border-slate-700 min-w-0" key={device.id}>
+                <div className="grid h-10 w-10 place-items-center rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 shrink-0"><Cpu size={17} /></div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-200">{device.name}</p>
+                  <p className="mt-1 text-xs text-slate-400 truncate">{device.asset_code} • {device.category} • <StatusBadge status={device.status} /></p>
+                </div>
+                <Button size="sm" onClick={() => borrow(device)} className="shrink-0">Mượn</Button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <Empty text="Không tìm thấy thiết bị khả dụng phù hợp." />
+        )}
+      </Card>
+
+      <div className="mt-6">
+        <AuditLogViewer targetType="DEVICE" title="Nhật ký hoạt động thiết bị" />
+      </div>
+
+      <BorrowModal open={borrowModal.open} device={borrowModal.device} onClose={() => setBorrowModal({ open: false, device: null })} onSubmit={handleConfirmBorrow} />
+      <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
+    </>
+  );
+
+  // Tổng quan
   return (
     <>
       <PageHeader
@@ -2319,7 +3313,6 @@ function UserDashboard({ section = "Tổng quan", onNavigate }) {
         <KPICard label="Thiết bị khả dụng" value={data.devices.filter((item) => item.status === "available").length} icon={Cpu} tone="blue" />
       </div>
 
-      {/* PROMINENT: My Current Borrowed Devices Block with Return Action */}
       <Card className="mt-6 p-5 sm:p-6 border-2 border-blue-500/30 dark:border-blue-500/20 overflow-hidden">
         <div className="flex items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2.5">
@@ -2353,9 +3346,14 @@ function UserDashboard({ section = "Tổng quan", onNavigate }) {
                       </Button>
                     )}
                     {item.status === "borrowed" && (
-                      <Button size="sm" variant="outline" onClick={() => returnBorrow(item)} className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/60" title="Bấm để xác nhận hoàn trả thiết bị về phòng thí nghiệm">
-                        <RotateCcw size={14} /> Hoàn trả thiết bị
-                      </Button>
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => returnBorrow(item)} className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/60" title="Bấm để xác nhận hoàn trả thiết bị về phòng thí nghiệm">
+                          <RotateCcw size={14} /> Hoàn trả thiết bị
+                        </Button>
+                        <Button size="sm" variant="danger" onClick={() => setIncidentModal({ open: true, item })} title="Báo cáo sự cố khi thiết bị gặp trục trặc, lỗi, chập cháy">
+                          <AlertTriangle size={14} /> Báo sự cố
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -2363,55 +3361,7 @@ function UserDashboard({ section = "Tổng quan", onNavigate }) {
             })}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground py-3">Bạn hiện không giữ hoặc chờ nhận thiết bị nào. Hãy chọn thiết bị khả dụng bên dưới để mượn.</p>
-        )}
-      </Card>
-
-      {/* Enhanced Multi-criteria Search */}
-      <Card className="mt-6 p-4 overflow-hidden">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[220px]">
-            <Search size={17} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm thiết bị theo tên, mã tài sản, nhóm..."
-              className="h-10 w-full rounded-xl border border-border bg-surface pl-10 pr-3.5 text-xs text-foreground placeholder:text-muted-foreground outline-none transition focus:border-blue-500"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 shrink-0"><Filter size={13} /> Nhóm:</span>
-            <Select 
-              value={categoryFilter} 
-              onChange={(e) => setCategoryFilter(e.target.value)} 
-              className="h-10 w-36 text-xs"
-            >
-              {categories.map((cat) => (
-                <option value={cat} key={cat}>{cat === "all" ? "Tất cả nhóm" : cat}</option>
-              ))}
-            </Select>
-          </div>
-          <Badge tone="slate" className="shrink-0">{filteredDevices.length} thiết bị sẵn sàng</Badge>
-        </div>
-      </Card>
-
-      <Card className="mt-6 p-5 sm:p-6 overflow-hidden">
-        <SectionTitle title="Kho thiết bị sẵn sàng mượn" />
-        {filteredDevices.length ? (
-          <div className="grid gap-3 md:grid-cols-2">
-            {filteredDevices.map((device) => (
-              <div className="flex items-center gap-3 rounded-xl border border-slate-100 p-3 transition hover:border-slate-200 dark:border-slate-800 dark:hover:border-slate-700 min-w-0" key={device.id}>
-                <div className="grid h-10 w-10 place-items-center rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 shrink-0"><Cpu size={17} /></div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-200">{device.name}</p>
-                  <p className="mt-1 text-xs text-slate-400 truncate">{device.asset_code} • {device.category} • <StatusBadge status={device.status} /></p>
-                </div>
-                <Button size="sm" onClick={() => borrow(device)} className="shrink-0">Mượn</Button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <Empty text="Không tìm thấy thiết bị khả dụng phù hợp." />
+          <p className="text-sm text-muted-foreground py-3">Bạn hiện không giữ hoặc chờ nhận thiết bị nào. Hãy chọn mục Thiết bị để mượn.</p>
         )}
       </Card>
 
@@ -2419,10 +3369,13 @@ function UserDashboard({ section = "Tổng quan", onNavigate }) {
         <AIChatPanel title="Trợ lý AI" starter="Xin chào! Tôi có thể giúp tra cứu hướng dẫn sử dụng, quy trình an toàn và thông tin thiết bị." />
       </div>
 
-      <Toast message={toast?.message} type={toast?.type} />
+      <IncidentModal open={incidentModal.open} item={incidentModal.item} onClose={() => setIncidentModal({ open: false, item: null })} onSubmit={handleReportIncident} />
+      <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
     </>
   );
+
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Technician dashboard                                                */
@@ -2475,6 +3428,19 @@ function MaintenanceModal({ open, mode, item, devices, onClose, onSubmit, onDele
               <option value="completed">Đã hoàn thành</option>
             </select>
           </div>
+          {mode === "update" && (
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-foreground">Đánh giá tình trạng thiết bị</label>
+              <select
+                value={form.device_condition || ""}
+                onChange={(e) => setForm({ ...form, device_condition: e.target.value })}
+                className="w-full rounded-lg border border-input bg-surface-elevated p-2 text-sm focus:border-blue-500 focus:outline-none"
+              >
+                <option value="">-- Giữ nguyên tình trạng cũ --</option>
+                {DEVICE_CONDITIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </div>
+          )}
           <div>
             <label className="mb-1 block text-sm font-semibold text-foreground">Ghi chú</label>
             <textarea
@@ -2504,6 +3470,8 @@ function TechnicianDashboard({ section = "Tổng quan", onNavigate }) {
   const { data, offline, setData } = useDashboardData();
   const { user } = useAuth();
   const [toast, setToast] = useState(null);
+  const [borrowModal, setBorrowModal] = useState({ open: false, device: null });
+  const [incidentModal, setIncidentModal] = useState({ open: false, item: null });
   const [modal, setModal] = useState({ open: false, mode: 'create', item: null });
 
   async function handleSubmit(form) {
@@ -2512,7 +3480,7 @@ function TechnicianDashboard({ section = "Tổng quan", onNavigate }) {
         await api.createMaintenance(form.device_id, form.notes, form.status, form.kind);
         setToast({ message: "Đã lưu tác vụ bảo trì", type: "success" });
       } else {
-        await api.updateMaintenance(modal.item.id, { status: form.status, notes: form.notes });
+        await api.updateMaintenance(modal.item.id, { status: form.status, notes: form.notes, device_condition: form.device_condition || undefined });
         setToast({ message: "Đã cập nhật bảo trì", type: "success" });
       }
       const [devices, maintenance] = await Promise.all([api.devices(), api.maintenance()]);
@@ -2589,7 +3557,7 @@ function TechnicianDashboard({ section = "Tổng quan", onNavigate }) {
       </div>
 
       <MaintenanceModal open={modal.open} mode={modal.mode} item={modal.item} devices={data.devices} onClose={() => setModal({ open: false, mode: 'create', item: null })} onSubmit={handleSubmit} onDelete={handleDelete} />
-      <Toast message={toast?.message} type={toast?.type} />
+      <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
     </>
   );
 }
@@ -2597,26 +3565,93 @@ function TechnicianDashboard({ section = "Tổng quan", onNavigate }) {
 /* ------------------------------------------------------------------ */
 /* Shared Request List                                                 */
 /* ------------------------------------------------------------------ */
-function RequestList({ items, onApprove, onReject, onHandover, onReturn, onRecall, role = "user" }) {
+function RequestList({ items, devices = [], users = [], onApprove, onReject, onHandover, onReturn, onRecall, role = "user" }) {
   const isManager = role === "admin" || role === "technician";
+  const now = new Date();
+
   return (
     <div className="space-y-3">
-      {items.slice(0, 10).map((item) => (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-border bg-surface p-3.5 min-w-0" key={item.id}>
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="grid h-9 w-9 place-items-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 shrink-0">
-              <ClipboardCheck size={16} />
-            </div>
-            <div className="min-w-0 flex-1 text-sm truncate">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-foreground">Thiết bị #{item.device_id}</span>
-                <StatusBadge status={item.status} />
+      {items.map((item) => {
+        const dev = (devices || []).find((d) => d.id === item.device_id);
+        const borrower = (users || []).find((u) => u.id === item.user_id);
+        const isOverdue = item.status === "borrowed" && item.requested_to && new Date(item.requested_to) < now;
+        let overdueBadge = null;
+        if (isOverdue) {
+          const diffMs = now - new Date(item.requested_to);
+          const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+          const diffDays = Math.floor(diffHours / 24);
+          const text = diffDays > 0 ? `QUÁ HẠN ${diffDays} NGÀY` : `QUÁ HẠN ${diffHours} GIỜ`;
+          overdueBadge = (
+            <span className="inline-flex items-center gap-1 rounded-md bg-rose-600 text-white px-2 py-0.5 text-[10px] font-extrabold shadow-sm animate-pulse">
+              <AlertTriangle size={11} /> {text}
+            </span>
+          );
+        }
+
+        const createdAtStr = item.created_at ? new Date(item.created_at).toLocaleString("vi-VN", {
+          day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
+        }) : null;
+
+        const fromStr = item.requested_from ? new Date(item.requested_from).toLocaleString("vi-VN", {
+          day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
+        }) : null;
+
+        const dueStr = item.requested_to ? new Date(item.requested_to).toLocaleString("vi-VN", {
+          day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
+        }) : null;
+
+        return (
+          <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border p-4 min-w-0 transition ${isOverdue ? "border-rose-300 dark:border-rose-900 bg-rose-50/30 dark:bg-rose-950/20" : "border-border bg-surface"}`} key={item.id}>
+            <div className="flex items-start gap-3.5 min-w-0 flex-1">
+              <div className={`grid h-11 w-11 place-items-center rounded-xl shrink-0 mt-0.5 ${isOverdue ? "bg-rose-100 text-rose-600 dark:bg-rose-900/60 dark:text-rose-400" : "bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400"}`}>
+                <ClipboardCheck size={20} />
               </div>
-              <span className="mt-1 block truncate text-xs font-medium text-muted-foreground">
-                {item.purpose || `Yêu cầu #${item.id}`}
-              </span>
+              <div className="min-w-0 flex-1 text-sm">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-foreground">
+                    {dev ? `${dev.name}` : `Thiết bị #${item.device_id}`}
+                  </span>
+                  {dev?.asset_code && (
+                    <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-surface-elevated text-muted-foreground border border-border">
+                      {dev.asset_code}
+                    </span>
+                  )}
+                  <StatusBadge status={item.status} />
+                  {overdueBadge}
+                </div>
+
+                {/* Borrower and Purpose info */}
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                  {borrower && (
+                    <span className="font-semibold text-blue-700 dark:text-blue-300">
+                      Người mượn: {borrower.full_name} (@{borrower.username})
+                    </span>
+                  )}
+                  <span className="text-muted-foreground">
+                    Mục đích: <strong className="text-foreground font-medium">{item.purpose || "Thực hành phòng lab"}</strong>
+                  </span>
+                </div>
+
+                {/* Detailed Date and Time breakdown */}
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-mono bg-surface-elevated/60 dark:bg-surface-elevated/30 p-2 rounded-lg border border-border/60">
+                  {createdAtStr && (
+                    <span className="text-muted-foreground">
+                      Gửi lúc: <strong className="text-foreground">{createdAtStr}</strong>
+                    </span>
+                  )}
+                  {fromStr && (
+                    <span className="text-muted-foreground">
+                      Bắt đầu: <strong className="text-emerald-600 dark:text-emerald-400">{fromStr}</strong>
+                    </span>
+                  )}
+                  {dueStr && (
+                    <span className="text-muted-foreground">
+                      Hạn trả: <strong className="text-blue-600 dark:text-blue-400">{dueStr}</strong>
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
 
           <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
             {/* Action buttons matching exact business states */}
@@ -2665,7 +3700,8 @@ function RequestList({ items, onApprove, onReject, onHandover, onReturn, onRecal
             )}
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

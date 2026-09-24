@@ -54,6 +54,7 @@ class PasswordChange(BaseModel):
 
 
 class UserUpdate(BaseModel):
+    username: str | None = None
     full_name: str | None = None
     email: str | None = None
     role: str | None = None
@@ -119,6 +120,7 @@ class MaintenanceOut(ORMModel):
 class MaintenanceUpdate(BaseModel):
     status: str
     notes: str | None = None
+    device_condition: str | None = None
 
 
 class MaintenanceScheduleCreate(BaseModel):
@@ -129,9 +131,37 @@ class MaintenanceScheduleOut(ORMModel):
     id: int; device_id: int; interval_days: int; next_due_at: datetime; active: bool; notes: str
 
 
+class DeviceUpdate(BaseModel):
+    name: str | None = None
+    category: str | None = None
+    condition: str | None = None
+    serial_number: str | None = None
+    location_id: int | None = None
+    group_id: int | None = None
+    status: DeviceStatus | None = None
+
+
+class IncidentReportCreate(BaseModel):
+    description: str = Field(min_length=3)
+
+
+class AuditLogOut(ORMModel):
+    id: int
+    user_id: int | None
+    username: str
+    user_role: str
+    action: str
+    target_type: str
+    target_id: int | None
+    target_name: str
+    details: str
+    created_at: datetime
+
+
 class GroupCreate(BaseModel):
     name: str; description: str = ""
 
 
 class LocationCreate(BaseModel):
     name: str; building: str = ""
+

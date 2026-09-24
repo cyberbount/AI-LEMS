@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { cn } from "../lib/utils";
 
 export function Button({ className, variant = "default", size = "default", ...props }) {
@@ -11,15 +11,16 @@ export function Button({ className, variant = "default", size = "default", ...pr
   };
   const sizes = {
     sm: "h-9 px-3 text-xs",
+    default: "h-10 px-4 text-sm",
     md: "h-10 px-4 text-sm",
     lg: "h-11 px-6 text-sm",
   };
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500/25 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
+        "inline-flex items-center justify-center gap-2 rounded-xl font-semibold whitespace-nowrap shrink-0 transition focus:outline-none focus:ring-2 focus:ring-blue-500/25 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
         variants[variant],
-        sizes[size],
+        sizes[size] || sizes.default,
         className,
       )}
       {...props}
@@ -101,22 +102,62 @@ export function Modal({ open, onClose, title, children, footer }) {
           </button>
         </div>
         <div className="p-6 space-y-4 overflow-y-auto flex-1 text-foreground">{children}</div>
-        {footer && <div className="px-6 py-4 border-t border-border bg-surface-elevated flex justify-end gap-3">{footer}</div>}
+        {footer && <div className="px-6 py-4 border-t border-border bg-surface-elevated flex flex-wrap items-center justify-end gap-3">{footer}</div>}
       </div>
     </div>
   );
 }
 
-export function Toast({ message, type = "success" }) {
-  if (!message) return null;
-  const styles = {
-    success: "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/90 dark:text-emerald-200",
-    error: "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/90 dark:text-rose-200",
-    info: "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/90 dark:text-blue-200",
+export function Toast({ message, type = "success", duration = 4000, onClose }) {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (message) {
+      setVisible(true);
+      const timer = setTimeout(() => {
+        setVisible(false);
+        if (onClose) onClose();
+      }, duration);
+      return () => clearTimeout(timer);
+    } else {
+      setVisible(false);
+    }
+  }, [message, duration, onClose]);
+
+  const handleClose = () => {
+    setVisible(false);
+    if (onClose) onClose();
   };
+
+  if (!visible || !message) return null;
+
+  const styles = {
+    success: "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/90 dark:text-emerald-200 shadow-emerald-500/10",
+    error: "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/90 dark:text-rose-200 shadow-rose-500/10",
+    info: "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/90 dark:text-blue-200 shadow-blue-500/10",
+  };
+
+  const icons = {
+    success: "✓",
+    error: "✕",
+    info: "ℹ",
+  };
+
   return (
-    <div className={cn("fixed bottom-6 right-6 z-50 animate-slide-up rounded-xl border px-4 py-3 text-sm font-semibold shadow-xl", styles[type])}>
-      {message}
+    <div className={cn("fixed bottom-6 right-6 z-50 animate-slide-up flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold shadow-2xl backdrop-blur-md transition-all", styles[type])}>
+      <span className="grid h-6 w-6 place-items-center rounded-full bg-current/10 text-xs font-bold shrink-0">
+        {icons[type]}
+      </span>
+      <span className="max-w-xs sm:max-w-md break-words">{message}</span>
+      <button
+        type="button"
+        onClick={handleClose}
+        className="ml-2 rounded-lg p-1 text-current/60 hover:text-current hover:bg-current/10 transition shrink-0"
+        aria-label="Đóng thông báo"
+        title="Đóng thông báo"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
     </div>
   );
 }

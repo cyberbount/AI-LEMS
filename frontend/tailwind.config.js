@@ -4,6 +4,10 @@ export default {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["JetBrains Mono", "Be Vietnam Pro", "ui-monospace", "monospace"],
+        mono: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"],
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",

@@ -55,11 +55,19 @@ export const api = {
     return request(url, { method: "PATCH" });
   },
   updateDevice: (id, payload) => request(`/api/devices/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  deleteDevice: (id) => request(`/api/devices/${id}`, { method: "DELETE" }),
   requests: () => request("/api/requests"),
-  borrow: (device_id, purpose) => request("/api/requests", { method: "POST", body: JSON.stringify({ device_id, purpose }) }),
+  borrow: (device_id, purpose, requested_to = null, requested_from = null) => {
+    const body = { device_id, purpose };
+    if (requested_to) body.requested_to = requested_to;
+    if (requested_from) body.requested_from = requested_from;
+    return request("/api/requests", { method: "POST", body: JSON.stringify(body) });
+  },
+  reportIncident: (request_id, description) => request(`/api/requests/${request_id}/incident`, { method: "POST", body: JSON.stringify({ description }) }),
   approveRequest: (id, status) => request(`/api/requests/${id}/status?status=${encodeURIComponent(status)}`, { method: "PATCH" }),
   handoverRequest: (id) => request(`/api/requests/${id}/borrow`, { method: "PATCH" }),
   returnRequest: (id) => request(`/api/requests/${id}/return`, { method: "PATCH" }),
+
   maintenance: () => request("/api/maintenance"),
   completeMaintenance: (id) => request(`/api/maintenance/${id}/complete`, { method: "PATCH" }),
   updateMaintenance: (id, payload) => request(`/api/maintenance/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
@@ -74,7 +82,16 @@ export const api = {
   deleteUser: (id) => request(`/api/users/${id}`, { method: "DELETE" }),
   resetUserPassword: (id, new_password) => request(`/api/users/${id}/reset-password`, { method: "POST", body: JSON.stringify({ new_password }) }),
   changePassword: (payload) => request("/api/auth/password", { method: "PATCH", body: JSON.stringify(payload) }),
+  auditLogs: (params = {}) => {
+    const q = new URLSearchParams();
+    if (params.target_type) q.set("target_type", params.target_type);
+    if (params.action) q.set("action", params.action);
+    if (params.limit) q.set("limit", params.limit);
+    const qs = q.toString() ? `?${q.toString()}` : "";
+    return request(`/api/audit-logs${qs}`);
+  },
   chat: (message, history, mode = "chat", signal = undefined) => {
+
     const opts = { method: "POST", body: JSON.stringify({ message, history, mode }) };
     if (signal) opts.signal = signal;
     return request("/api/ai/chat", opts);

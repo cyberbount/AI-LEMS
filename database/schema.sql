@@ -106,8 +106,25 @@ CREATE TABLE document_chunks (
     FOREIGN KEY (document_id) REFERENCES documents(id)
 );
 
+CREATE TABLE audit_logs (
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER,
+    username VARCHAR(60) NOT NULL DEFAULT '',
+    user_role VARCHAR(30) NOT NULL DEFAULT '',
+    action VARCHAR(40) NOT NULL,
+    target_type VARCHAR(40) NOT NULL,
+    target_id INTEGER,
+    target_name VARCHAR(160) NOT NULL DEFAULT '',
+    details TEXT NOT NULL DEFAULT '',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
 CREATE INDEX ix_users_role ON users(role);
 CREATE INDEX ix_devices_status ON devices(status);
 CREATE INDEX ix_borrow_requests_status ON borrow_requests(status);
 CREATE INDEX ix_maintenance_records_status ON maintenance_records(status);
 CREATE INDEX ix_document_chunks_name ON document_chunks(document_name);
+CREATE INDEX ix_audit_logs_action ON audit_logs(action);
+CREATE INDEX ix_audit_logs_target ON audit_logs(target_type);
+

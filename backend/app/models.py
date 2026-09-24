@@ -116,3 +116,18 @@ class UsageHistory(Base):
     borrow_request_id: Mapped[int | None] = mapped_column(ForeignKey("borrow_requests.id"))
     action: Mapped[str] = mapped_column(String(30))
     occurred_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    username: Mapped[str] = mapped_column(String(60), default="")
+    user_role: Mapped[str] = mapped_column(String(30), default="")
+    action: Mapped[str] = mapped_column(String(40), index=True)
+    target_type: Mapped[str] = mapped_column(String(40), index=True)
+    target_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    target_name: Mapped[str] = mapped_column(String(160), default="")
+    details: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+

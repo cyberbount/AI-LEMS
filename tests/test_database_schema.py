@@ -20,6 +20,7 @@ EXPECTED_TABLES = {
     "maintenance_records",
     "documents",
     "document_chunks",
+    "audit_logs",
 }
 
 
