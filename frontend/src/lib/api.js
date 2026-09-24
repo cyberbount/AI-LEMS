@@ -15,7 +15,11 @@ async function request(path, options = {}) {
   const token = localStorage.getItem("lab_token");
   const headers = { ...(options.body instanceof URLSearchParams ? {} : { "Content-Type": "application/json" }), ...(options.headers || {}) };
   if (token) headers.Authorization = `Bearer ${token}`;
-  const response = await fetch(`${API_URL}${path}`, { ...options, headers });
+  const fetchOptions = { ...options, headers };
+  if (!options.signal) {
+    delete fetchOptions.signal;
+  }
+  const response = await fetch(`${API_URL}${path}`, fetchOptions);
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error(data.detail || `API error ${response.status}`);
@@ -31,23 +35,50 @@ export async function login(username, password) {
   return request("/api/auth/me");
 }
 
+export async function googleLogin(idToken) {
+  const data = await request("/api/auth/google", {
+    method: "POST",
+    body: JSON.stringify({ id_token: idToken }),
+  });
+  localStorage.setItem("lab_token", data.access_token);
+  return request("/api/auth/me");
+}
+
+
 export const api = {
   me: () => request("/api/auth/me"),
   devices: () => request("/api/devices"),
   createDevice: (payload) => request("/api/devices", { method: "POST", body: JSON.stringify(payload) }),
-  updateDeviceStatus: (id, status) => request(`/api/devices/${id}/status?status=${encodeURIComponent(status)}`, { method: "PATCH" }),
+  updateDeviceStatus: (id, status, condition) => {
+    let url = `/api/devices/${id}/status?status=${encodeURIComponent(status)}`;
+    if (condition) url += `&condition=${encodeURIComponent(condition)}`;
+    return request(url, { method: "PATCH" });
+  },
+  updateDevice: (id, payload) => request(`/api/devices/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   requests: () => request("/api/requests"),
   borrow: (device_id, purpose) => request("/api/requests", { method: "POST", body: JSON.stringify({ device_id, purpose }) }),
   approveRequest: (id, status) => request(`/api/requests/${id}/status?status=${encodeURIComponent(status)}`, { method: "PATCH" }),
+  handoverRequest: (id) => request(`/api/requests/${id}/borrow`, { method: "PATCH" }),
   returnRequest: (id) => request(`/api/requests/${id}/return`, { method: "PATCH" }),
   maintenance: () => request("/api/maintenance"),
   completeMaintenance: (id) => request(`/api/maintenance/${id}/complete`, { method: "PATCH" }),
-  createMaintenance: (device_id, notes, kind = "inspection") => request("/api/maintenance", { method: "POST", body: JSON.stringify({ device_id, notes, kind }) }),
+  updateMaintenance: (id, payload) => request(`/api/maintenance/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  deleteMaintenance: (id) => request(`/api/maintenance/${id}`, { method: "DELETE" }),
+  createMaintenance: (device_id, notes, status = "open", kind = "inspection") => request("/api/maintenance", { method: "POST", body: JSON.stringify({ device_id, notes, status, kind }) }),
   stats: () => request("/api/stats"),
   groups: () => request("/api/groups"),
   locations: () => request("/api/locations"),
   users: () => request("/api/users"),
-  chat: (message, history, mode = "chat") => request("/api/ai/chat", { method: "POST", body: JSON.stringify({ message, history, mode }) }),
+  createUser: (payload) => request("/api/users", { method: "POST", body: JSON.stringify(payload) }),
+  updateUser: (id, payload) => request(`/api/users/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  deleteUser: (id) => request(`/api/users/${id}`, { method: "DELETE" }),
+  resetUserPassword: (id, new_password) => request(`/api/users/${id}/reset-password`, { method: "POST", body: JSON.stringify({ new_password }) }),
+  changePassword: (payload) => request("/api/auth/password", { method: "PATCH", body: JSON.stringify(payload) }),
+  chat: (message, history, mode = "chat", signal = undefined) => {
+    const opts = { method: "POST", body: JSON.stringify({ message, history, mode }) };
+    if (signal) opts.signal = signal;
+    return request("/api/ai/chat", opts);
+  },
 };
 
 export function clearSession() { localStorage.removeItem("lab_token"); localStorage.removeItem("lab_role"); localStorage.removeItem("lab_user"); }

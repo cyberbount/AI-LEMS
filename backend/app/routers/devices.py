@@ -12,7 +12,20 @@ def list_devices(db: Db, status: DeviceStatus | None = None, _: Annotated[User, 
 def create_device(data: DeviceCreate, db: Db, _: Annotated[User, Depends(require_roles("admin", "manager"))]):
     device = Device(**data.model_dump()); db.add(device); db.commit(); db.refresh(device); return device
 @router.patch("/{device_id}/status", response_model=DeviceOut)
-def update_status(device_id: int, status: DeviceStatus, db: Db, _: Annotated[User, Depends(require_roles("admin", "manager", "technician"))]):
+def update_status(device_id: int, status: DeviceStatus, db: Db, condition: str | None = None, _: Annotated[User, Depends(require_roles("admin", "manager", "technician"))] = None):
     device = db.get(Device, device_id)
     if not device: raise HTTPException(404, "Device not found")
-    device.status = status; db.commit(); db.refresh(device); return device
+    device.status = status
+    if condition:
+        device.condition = condition
+    db.commit(); db.refresh(device); return device
+
+
+@router.patch("/{device_id}", response_model=DeviceOut)
+def update_device(device_id: int, db: Db, status: DeviceStatus | None = None, condition: str | None = None, _: Annotated[User, Depends(require_roles("admin", "manager", "technician"))] = None):
+    device = db.get(Device, device_id)
+    if not device: raise HTTPException(404, "Device not found")
+    if status is not None: device.status = status
+    if condition is not None: device.condition = condition
+    db.commit(); db.refresh(device); return device
+

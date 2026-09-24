@@ -53,6 +53,17 @@ class PasswordChange(BaseModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 
+class UserUpdate(BaseModel):
+    full_name: str | None = None
+    email: str | None = None
+    role: str | None = None
+    is_active: bool | None = None
+
+
+class UserResetPassword(BaseModel):
+    new_password: str = Field(min_length=8, max_length=128)
+
+
 class UserOut(ORMModel):
     id: int; username: str; email: str; full_name: str; role: str; is_active: bool
 
@@ -61,12 +72,32 @@ class Token(BaseModel):
     access_token: str; token_type: str = "bearer"
 
 
+class GoogleLoginRequest(BaseModel):
+    id_token: str
+
+
 class DeviceCreate(BaseModel):
     asset_code: str; name: str; category: str; serial_number: str = ""; group_id: int | None = None; location_id: int | None = None
+    asset_code: str
+    name: str
+    category: str
+    condition: str = "Mới nguyên hộp"
+    serial_number: str = ""
+    group_id: int | None = None
+    location_id: int | None = None
 
 
 class DeviceOut(ORMModel):
     id: int; asset_code: str; name: str; category: str; status: DeviceStatus; serial_number: str; group_id: int | None; location_id: int | None
+    id: int
+    asset_code: str
+    name: str
+    category: str
+    status: DeviceStatus
+    condition: str = "Mới nguyên hộp"
+    serial_number: str
+    group_id: int | None
+    location_id: int | None
 
 
 class RequestCreate(BaseModel):
@@ -78,11 +109,16 @@ class RequestOut(ORMModel):
 
 
 class MaintenanceCreate(BaseModel):
-    device_id: int; kind: str = "inspection"; notes: str = ""; scheduled_at: datetime | None = None
+    device_id: int; kind: str = "inspection"; notes: str = ""; scheduled_at: datetime | None = None; status: str = "open"
 
 
 class MaintenanceOut(ORMModel):
     id: int; device_id: int; technician_id: int | None; kind: str; notes: str; status: str; scheduled_at: datetime | None; completed_at: datetime | None
+
+
+class MaintenanceUpdate(BaseModel):
+    status: str
+    notes: str | None = None
 
 
 class MaintenanceScheduleCreate(BaseModel):

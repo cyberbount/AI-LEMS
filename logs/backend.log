@@ -1,257 +1,415 @@
 INFO:     Will watch for changes in these directories: ['/home/cyberbount/UDTT_K23A/api_local/local-lab-ai']
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [111719] using WatchFiles
-INFO:     Started server process [111726]
+INFO:     Started reloader process [98274] using WatchFiles
+INFO:     Started server process [98281]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     127.0.0.1:38642 - "GET /health HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58238 - "POST /api/auth/login HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58242 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58256 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59978 - "OPTIONS /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59988 - "OPTIONS /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59978 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59998 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59988 - "OPTIONS /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60000 - "OPTIONS /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60004 - "OPTIONS /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60006 - "OPTIONS /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59998 - "GET /api/requests HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:59978 - "GET /api/devices HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:59988 - "GET /api/maintenance HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:60004 - "GET /api/stats HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:59998 - "GET /api/requests HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:59988 - "GET /api/maintenance HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:59978 - "GET /api/devices HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:60004 - "GET /api/stats HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:51676 - "GET /health HTTP/1.1" 200 OK
-INFO:     127.0.0.1:33870 - "POST /api/auth/login HTTP/1.1" 200 OK
-INFO:     127.0.0.1:33874 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:33888 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:33902 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56234 - "POST /api/auth/login HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56234 - "OPTIONS /api/auth/me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56234 - "GET /api/auth/me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56234 - "OPTIONS /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56234 - "OPTIONS /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56250 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56234 - "OPTIONS /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56250 - "OPTIONS /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56250 - "OPTIONS /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56250 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56234 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56250 - "OPTIONS /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56234 - "OPTIONS /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56250 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56234 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56250 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56234 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56234 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56250 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56250 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56234 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56250 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43188 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43202 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43214 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43188 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43202 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43236 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43230 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43214 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43236 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43230 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43238 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43238 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43238 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43238 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43238 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43238 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43238 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43238 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43238 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43238 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:42386 - "OPTIONS /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:42402 - "OPTIONS /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:42418 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:42434 - "OPTIONS /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:42442 - "OPTIONS /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:42386 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:42402 - "OPTIONS /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:42456 - "OPTIONS /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:42418 - "GET /api/devices HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:42434 - "GET /api/requests HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:42442 - "GET /api/maintenance HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:42418 - "GET /api/devices HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:42386 - "GET /api/stats HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:42434 - "GET /api/requests HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:42442 - "GET /api/maintenance HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:42386 - "GET /api/stats HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:59500 - "POST /api/auth/login HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59500 - "OPTIONS /api/auth/me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59500 - "GET /api/auth/me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59500 - "OPTIONS /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59500 - "OPTIONS /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59500 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59500 - "OPTIONS /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59500 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59500 - "OPTIONS /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59500 - "OPTIONS /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59514 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59514 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59500 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59500 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59514 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59500 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59514 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59500 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59518 - "OPTIONS /api/ai/chat HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59524 - "POST /api/ai/chat HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60152 - "POST /api/ai/chat HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60624 - "POST /api/ai/chat HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60630 - "POST /api/ai/chat HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60068 - "POST /api/auth/login HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60068 - "OPTIONS /api/auth/me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60068 - "GET /api/auth/me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60068 - "OPTIONS /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60068 - "OPTIONS /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60068 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60068 - "OPTIONS /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60068 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60068 - "OPTIONS /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60068 - "OPTIONS /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60068 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60068 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60068 - "OPTIONS /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60068 - "OPTIONS /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60068 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60068 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60078 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60068 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60078 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60068 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60068 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60078 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54018 - "OPTIONS /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54030 - "OPTIONS /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54034 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54038 - "OPTIONS /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54046 - "OPTIONS /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54018 - "OPTIONS /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54062 - "OPTIONS /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54030 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54034 - "OPTIONS /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54038 - "OPTIONS /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54062 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54046 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54018 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54034 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54030 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54018 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54046 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54062 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54034 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54030 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54068 - "OPTIONS /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54084 - "OPTIONS /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54090 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54068 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54084 - "OPTIONS /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54094 - "OPTIONS /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54104 - "OPTIONS /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54116 - "OPTIONS /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54090 - "GET /api/devices HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:54068 - "GET /api/requests HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:54094 - "GET /api/maintenance HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:54116 - "GET /api/stats HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:54090 - "GET /api/devices HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:54094 - "GET /api/maintenance HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:54068 - "GET /api/requests HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:54116 - "GET /api/stats HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:35312 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35326 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35342 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35360 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35346 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35312 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35360 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35342 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35326 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35346 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35372 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:35372 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:35372 - "POST /api/auth/login HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35372 - "OPTIONS /api/auth/me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35372 - "GET /api/auth/me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35372 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35372 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35372 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35372 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35372 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35372 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35372 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35372 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35372 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35372 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:33908 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35372 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:33916 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:33924 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:33920 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:33916 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35372 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:33908 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:33924 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:33920 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56810 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:56824 - "POST /api/auth/login HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "OPTIONS /api/auth/me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "GET /api/auth/me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "OPTIONS /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "OPTIONS /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "OPTIONS /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "OPTIONS /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "OPTIONS /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "OPTIONS /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49652 - "OPTIONS /api/ai/chat HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49652 - "POST /api/ai/chat HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49662 - "POST /api/ai/chat HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40178 - "POST /api/auth/login HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40178 - "GET /api/auth/me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40178 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40178 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40178 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40178 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40178 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40194 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40178 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40194 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40204 - "POST /api/auth/login HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40204 - "GET /api/auth/me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40204 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40208 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40218 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40222 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40204 - "GET /api/requests HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40222 - "GET /api/maintenance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40218 - "GET /api/devices HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40208 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40204 - "GET /api/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40218 - "GET /api/users HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56442 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:56444 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:56630 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:56630 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:56630 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:48142 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48070 - "POST /api/auth/login HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:48078 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:43176 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43188 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60772 - "OPTIONS /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60776 - "OPTIONS /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60772 - "GET /api/devices HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60788 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60776 - "OPTIONS /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60788 - "OPTIONS /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60772 - "OPTIONS /api/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60802 - "OPTIONS /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60826 - "OPTIONS /api/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60816 - "GET /api/devices HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60772 - "GET /api/users HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60788 - "GET /api/maintenance HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60802 - "GET /api/stats HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60776 - "GET /api/requests HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60772 - "GET /api/users HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60788 - "GET /api/stats HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60802 - "GET /api/maintenance HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60776 - "GET /api/requests HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:51090 - "OPTIONS /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51098 - "OPTIONS /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51110 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51120 - "OPTIONS /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51098 - "OPTIONS /api/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51090 - "GET /api/devices HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:51098 - "OPTIONS /api/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51128 - "GET /api/requests HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:51110 - "GET /api/stats HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:51120 - "GET /api/maintenance HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:51090 - "GET /api/devices HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:51140 - "GET /api/users HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:51128 - "GET /api/requests HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:51110 - "GET /api/maintenance HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:51120 - "GET /api/stats HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:51140 - "GET /api/users HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60568 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58082 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58088 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58104 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53752 - "GET /api/devices HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53756 - "GET /api/requests HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53768 - "GET /api/maintenance HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53772 - "GET /api/users HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53784 - "GET /api/stats HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53752 - "GET /api/devices HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53768 - "GET /api/maintenance HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53756 - "GET /api/requests HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53784 - "GET /api/stats HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53772 - "GET /api/users HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:59308 - "GET /api/devices HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:59320 - "GET /api/requests HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:59328 - "GET /api/maintenance HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:59340 - "GET /api/stats HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:59356 - "GET /api/users HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:59308 - "GET /api/devices HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:59328 - "GET /api/maintenance HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:59340 - "GET /api/stats HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:59320 - "GET /api/requests HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:59356 - "GET /api/users HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:57182 - "GET /api/devices HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:57202 - "GET /api/maintenance HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:57192 - "GET /api/requests HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:57182 - "GET /api/devices HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:57220 - "GET /api/users HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:57218 - "GET /api/stats HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:57202 - "GET /api/maintenance HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:57192 - "GET /api/requests HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:57220 - "GET /api/users HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:57218 - "GET /api/stats HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:38014 - "OPTIONS /api/ai/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38014 - "POST /api/ai/chat HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:40120 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40128 - "POST /api/ai/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43056 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43072 - "POST /api/ai/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59590 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59606 - "POST /api/ai/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36756 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36766 - "POST /api/ai/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54300 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54300 - "OPTIONS /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54300 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54300 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54314 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54300 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54316 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54324 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54300 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54316 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54324 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54324 - "OPTIONS /api/requests/5/return HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54324 - "PATCH /api/requests/5/return HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40316 - "POST /api/ai/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47622 - "POST /api/ai/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47630 - "POST /api/ai/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42058 - "POST /api/ai/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37420 - "POST /api/ai/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34002 - "OPTIONS /api/ai/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34002 - "POST /api/ai/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34008 - "POST /api/ai/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41832 - "POST /api/ai/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42552 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42552 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42552 - "OPTIONS /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42552 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42554 - "OPTIONS /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42562 - "OPTIONS /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42552 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42580 - "OPTIONS /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42578 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42562 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42554 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42578 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42562 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42588 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42554 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42588 - "GET /api/stats HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'backend/app/schemas.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [98281]
+INFO:     Started server process [103740]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'backend/app/routers/maintenance.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [103740]
+INFO:     Started server process [103797]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:43614 - "OPTIONS /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43618 - "OPTIONS /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43622 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43628 - "OPTIONS /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43642 - "OPTIONS /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43614 - "OPTIONS /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43642 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43628 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43622 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43642 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43618 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43628 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43622 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43618 - "GET /api/stats HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'patch_app.py'. Reloading...
+INFO:     127.0.0.1:35440 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35422 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35434 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35444 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35440 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35422 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35434 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     127.0.0.1:35444 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [103797]
+INFO:     Started server process [104063]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:44802 - "HEAD /api/stats HTTP/1.1" 405 Method Not Allowed
+INFO:     127.0.0.1:49760 - "HEAD /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41768 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41752 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41766 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41768 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41770 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41752 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41766 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41770 - "GET /api/stats HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'backend/app/schemas.py', 'backend/app/routers/maintenance.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [104063]
+INFO:     Started server process [104298]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'backend/app/schemas.py', 'backend/app/routers/maintenance.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [104298]
+INFO:     Started server process [104312]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:41788 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41796 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41784 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41796 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41788 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41798 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41784 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41798 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47960 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47986 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47974 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48002 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47986 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47974 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47960 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48002 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47974 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47986 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47960 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48002 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47974 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47960 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48002 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47986 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52570 - "POST /api/maintenance HTTP/1.1" 201 Created
+INFO:     127.0.0.1:52570 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52572 - "GET /api/devices HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'patch_workspace.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [104312]
+INFO:     Started server process [106062]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:34738 - "OPTIONS /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34748 - "OPTIONS /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34762 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34772 - "OPTIONS /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34786 - "OPTIONS /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34800 - "OPTIONS /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34738 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34748 - "OPTIONS /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34800 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34772 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34786 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34800 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34786 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34738 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34772 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34738 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37596 - "POST /api/maintenance HTTP/1.1" 201 Created
+INFO:     127.0.0.1:37596 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37610 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56770 - "OPTIONS /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56780 - "OPTIONS /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56782 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56786 - "OPTIONS /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56788 - "OPTIONS /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56770 - "OPTIONS /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56786 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56788 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56782 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56780 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56786 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56788 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56782 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56780 - "GET /api/stats HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'patch_create_maintenance.py', 'backend/app/schemas.py', 'backend/app/routers/maintenance.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [106062]
+INFO:     Started server process [107887]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:50830 - "POST /api/maintenance HTTP/1.1" 201 Created
+INFO:     127.0.0.1:50830 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50836 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50836 - "OPTIONS /api/maintenance/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50836 - "PATCH /api/maintenance/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50836 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50830 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50830 - "PATCH /api/maintenance/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50830 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50836 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50830 - "PATCH /api/maintenance/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50830 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50836 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35142 - "POST /api/maintenance HTTP/1.1" 201 Created
+INFO:     127.0.0.1:35142 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35156 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33086 - "OPTIONS /api/maintenance/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33086 - "DELETE /api/maintenance/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33086 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39180 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39180 - "OPTIONS /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39180 - "GET /api/auth/me HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'fix_crashes.py'. Reloading...
+INFO:     127.0.0.1:46192 - "OPTIONS /api/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46234 - "OPTIONS /api/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46200 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46214 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46192 - "GET /api/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46200 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46202 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46220 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     127.0.0.1:46214 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46192 - "GET /api/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46202 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46220 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [107887]
+INFO:     Started server process [108640]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:59676 - "OPTIONS /api/devices/2/status?status=available HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59676 - "PATCH /api/devices/2/status?status=available HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59676 - "OPTIONS /api/devices/2/status?status=reserved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59676 - "PATCH /api/devices/2/status?status=reserved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59676 - "OPTIONS /api/devices/2/status?status=maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59676 - "PATCH /api/devices/2/status?status=maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59676 - "PATCH /api/devices/2/status?status=available HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59676 - "OPTIONS /api/devices/2/status?status=borrowed HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59676 - "PATCH /api/devices/2/status?status=borrowed HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59676 - "PATCH /api/devices/2/status?status=available HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49876 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49876 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49876 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49882 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49876 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49894 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49882 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49910 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49894 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49910 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49910 - "POST /api/requests HTTP/1.1" 201 Created
+INFO:     127.0.0.1:42486 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42486 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42486 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42488 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42494 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42486 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42522 - "GET /api/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42510 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42494 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42488 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42522 - "GET /api/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42510 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55244 - "OPTIONS /api/requests/6/status?status=approved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55244 - "PATCH /api/requests/6/status?status=approved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55244 - "OPTIONS /api/requests/6/borrow HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55244 - "PATCH /api/requests/6/borrow HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34946 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34946 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34946 - "OPTIONS /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34946 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34956 - "OPTIONS /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34968 - "OPTIONS /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34946 - "OPTIONS /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34982 - "OPTIONS /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34976 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34968 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34956 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34996 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34968 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34976 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34956 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34996 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53760 - "POST /api/requests HTTP/1.1" 201 Created
+INFO:     127.0.0.1:59982 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59982 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59982 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59994 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59998 - "GET /api/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59988 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59982 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59996 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59994 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59998 - "GET /api/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59988 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59996 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59308 - "OPTIONS /api/requests/7/status?status=approved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59308 - "PATCH /api/requests/7/status?status=approved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59308 - "OPTIONS /api/requests/7/borrow HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59308 - "PATCH /api/requests/7/borrow HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59952 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:59952 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59952 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59952 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39072 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39084 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59952 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39088 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39072 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39084 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39088 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39072 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39088 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39084 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59952 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39072 - "GET /api/maintenance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39088 - "GET /api/devices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39084 - "GET /api/requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59952 - "GET /api/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41290 - "OPTIONS /api/requests/7/return HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41290 - "PATCH /api/requests/7/return HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41290 - "OPTIONS /api/requests/6/return HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41290 - "PATCH /api/requests/6/return HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [108640]
+INFO:     Stopping reloader process [98274]

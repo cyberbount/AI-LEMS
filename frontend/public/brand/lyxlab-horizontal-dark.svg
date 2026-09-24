@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 500" role="img" aria-label="LyxLab Learn Explore Launch"><defs>
+<linearGradient id="g" x1="0" y1="1" x2="1" y2="0">
+<stop offset="0" stop-color="#1267F4"/><stop offset=".55" stop-color="#168BFF"/><stop offset="1" stop-color="#25C7F2"/>
+</linearGradient>
+</defs>
+<g transform="translate(115 135) scale(1.55)"><path d="M38 18H82V75L112 104L84 132L54 103V58H38Z" fill="url(#g)"/>
+<path d="M83 53L111 25L143 57L111 89Z" fill="url(#g)"/>
+<path d="M64 103L91 76L125 110L98 137Z" fill="url(#g)"/>
+<path d="M98 137L125 110L155 140L128 167Z" fill="url(#g)"/></g>
+<rect x="400" y="125" width="2" height="250" fill="#DCE8F5"/>
+<text x="475" y="285" fill="#F7F9FC" font-family="Arial,Helvetica,sans-serif" font-size="150" font-weight="700" letter-spacing="-7">Lyx<tspan fill="#19B9F2">Lab</tspan></text>
+<text x="480" y="355" fill="#D7DEE8" font-family="Arial,Helvetica,sans-serif" font-size="31" letter-spacing="10">LEARN · EXPLORE · LAUNCH</text></svg>

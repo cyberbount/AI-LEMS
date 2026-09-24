@@ -5,3 +5,8 @@ __pycache__/
 node_modules/
 dist/
 .pytest_cache/
+*.log
+logs/
+lab.db
+lab.db-journal
+frontend/frontend/

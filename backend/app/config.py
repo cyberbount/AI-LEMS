@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     max_history_messages: int = 12
     request_timeout_seconds: float = 360.0
     cors_origins: str = "http://localhost:5173,http://localhost:3000"
+    google_client_id: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

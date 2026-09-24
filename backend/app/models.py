@@ -47,6 +47,7 @@ class Device(Base):
     name: Mapped[str] = mapped_column(String(160))
     category: Mapped[str] = mapped_column(String(80))
     status: Mapped[str] = mapped_column(String(30), default="available", index=True)
+    condition: Mapped[str] = mapped_column(String(60), default="Mới nguyên hộp")
     serial_number: Mapped[str] = mapped_column(String(120), default="")
     group_id: Mapped[int | None] = mapped_column(ForeignKey("device_groups.id"))
     location_id: Mapped[int | None] = mapped_column(ForeignKey("locations.id"))

@@ -77,6 +77,51 @@ class ApiWorkflowTests(unittest.TestCase):
         self.assertEqual(returned.status_code, 200)
         self.assertEqual(returned.json()["status"], "returned")
 
+    def test_user_management_crud_and_reset_password(self):
+        suffix = str(time.time_ns())[-6:]
+        username = f"testuser_{suffix}"
+        created = self.client.post(
+            "/api/users",
+            headers=self.admin,
+            json={
+                "username": username,
+                "email": f"{username}@test.vn",
+                "full_name": "Test User",
+                "role": "user",
+                "password": "initialpassword123",
+            },
+        )
+        self.assertEqual(created.status_code, 201)
+        uid = created.json()["id"]
+
+        # Update user
+        updated = self.client.patch(
+            f"/api/users/{uid}",
+            headers=self.admin,
+            json={"full_name": "Updated Name", "is_active": True},
+        )
+        self.assertEqual(updated.status_code, 200)
+        self.assertEqual(updated.json()["full_name"], "Updated Name")
+
+        # Reset password
+        reset = self.client.post(
+            f"/api/users/{uid}/reset-password",
+            headers=self.admin,
+            json={"new_password": "newsecretpassword123"},
+        )
+        self.assertEqual(reset.status_code, 204)
+
+        # Login with new password
+        login_res = self.client.post(
+            "/api/auth/login",
+            data={"username": username, "password": "newsecretpassword123"},
+        )
+        self.assertEqual(login_res.status_code, 200)
+
+        # Deactivate / delete
+        deactivated = self.client.delete(f"/api/users/{uid}", headers=self.admin)
+        self.assertEqual(deactivated.status_code, 204)
+
     def test_unavailable_device_is_rejected(self):
         asset_code = f"{self.asset_prefix}-BUSY"
         created = self.client.post(
@@ -95,5 +140,34 @@ class ApiWorkflowTests(unittest.TestCase):
         self.assertEqual(response.status_code, 409)
 
 
+    def test_device_condition_and_research_category(self):
+        asset_code = f"{self.asset_prefix}-COND"
+        created = self.client.post(
+            "/api/devices",
+            headers=self.admin,
+            json={
+                "asset_code": asset_code,
+                "name": "ESP32 DevKit V4",
+                "category": "Mạch nhúng & Vi điều khiển",
+                "condition": "Mới nguyên hộp",
+            },
+        )
+        self.assertEqual(created.status_code, 201)
+        data = created.json()
+        self.assertEqual(data["category"], "Mạch nhúng & Vi điều khiển")
+        self.assertEqual(data["condition"], "Mới nguyên hộp")
+
+        # Update condition & status
+        dev_id = data["id"]
+        updated = self.client.patch(
+            f"/api/devices/{dev_id}/status?status=available&condition=Đã qua sử dụng - Hoạt động tốt",
+            headers=self.admin,
+        )
+        self.assertEqual(updated.status_code, 200)
+        self.assertEqual(updated.json()["condition"], "Đã qua sử dụng - Hoạt động tốt")
+
+
 if __name__ == "__main__":
     unittest.main()
+
+

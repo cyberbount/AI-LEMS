@@ -3,11 +3,11 @@ import { cn } from "../lib/utils";
 
 export function Button({ className, variant = "default", size = "default", ...props }) {
   const variants = {
-    default: "bg-brand text-white shadow-glow-brand hover:bg-brand-dark",
-    outline: "border border-slate-200 bg-white text-slate-700 hover:border-brand/40 hover:text-brand",
-    ghost: "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
-    success: "bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
-    danger: "bg-red-50 text-brand hover:bg-red-100",
+    default: "bg-blue-600 text-white shadow-glow-brand hover:bg-blue-500 active:bg-blue-700",
+    outline: "border border-border bg-surface text-foreground hover:border-blue-500 hover:text-blue-600 dark:hover:border-blue-400 dark:hover:text-blue-400",
+    ghost: "text-muted-foreground hover:bg-surface-elevated hover:text-foreground",
+    success: "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-900/60 border border-emerald-200/50 dark:border-emerald-800/50",
+    danger: "bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/60 dark:text-rose-300 dark:hover:bg-rose-900/60 border border-rose-200/50 dark:border-rose-800/50",
   };
   const sizes = {
     sm: "h-9 px-3 text-xs",
@@ -17,7 +17,7 @@ export function Button({ className, variant = "default", size = "default", ...pr
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition focus:outline-none focus:ring-2 focus:ring-brand/25 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
+        "inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500/25 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
         variants[variant],
         sizes[size],
         className,
@@ -31,8 +31,8 @@ export function Card({ className, hover = false, ...props }) {
   return (
     <div
       className={cn(
-        "rounded-2xl border border-slate-200/80 bg-white shadow-card",
-        hover && "transition duration-300 hover:-translate-y-0.5 hover:shadow-card-hover",
+        "rounded-2xl border border-border bg-surface text-foreground shadow-card transition-colors dark:shadow-none",
+        hover && "transition duration-300 hover:-translate-y-0.5 hover:shadow-card-hover dark:hover:border-slate-700",
         className,
       )}
       {...props}
@@ -42,15 +42,15 @@ export function Card({ className, hover = false, ...props }) {
 
 export function Badge({ className, tone = "slate", dot = false, ...props }) {
   const tones = {
-    slate: "bg-slate-100 text-slate-600",
-    red: "bg-red-50 text-brand",
-    amber: "bg-amber-50 text-amber-700",
-    green: "bg-emerald-50 text-emerald-700",
-    blue: "bg-blue-50 text-blue-700",
+    slate: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700/60",
+    red: "bg-rose-50 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/60",
+    amber: "bg-amber-50 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60",
+    green: "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60",
+    blue: "bg-blue-50 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60",
   };
   const dots = {
-    slate: "bg-slate-400",
-    red: "bg-brand",
+    slate: "bg-slate-400 dark:bg-slate-400",
+    red: "bg-rose-500",
     amber: "bg-amber-500",
     green: "bg-emerald-500",
     blue: "bg-blue-500",
@@ -64,20 +64,25 @@ export function Badge({ className, tone = "slate", dot = false, ...props }) {
 }
 
 export function Input({ className, icon, ...props }) {
+  const inputClass = cn(
+    "h-11 w-full rounded-xl border border-border bg-surface px-3.5 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10",
+    icon && "pl-10",
+    className
+  );
   if (icon) {
     return (
       <div className={cn("relative", className)}>
-        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">{icon}</span>
-        <input className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/10" {...props} />
+        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">{icon}</span>
+        <input className={inputClass} {...props} />
       </div>
     );
   }
-  return <input className={cn("h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/10", className)} {...props} />;
+  return <input className={inputClass} {...props} />;
 }
 
 export function Select({ className, children, ...props }) {
   return (
-    <select className={cn("h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-800 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10", className)} {...props}>
+    <select className={cn("h-11 w-full appearance-none rounded-xl border border-border bg-surface px-3.5 text-sm text-foreground outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10", className)} {...props}>
       {children}
     </select>
   );
@@ -87,16 +92,16 @@ export function Modal({ open, onClose, title, children, footer }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-ink/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-lg animate-slide-up rounded-2xl bg-white p-6 shadow-2xl">
-        <div className="mb-5 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-ink">{title}</h3>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700">
+      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-lg animate-slide-up rounded-2xl bg-surface shadow-2xl overflow-hidden max-h-[90vh] flex flex-col border border-border text-foreground">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-surface-elevated">
+          <h3 className="text-base font-bold text-foreground">{title}</h3>
+          <button onClick={onClose} className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
           </button>
         </div>
-        <div className="space-y-4">{children}</div>
-        {footer && <div className="mt-6 flex justify-end gap-3">{footer}</div>}
+        <div className="p-6 space-y-4 overflow-y-auto flex-1 text-foreground">{children}</div>
+        {footer && <div className="px-6 py-4 border-t border-border bg-surface-elevated flex justify-end gap-3">{footer}</div>}
       </div>
     </div>
   );
@@ -105,12 +110,12 @@ export function Modal({ open, onClose, title, children, footer }) {
 export function Toast({ message, type = "success" }) {
   if (!message) return null;
   const styles = {
-    success: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    error: "border-red-200 bg-red-50 text-red-800",
-    info: "border-blue-200 bg-blue-50 text-blue-800",
+    success: "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/90 dark:text-emerald-200",
+    error: "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/90 dark:text-rose-200",
+    info: "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/90 dark:text-blue-200",
   };
   return (
-    <div className={cn("fixed bottom-6 right-6 z-50 animate-slide-up rounded-xl border px-4 py-3 text-sm font-semibold shadow-lg", styles[type])}>
+    <div className={cn("fixed bottom-6 right-6 z-50 animate-slide-up rounded-xl border px-4 py-3 text-sm font-semibold shadow-xl", styles[type])}>
       {message}
     </div>
   );
