@@ -1,7 +1,8 @@
 from typing import Literal
 
 from datetime import datetime
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_serializer
+from app.utils.tz import to_hanoi_iso
 
 
 class ChatMessage(BaseModel):
@@ -24,8 +25,8 @@ class ChatResponse(BaseModel):
     sources: list[str] = Field(default_factory=list)
 
 
-DeviceStatus = Literal["available", "reserved", "borrowed", "maintenance"]
-RequestStatus = Literal["pending", "approved", "borrowed", "returned", "rejected"]
+DeviceStatus = Literal["available", "reserved", "borrowed", "maintenance", "returning", "pending_inspection", "in_progress", "replace_partial", "replace_full"]
+RequestStatus = Literal["pending", "approved", "borrowed", "return_pending", "returned", "rejected"]
 
 
 class HealthResponse(BaseModel):
@@ -59,6 +60,7 @@ class UserUpdate(BaseModel):
     email: str | None = None
     role: str | None = None
     is_active: bool | None = None
+    password: str | None = None
 
 
 class UserResetPassword(BaseModel):
@@ -66,7 +68,12 @@ class UserResetPassword(BaseModel):
 
 
 class UserOut(ORMModel):
-    id: int; username: str; email: str; full_name: str; role: str; is_active: bool
+    id: int
+    username: str
+    email: str
+    full_name: str
+    role: str
+    is_active: bool
 
 
 class Token(BaseModel):
@@ -78,7 +85,6 @@ class GoogleLoginRequest(BaseModel):
 
 
 class DeviceCreate(BaseModel):
-    asset_code: str; name: str; category: str; serial_number: str = ""; group_id: int | None = None; location_id: int | None = None
     asset_code: str
     name: str
     category: str
@@ -89,7 +95,6 @@ class DeviceCreate(BaseModel):
 
 
 class DeviceOut(ORMModel):
-    id: int; asset_code: str; name: str; category: str; status: DeviceStatus; serial_number: str; group_id: int | None; location_id: int | None
     id: int
     asset_code: str
     name: str
@@ -106,7 +111,23 @@ class RequestCreate(BaseModel):
 
 
 class RequestOut(ORMModel):
-    id: int; user_id: int; device_id: int; purpose: str; status: RequestStatus; requested_from: datetime | None; requested_to: datetime | None; created_at: datetime
+    id: int
+    user_id: int
+    device_id: int
+    purpose: str
+    status: RequestStatus
+    requested_from: datetime | None = None
+    requested_to: datetime | None = None
+    created_at: datetime
+
+    @field_serializer("requested_from", "requested_to", "created_at")
+    def serialize_request_dt(self, dt: datetime | None, _info):
+        return to_hanoi_iso(dt)
+
+
+class ReturnConfirmRequest(BaseModel):
+    condition: str = "Đã qua sử dụng - Hoạt động tốt"
+    notes: str = ""
 
 
 class MaintenanceCreate(BaseModel):
@@ -115,6 +136,10 @@ class MaintenanceCreate(BaseModel):
 
 class MaintenanceOut(ORMModel):
     id: int; device_id: int; technician_id: int | None; kind: str; notes: str; status: str; scheduled_at: datetime | None; completed_at: datetime | None
+
+    @field_serializer("scheduled_at", "completed_at")
+    def serialize_maint_dt(self, dt: datetime | None, _info):
+        return to_hanoi_iso(dt)
 
 
 class MaintenanceUpdate(BaseModel):
@@ -129,6 +154,10 @@ class MaintenanceScheduleCreate(BaseModel):
 
 class MaintenanceScheduleOut(ORMModel):
     id: int; device_id: int; interval_days: int; next_due_at: datetime; active: bool; notes: str
+
+    @field_serializer("next_due_at")
+    def serialize_sched_dt(self, dt: datetime | None, _info):
+        return to_hanoi_iso(dt)
 
 
 class DeviceUpdate(BaseModel):
@@ -156,6 +185,10 @@ class AuditLogOut(ORMModel):
     target_name: str
     details: str
     created_at: datetime
+
+    @field_serializer("created_at")
+    def serialize_audit_dt(self, dt: datetime, _info):
+        return to_hanoi_iso(dt)
 
 
 class GroupCreate(BaseModel):

@@ -268,6 +268,7 @@ const navItems = {
   ],
   technician: [
     ["Tổng quan", LayoutDashboard],
+    ["Thiết bị", Cpu],
     ["Bảo trì", Wrench],
     ["Lịch sử", ClipboardCheck],
     ["Cảnh báo AI", AlertTriangle],
@@ -278,32 +279,104 @@ const statusMeta = {
   available: { label: "Sẵn sàng", tone: "green" },
   reserved: { label: "Đã duyệt / Chờ nhận", tone: "blue" },
   borrowed: { label: "Đang mượn", tone: "amber" },
+  return_pending: { label: "Chờ kiểm tra & nhận trả", tone: "amber" },
+  returning: { label: "Đang kiểm tra trả", tone: "amber" },
+  pending_inspection: { label: "Chờ tiếp nhận sự cố", tone: "orange" },
+  in_progress: { label: "Đang kiểm tra sự cố", tone: "blue" },
+  replace_partial: { label: "Sửa chữa 1 phần", tone: "amber" },
+  replace_full: { label: "Phải thay thế mới", tone: "red" },
   maintenance: { label: "Đang bảo trì", tone: "red" },
   pending: { label: "Chờ duyệt", tone: "amber" },
   approved: { label: "Đã duyệt", tone: "blue" },
   rejected: { label: "Từ chối", tone: "red" },
   returned: { label: "Đã hoàn trả", tone: "green" },
-  open: { label: "Đang mở", tone: "amber" },
+  open: { label: "Chờ xử lý", tone: "orange" },
   completed: { label: "Hoàn thành", tone: "green" },
-  replace_full: { label: "Phải thay thế mới", tone: "red" },
-  replace_partial: { label: "Thay thế một phần", tone: "amber" },
 };
 
+export const CATEGORY_LABEL_MAP = {
+  measurement: "Đo lường & Phân tích tín hiệu",
+  electronics: "Thiết bị Điện tử & Nguồn công suất",
+  embedded: "Hệ thống Nhúng & Vi điều khiển",
+  iot: "Mạng & IoT Không dây",
+  IoT: "Mạng & IoT Không dây",
+  robotics: "Robot & Tự động hóa",
+  safety: "An toàn & Phụ trợ Lab",
+  repair: "Thiết bị hàn khò & Sửa chữa",
+  passive: "Linh kiện thụ động",
+  semiconductor: "Bán dẫn & Quang điện tử",
+  sensor: "Cảm biến & Module chức năng",
+  tools: "Dụng cụ cơ khí & Phụ trợ Lab",
+};
+
+export function getCategoryLabel(val) {
+  if (!val) return "Chưa phân loại";
+  return CATEGORY_LABEL_MAP[val] || val;
+}
+
+export function formatHanoiDateTime(dateStr) {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleString("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+}
+
+export function formatOverdueDuration(diffMs) {
+  if (diffMs <= 0) return "vài giây";
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHours = Math.floor(diffMin / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffDays > 0) {
+    const remHours = diffHours % 24;
+    return remHours > 0 ? `${diffDays} ngày ${remHours} giờ` : `${diffDays} ngày`;
+  }
+  if (diffHours > 0) {
+    const remMin = diffMin % 60;
+    return remMin > 0 ? `${diffHours} giờ ${remMin} phút` : `${diffHours} giờ`;
+  }
+  return `${Math.max(1, diffMin)} phút`;
+}
+
+export function useRealtimeClock(intervalMs = 3000) {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), intervalMs);
+    return () => clearInterval(timer);
+  }, [intervalMs]);
+  return now;
+}
+
 export const RESEARCH_CATEGORIES = [
-  { value: "Mạch nhúng & Vi điều khiển", label: "Mạch nhúng & Vi điều khiển (ESP32, STM32, Arduino, Pi...)" },
-  { value: "Thiết bị đo lường & Cấp nguồn", label: "Thiết bị đo lường & Cấp nguồn (Oscilloscope, VOM, Nguồn DC...)" },
-  { value: "Thiết bị hàn khò & Sửa chữa", label: "Thiết bị hàn khò & Sửa chữa (Trạm hàn, Máy khò, Kính hiển vi...)" },
-  { value: "Linh kiện thụ động (Capacitor, Resistor)", label: "Linh kiện thụ động (Tụ điện, Điện trở, Cuộn cảm...)" },
-  { value: "Bán dẫn & Quang điện tử (Diode, LED, IC)", label: "Bán dẫn & Quang điện tử (Diode, LED, Transistor, IC...)" },
-  { value: "Cảm biến & Module chức năng", label: "Cảm biến & Module chức năng (Cảm biến nhiệt/ẩm, Relay, LoRa...)" },
-  { value: "Dụng cụ cơ khí & Phụ trợ Lab", label: "Dụng cụ cơ khí & Phụ trợ Lab (Breadboard, Kìm bấm cos, Que đo...)" },
-  { value: "Khác", label: "Khác (Nhập tùy chỉnh...)" },
+  { value: "Đo lường & Phân tích tín hiệu", label: "Đo lường & Phân tích tín hiệu (Oscilloscope, VOM, Máy phát xung...)" },
+  { value: "Hệ thống Nhúng & Vi điều khiển", label: "Hệ thống Nhúng & Vi điều khiển (STM32, ESP32, Raspberry Pi, Jetson Nano, FPGA...)" },
+  { value: "Thiết bị Điện tử & Nguồn công suất", label: "Thiết bị Điện tử & Nguồn công suất (Nguồn DC, Tải điện tử, Cầu đo LCR...)" },
+  { value: "Thiết bị hàn khò & Sửa chữa", label: "Thiết bị hàn khò & Sửa chữa (Trạm hàn Quick/Hakko, Máy khò nhiệt...)" },
+  { value: "Mạng & IoT Không dây", label: "Mạng & IoT Không dây (LoRa Gateway, SDR HackRF, Zigbee, Anten...)" },
+  { value: "Robot & Tự động hóa", label: "Robot & Tự động hóa (Cánh tay robot, Xe tự hành AGV, Động cơ bước...)" },
+  { value: "Cảm biến & Module chức năng", label: "Cảm biến & Module chức năng (Cảm biến nhiệt ẩm, Relay, Mạch logic...)" },
+  { value: "An toàn & Phụ trợ Lab", label: "An toàn & Phụ trợ Lab (Kiểm tra rò điện ESD, Bình chữa cháy, Dụng cụ...)" },
+  { value: "Khác", label: "Khác (Nhập phân nhóm tùy chỉnh...)" },
 ];
 
 export const DEVICE_CONDITIONS = [
   { value: "Mới nguyên hộp", label: "Mới nguyên hộp (Brand New / In-box)", tone: "green" },
   { value: "Đã qua sử dụng - Hoạt động tốt", label: "Đã qua sử dụng - Hoạt động tốt (Used - Good)", tone: "blue" },
+  { value: "Đã sửa chữa / Thay thế 1 phần linh kiện - Hoạt động tốt", label: "Đã sửa chữa / Thay thế 1 phần linh kiện - Hoạt động tốt", tone: "blue" },
+  { value: "Bảo dưỡng xong - Hoạt động tốt", label: "Bảo dưỡng xong - Hoạt động tốt", tone: "blue" },
   { value: "Cũ - Cần bảo dưỡng định kỳ", label: "Cũ - Cần bảo dưỡng định kỳ (Fair - Needs Maintenance)", tone: "amber" },
+  { value: "Đang sửa chữa / Thay thế một phần", label: "Đang sửa chữa / Thay thế một phần (Repairing / Partial Replace)", tone: "amber" },
+  { value: "Hỏng hóc / Báo lỗi sự cố", label: "Hỏng hóc / Báo lỗi sự cố (Reported Fault)", tone: "red" },
+  { value: "Hỏng hóc nặng / Chờ thanh lý hoặc thay mới", label: "Hỏng hóc nặng / Chờ thanh lý hoặc thay mới (Broken / Replace Full)", tone: "red" },
   { value: "Hỏng hóc / Lỗi phần cứng", label: "Hỏng hóc / Lỗi phần cứng (Damaged / Faulty)", tone: "red" },
 ];
 
@@ -314,27 +387,31 @@ const useAuth = () => useContext(AuthContext);
 /* Auth provider                                                       */
 /* ------------------------------------------------------------------ */
 function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("lab_user") || "null"));
+  const [user, setUser] = useState(() => JSON.parse(sessionStorage.getItem("lab_user") || "null"));
 
   async function signIn(identifier, password) {
     const loggedIn = await login(identifier, password);
     setUser(loggedIn);
-    localStorage.setItem("lab_user", JSON.stringify(loggedIn));
-    localStorage.setItem("lab_role", loggedIn.role);
+    sessionStorage.setItem("lab_user", JSON.stringify(loggedIn));
+    sessionStorage.setItem("lab_role", loggedIn.role);
+    localStorage.removeItem("lab_user");
+    localStorage.removeItem("lab_role");
     return loggedIn;
   }
 
   async function signInWithGoogle(idToken) {
     const loggedIn = await googleLogin(idToken);
     setUser(loggedIn);
-    localStorage.setItem("lab_user", JSON.stringify(loggedIn));
-    localStorage.setItem("lab_role", loggedIn.role);
+    sessionStorage.setItem("lab_user", JSON.stringify(loggedIn));
+    sessionStorage.setItem("lab_role", loggedIn.role);
+    localStorage.removeItem("lab_user");
+    localStorage.removeItem("lab_role");
     return loggedIn;
   }
 
   function updateUser(updated) {
     setUser(updated);
-    localStorage.setItem("lab_user", JSON.stringify(updated));
+    sessionStorage.setItem("lab_user", JSON.stringify(updated));
   }
 
   function signOut() {
@@ -497,7 +574,7 @@ function Login() {
   }
 
   return (
-    <div className="min-h-[100dvh] lg:grid lg:grid-cols-[1.1fr_.9fr] relative overflow-hidden font-sans transition-colors duration-200 bg-background text-foreground">
+    <div className="min-h-[100dvh] lg:grid lg:grid-cols-[1.1fr_.9fr] relative overflow-hidden font-jetbrains font-mono transition-colors duration-200 bg-background text-foreground" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
       {/* Ambient background glows */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -795,17 +872,21 @@ function PageHeader({ eyebrow, title, description, action }) {
 function KPICard({ label, value, icon: Icon, tone = "blue", hint }) {
   const tones = {
     red: "bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400",
+    danger: "bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400",
+    rose: "bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400",
     amber: "bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400",
     green: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400",
     blue: "bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400",
+    slate: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
   };
+  const isUrgent = (tone === "red" || tone === "danger" || tone === "rose") && Number(value) > 0;
   return (
-    <Card hover className="p-5 overflow-hidden">
+    <Card hover className={`p-5 overflow-hidden transition ${isUrgent ? "border-rose-400 dark:border-rose-700 bg-rose-50/20 dark:bg-rose-950/20 ring-1 ring-rose-500/20" : ""}`}>
       <div className="flex items-start justify-between gap-2">
-        <div className={`grid h-10 w-10 place-items-center rounded-xl shrink-0 ${tones[tone] || tones.blue}`}><Icon size={19} /></div>
-        {hint && <span className="text-[11px] font-semibold text-muted-foreground truncate">{hint}</span>}
+        <div className={`grid h-10 w-10 place-items-center rounded-xl shrink-0 ${tones[tone] || tones.blue} ${isUrgent ? "animate-pulse" : ""}`}><Icon size={19} /></div>
+        {hint && <span className={`text-[11px] font-semibold truncate ${isUrgent ? "text-rose-600 dark:text-rose-400 font-bold" : "text-muted-foreground"}`}>{hint}</span>}
       </div>
-      <p className="mt-4 text-3xl font-extrabold tracking-tight text-foreground truncate">{value ?? "—"}</p>
+      <p className={`mt-4 text-3xl font-extrabold tracking-tight truncate ${isUrgent ? "text-rose-600 dark:text-rose-400" : "text-foreground"}`}>{value ?? "—"}</p>
       <p className="mt-1 text-sm font-semibold text-muted-foreground truncate">{label}</p>
     </Card>
   );
@@ -833,7 +914,11 @@ function Empty({ text }) {
   return <p className="empty-state">{text}</p>;
 }
 
-function StatusBadge({ status }) {
+function StatusBadge({ status, role }) {
+  // Với vai trò User: tất cả các trạng thái sự cố/bảo dưỡng/sửa chữa kỹ thuật nội bộ hiển thị thống nhất là "Đang bảo trì"
+  if (role === "user" && ["pending_inspection", "in_progress", "replace_partial", "replace_full", "maintenance"].includes(status)) {
+    return <Badge tone="red" dot className="whitespace-nowrap shrink-0">Đang bảo trì</Badge>;
+  }
   const meta = statusMeta[status] || { label: status, tone: "slate" };
   return <Badge tone={meta.tone} dot className="whitespace-nowrap shrink-0">{meta.label}</Badge>;
 }
@@ -843,6 +928,9 @@ function ConditionBadge({ condition }) {
     "Mới nguyên hộp": { tone: "green", label: "Mới nguyên hộp" },
     "Đã qua sử dụng - Hoạt động tốt": { tone: "blue", label: "Hoạt động tốt" },
     "Cũ - Cần bảo dưỡng định kỳ": { tone: "amber", label: "Cần bảo dưỡng" },
+    "Đang sửa chữa / Thay thế một phần": { tone: "amber", label: "Sửa chữa 1 phần" },
+    "Hỏng hóc / Báo lỗi sự cố": { tone: "red", label: "Báo lỗi sự cố" },
+    "Hỏng hóc nặng / Chờ thanh lý hoặc thay mới": { tone: "red", label: "Chờ thay mới" },
     "Hỏng hóc / Lỗi phần cứng": { tone: "red", label: "Hỏng hóc" },
   };
   const item = meta[condition] || { tone: "slate", label: condition || "Bình thường" };
@@ -852,7 +940,7 @@ function ConditionBadge({ condition }) {
 /* ------------------------------------------------------------------ */
 /* Workspace Section                                                   */
 /* ------------------------------------------------------------------ */
-function WorkspaceSection({ section, role, data, onBorrow, onComplete, onSchedule, onDownloadReportTXT, onPrintReportPDF, onNavigate }) {
+function WorkspaceSection({ section, role, data, onBorrow, onComplete, onSchedule, onDownloadReportTXT, onPrintReportPDF, onNavigate, onUpdateDeviceStatus, onOpenMaintenanceForDevice }) {
   const titles = {
     "Người dùng": ["Người dùng", "Danh sách người dùng hiện có trong hệ thống."],
     "Thiết bị": ["Thiết bị", "Tra cứu trạng thái thiết bị từ dữ liệu hiện tại."],
@@ -901,25 +989,61 @@ function WorkspaceSection({ section, role, data, onBorrow, onComplete, onSchedul
               <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                 <span className="font-mono">{item.asset_code}</span>
                 <span>•</span>
-                <span className="truncate max-w-[120px]">{item.category}</span>
+                <span className="truncate max-w-[150px]">{getCategoryLabel(item.category)}</span>
                 <span>•</span>
                 <ConditionBadge condition={item.condition} />
-                <StatusBadge status={item.status} />
+                <StatusBadge status={item.status} role={role} />
               </div>
             </div>
             {role === "user" && item.status === "available" && <Button size="sm" onClick={() => onBorrow(item)} className="shrink-0">Mượn</Button>}
+            {role === "technician" && (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Select
+                  value={item.status}
+                  onChange={(e) => onUpdateDeviceStatus && onUpdateDeviceStatus(item, e.target.value)}
+                  className="h-8 text-[11px] min-w-32 py-0"
+                >
+                  {[
+                    "available",
+                    "in_progress",
+                    "replace_partial",
+                    "replace_full",
+                    "maintenance",
+                    "pending_inspection",
+                    "reserved",
+                    "borrowed"
+                  ].map((st) => (
+                    <option key={st} value={st} className="bg-surface text-foreground">{statusMeta[st]?.label || st}</option>
+                  ))}
+                </Select>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => onOpenMaintenanceForDevice && onOpenMaintenanceForDevice(item)}
+                  className="text-xs px-2.5 py-1 gap-1"
+                  title="Cập nhật tình trạng & Bảo trì kỹ thuật"
+                >
+                  <Wrench size={12} /> Đánh giá
+                </Button>
+              </div>
+            )}
           </div>
         ))}</div> : <Empty text="Chưa có thiết bị từ API." />
       )}
       {(section === "Yêu cầu mượn" || section === "Lượt mượn của tôi") && (data.requests.length ? <RequestList items={data.requests} devices={data.devices} users={data.users} role={role} onReturn={role === "user" ? data.onReturn : undefined} onHandover={data.onHandover} /> : <Empty text="Chưa có yêu cầu mượn." />)}
-      {(section === "Bảo trì" || section === "Lịch sử") && (maintenanceItems.length ? maintenanceItems.map((item) => (
+      {(section === "Bảo trì" || section === "Lịch sử") && (maintenanceItems.length ? maintenanceItems.map((item) => {
+        const dev = data.devices.find((d) => d.id === item.device_id) || {};
+        const devName = dev.name ? `${dev.name} (${dev.asset_code})` : `Thiết bị #${item.device_id}`;
+        const kindLabel = item.kind === "incident" ? "Báo cáo sự cố" : (item.kind === "inspection" ? "Kiểm tra định kỳ" : item.kind);
+        return (
         <div key={item.id} className="flex flex-wrap items-center gap-3 border-b border-border py-4 last:border-0 min-w-0">
           <Settings2 size={17} className="text-blue-600 dark:text-blue-400 shrink-0" />
-          <span className="flex-1 text-sm font-semibold text-foreground truncate">Thiết bị #{item.device_id} • {item.kind}</span>
+          <span className="flex-1 text-sm font-semibold text-foreground truncate">{devName} • {kindLabel}</span>
           <StatusBadge status={item.status} />
           {role === "technician" && item.status !== "completed" && <Button size="sm" variant="outline" onClick={() => onComplete(item)} className="shrink-0">Cập nhật</Button>}
         </div>
-      )) : <Empty text="Chưa có bản ghi bảo trì từ API." />)}
+      );
+      }) : <Empty text="Chưa có bản ghi bảo trì từ API." />)}
       {section === "Báo cáo" && (
         <>
           <UsageChart usage={data.stats.usage_by_action} />
@@ -988,6 +1112,7 @@ function WorkspaceSection({ section, role, data, onBorrow, onComplete, onSchedul
 function NotificationDropdown({ onNavigate, role }) {
   const { data } = useDashboardData();
   const { user } = useAuth();
+  const now = useRealtimeClock(3000);
   const [open, setOpen] = useState(false);
   const [readIds, setReadIds] = useState(() => {
     try {
@@ -1011,24 +1136,25 @@ function NotificationDropdown({ onNavigate, role }) {
 
   const notifications = useMemo(() => {
     const list = [];
-    const now = new Date();
 
-    // 1. Quá hạn
+    // 1. Quá hạn mượn thiết bị
     (data.requests || []).forEach((r) => {
       if (r.status === "borrowed" && r.requested_to) {
         const dueDate = new Date(r.requested_to);
         if (dueDate < now) {
-          const diffHours = Math.round((now - dueDate) / (1000 * 60 * 60));
-          const diffDays = Math.floor(diffHours / 24);
-          const timeText = diffDays > 0 ? `${diffDays} ngày` : `${diffHours} giờ`;
+          const diffMs = now - dueDate;
+          const timeText = formatOverdueDuration(diffMs);
           
           if (role === "user" && r.user_id !== user?.id) return;
 
           const dev = (data.devices || []).find(d => d.id === r.device_id) || {};
+          const borrower = (data.users || []).find(u => u.id === r.user_id);
+          const borrowerStr = borrower ? ` của ${borrower.full_name} (@${borrower.username})` : "";
+
           list.push({
             id: `overdue-${r.id}`,
-            title: `Cảnh báo quá hạn: ${dev.name || `Thiết bị #${r.device_id}`}`,
-            message: `Thiết bị đã quá hạn trả ${timeText} (Hạn chót: ${dueDate.toLocaleDateString("vi-VN")}). Vui lòng kiểm tra hoàn trả.`,
+            title: `CẢNH BÁO QUÁ HẠN: ${dev.name || `Thiết bị #${r.device_id}`}`,
+            message: `Thiết bị [${dev.name || `Thiết bị #${r.device_id}`}] (${dev.asset_code || `ID #${r.device_id}`})${role !== "user" ? borrowerStr : ""} đã quá hạn trả ${timeText} (Hạn trả: ${dueDate.toLocaleString("vi-VN")}). Vui lòng kiểm tra hoàn trả ngay.`,
             time: `Quá hạn ${timeText}`,
             type: "danger",
             targetSection: role === "user" ? "Lượt mượn của tôi" : "Yêu cầu mượn",
@@ -1087,9 +1213,10 @@ function NotificationDropdown({ onNavigate, role }) {
     }
 
     return list;
-  }, [data, role, user]);
+  }, [data, role, user, now]);
 
   const unreadCount = notifications.filter(n => !readIds.includes(n.id)).length;
+  const hasOverdue = notifications.some(n => n.type === "danger");
 
   const markAllAsRead = () => {
     const allIds = notifications.map(n => n.id);
@@ -1114,13 +1241,19 @@ function NotificationDropdown({ onNavigate, role }) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="relative rounded-lg p-2 text-muted-foreground transition hover:bg-surface-elevated hover:text-foreground focus:outline-none"
+        className={`relative rounded-xl p-2 transition focus:outline-none ${
+          hasOverdue 
+            ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/40 animate-pulse" 
+            : "text-muted-foreground hover:bg-surface-elevated hover:text-foreground"
+        }`}
         aria-label="Thông báo"
-        title="Xem thông báo hệ thống"
+        title={hasOverdue ? "CẢNH BÁO: Có thiết bị quá hạn hoàn trả!" : "Xem thông báo hệ thống"}
       >
-        <Bell size={19} />
+        <Bell size={19} className={hasOverdue ? "text-rose-600 dark:text-rose-400" : ""} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white shadow-sm animate-pulse">
+          <span className={`absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-extrabold text-white shadow-sm ${
+            hasOverdue ? "bg-rose-600 animate-bounce ring-2 ring-rose-300" : "bg-blue-600 animate-pulse"
+          }`}>
             {unreadCount}
           </span>
         )}
@@ -1201,15 +1334,23 @@ function AdminAuditCenter({ onPrintReportPDF }) {
   const [search, setSearch] = useState("");
   const [submittedSearch, setSubmittedSearch] = useState("");
 
-  const fetchLogs = () => {
-    setLoading(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchLogs = (silent = false) => {
+    if (!silent) setLoading(true);
+    setRefreshing(true);
     api.auditLogs({ target_type: targetTypeFilter !== "all" ? targetTypeFilter : undefined })
-      .then(res => { setLogs(res); setLoading(false); })
-      .catch(() => setLoading(false));
+      .then(res => { setLogs(res); setLoading(false); setRefreshing(false); })
+      .catch(() => { setLoading(false); setRefreshing(false); });
   };
 
   useEffect(() => {
     fetchLogs();
+    // Tự động đồng bộ nhật ký mỗi 10 giây để ghi nhận sự kiện real-time
+    const timer = setInterval(() => {
+      fetchLogs(true);
+    }, 10000);
+    return () => clearInterval(timer);
   }, [targetTypeFilter]);
 
   const filteredLogs = useMemo(() => {
@@ -1218,10 +1359,11 @@ function AdminAuditCenter({ onPrintReportPDF }) {
       if (actionFilter !== "all" && log.action !== actionFilter) return false;
       if (timeFilter !== "all") {
         const logDate = new Date(log.created_at);
-        const diffDays = (now - logDate) / (1000 * 60 * 60 * 24);
-        if (timeFilter === "today" && diffDays > 1) return false;
-        if (timeFilter === "7days" && diffDays > 7) return false;
-        if (timeFilter === "30days" && diffDays > 30) return false;
+        const diffMs = now - logDate;
+        const diffHours = diffMs / (1000 * 60 * 60);
+        if (timeFilter === "today" && (diffHours < -2 || diffHours > 24)) return false;
+        if (timeFilter === "7days" && (diffHours < -2 || diffHours > 24 * 7)) return false;
+        if (timeFilter === "30days" && (diffHours < -2 || diffHours > 24 * 30)) return false;
       }
       if (submittedSearch.trim()) {
         const q = removeVietnameseTones(submittedSearch.trim());
@@ -1250,9 +1392,16 @@ function AdminAuditCenter({ onPrintReportPDF }) {
     APPROVE: { label: "Duyệt mượn", tone: "green" },
     REJECT: { label: "Từ chối", tone: "red" },
     HANDOVER: { label: "Bàn giao máy", tone: "blue" },
+    RETURN_REQUESTED: { label: "Báo trả máy", tone: "amber" },
+    RETURN_CONFIRMED: { label: "Xác nhận nhận trả", tone: "green" },
     RETURN: { label: "Hoàn trả máy", tone: "green" },
     INCIDENT_REPORT: { label: "Báo sự cố", tone: "red" },
+    ACCEPT_INCIDENT: { label: "Tiếp nhận sự cố", tone: "orange" },
     RESET_PASSWORD: { label: "Đặt lại MK", tone: "amber" },
+    LOGIN: { label: "Đăng nhập", tone: "blue" },
+    LOGIN_GOOGLE: { label: "Đăng nhập Google", tone: "blue" },
+    PASSWORD_CHANGE: { label: "Đổi mật khẩu", tone: "amber" },
+    REGISTER: { label: "Đăng ký mới", tone: "green" },
   };
 
   const handleSearchSubmit = (e) => {
@@ -1273,9 +1422,13 @@ function AdminAuditCenter({ onPrintReportPDF }) {
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
             <SectionTitle title="Bộ lọc kiểm toán & Truy vết nhật ký" />
-            <p className="-mt-3 text-xs text-muted-foreground">Theo dõi chính xác tài khoản thao tác, thời gian, sự kiện và đối tượng tác động.</p>
+            <p className="-mt-3 text-xs text-muted-foreground">Theo dõi chính xác tài khoản thao tác, thời gian thực tế Hà Nội (UTC+7), sự kiện và đối tượng tác động.</p>
           </div>
           <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => fetchLogs()} disabled={refreshing} className="gap-1.5 shrink-0">
+              <RefreshCw size={14} className={refreshing ? "animate-spin text-blue-500" : ""} />
+              {refreshing ? "Đang đồng bộ..." : "Làm mới"}
+            </Button>
             <Button size="sm" variant="outline" onClick={() => downloadAuditLogsTXT(filteredLogs, "BÁO CÁO KIỂM TOÁN HỆ THỐNG PHÒNG LAB", "Bao_cao_kiem_toan")}>
               <FileDown size={14} /> Xuất .TXT
             </Button>
@@ -1381,10 +1534,7 @@ function AdminAuditCenter({ onPrintReportPDF }) {
                   return (
                     <tr key={log.id} className="hover:bg-surface-elevated/40 transition">
                       <td className="px-4 py-3 font-mono text-muted-foreground whitespace-nowrap">
-                        {new Date(log.created_at).toLocaleString("vi-VN", {
-                          day: "2-digit", month: "2-digit", year: "numeric",
-                          hour: "2-digit", minute: "2-digit", second: "2-digit"
-                        })}
+                        {formatHanoiDateTime(log.created_at)}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <span className="font-bold text-foreground">@{log.username || "system"}</span>
@@ -1422,8 +1572,10 @@ function AdminSection({
   onHandover,
   onReturnDevice,
   onRecallDevice,
-  onOpenDeviceForm, 
-  onDeviceStatus, 
+  onOpenDeviceForm,
+  onDeviceStatus,
+  onOpenEditDevice,
+  onDeleteDevice,
   onOpenUserForm,
   onOpenEditUser,
   onOpenResetPassword,
@@ -1436,7 +1588,9 @@ function AdminSection({
   onDownloadReportTXT,
   onPrintReportPDF,
   onNavigate,
+  role = "admin",
 }) {
+
   if (section === "Trợ lý AI") return <AIChatPanel title="Trợ lý AI" mode="summary" starter="Tôi có thể tóm tắt tình trạng thiết bị, yêu cầu mượn và bảo trì từ dữ liệu hiện có." />;
   
   if (section === "Người dùng") return (
@@ -1458,6 +1612,7 @@ function AdminSection({
               <tr>
                 <th className="px-5 py-3">Họ tên</th>
                 <th className="px-5 py-3">Tên đăng nhập</th>
+                <th className="px-5 py-3">Mật khẩu</th>
                 <th className="px-5 py-3">Email</th>
                 <th className="px-5 py-3">Vai trò</th>
                 <th className="px-5 py-3">Trạng thái</th>
@@ -1469,6 +1624,14 @@ function AdminSection({
                 <tr className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/40" key={item.id}>
                   <td className="px-5 py-3.5 font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[180px]">{item.full_name}</td>
                   <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400 font-mono text-xs truncate max-w-[140px]">{item.username}</td>
+                  <td className="px-5 py-3.5">
+                    <div className="inline-flex items-center gap-1.5 font-mono text-xs bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700">
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">••••••••</span>
+                      <span className="text-slate-400" title="Mật khẩu được mã hóa one-way (bcrypt), không thể xem lại. Dùng chức năng đặt lại mật khẩu nếu cần.">
+                        <ShieldCheck size={13} />
+                      </span>
+                    </div>
+                  </td>
                   <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400 text-xs truncate max-w-[180px]">{item.email || "—"}</td>
                   <td className="px-5 py-3.5">{roles[item.role]?.label || item.role}</td>
                   <td className="px-5 py-3.5">
@@ -1481,18 +1644,20 @@ function AdminSection({
                       <button
                         type="button"
                         onClick={() => onOpenEditUser(item)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-slate-800 dark:hover:text-blue-400 transition"
-                        title="Chỉnh sửa thông tin"
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition"
+                        title="Chỉnh sửa thông tin tài khoản"
                       >
-                        <Edit2 size={14} />
+                        <Edit2 size={13} />
+                        <span>Sửa</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => onOpenResetPassword(item)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-slate-800 dark:hover:text-amber-400 transition"
-                        title="Đặt lại mật khẩu"
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800/40 transition"
+                        title="Đặt lại mật khẩu mới cho người dùng"
                       >
-                        <Key size={14} />
+                        <Key size={13} />
+                        <span>Đổi mật khẩu</span>
                       </button>
                       <button
                         type="button"
@@ -1595,14 +1760,28 @@ function AdminSection({
                   <tr className="hover:bg-surface-elevated/50 transition" key={item.id}>
                     <td className="px-5 py-3.5 font-semibold text-foreground truncate max-w-[240px]">{item.name}</td>
                     <td className="px-5 py-3.5 text-muted-foreground font-mono text-xs">{item.asset_code}</td>
-                    <td className="px-5 py-3.5 text-muted-foreground truncate max-w-[160px]">{item.category}</td>
+                    <td className="px-5 py-3.5 text-muted-foreground truncate max-w-[180px] font-medium" title={getCategoryLabel(item.category)}>{getCategoryLabel(item.category)}</td>
                     <td className="px-5 py-3.5">
                       <ConditionBadge condition={item.condition} />
                     </td>
                     <td className="px-5 py-3">
                       <Select value={item.status} onChange={(event) => onDeviceStatus(item, event.target.value)} className="h-9 min-w-36 text-xs">
-                        {["available", "reserved", "borrowed", "maintenance"].map((status) => (
-                          <option value={status} key={status}>{statusMeta[status].label}</option>
+                        {[
+                          "available",
+                          "in_progress",
+                          "replace_partial",
+                          "replace_full",
+                          "maintenance",
+                          "pending_inspection",
+                          "reserved",
+                          "borrowed"
+                        ].filter(st => {
+                          if (role === "technician") {
+                            return ["pending_inspection", "in_progress", "replace_partial", "replace_full", "maintenance"].includes(st);
+                          }
+                          return true;
+                        }).map((status) => (
+                          <option value={status} key={status} className="bg-surface text-foreground">{statusMeta[status]?.label || status}</option>
                         ))}
                       </Select>
                     </td>
@@ -1769,6 +1948,7 @@ function AuditLogViewer({ targetType = null, title = "Nhật ký hoạt động 
     HANDOVER: "Bàn giao",
     RETURN: "Hoàn trả",
     INCIDENT_REPORT: "Báo sự cố",
+    ACCEPT_INCIDENT: "Tiếp nhận sự cố",
     RESET_PASSWORD: "Đặt lại MK",
   };
 
@@ -1848,18 +2028,17 @@ function BorrowModal({ open, device, onClose, onSubmit }) {
   const [error, setError] = useState("");
   const [minDT, setMinDT] = useState("");
 
+  const pad = (n) => String(n).padStart(2, "0");
+  const formatDT = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
   useEffect(() => {
     if (open) {
       const now = new Date();
-      const pad = (n) => String(n).padStart(2, "0");
-      const formatDT = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-      
       const current = formatDT(now);
       setMinDT(current);
 
-      const due = new Date();
-      due.setDate(due.getDate() + 7);
-      due.setHours(17, 0, 0, 0);
+      // Mặc định +2 giờ để giữ nguyên ngữ cảnh buổi Sáng/Chiều, tránh ép sang 17:00 (PM)
+      const due = new Date(now.getTime() + 2 * 60 * 60 * 1000);
 
       setForm({ 
         purpose: "Thực hành phòng thí nghiệm", 
@@ -1871,6 +2050,20 @@ function BorrowModal({ open, device, onClose, onSubmit }) {
   }, [open]);
 
   if (!open || !device) return null;
+
+  function applyPreset(minutes) {
+    const base = form.requested_from ? new Date(form.requested_from) : new Date();
+    const target = new Date(base.getTime() + minutes * 60 * 1000);
+    setForm((prev) => ({ ...prev, requested_to: formatDT(target) }));
+    setError("");
+  }
+
+  function toggleMeridiem() {
+    if (!form.requested_to) return;
+    const d = new Date(form.requested_to);
+    d.setHours((d.getHours() + 12) % 24);
+    setForm((prev) => ({ ...prev, requested_to: formatDT(d) }));
+  }
 
   function handleFormSubmit(e) {
     e?.preventDefault?.();
@@ -1897,13 +2090,17 @@ function BorrowModal({ open, device, onClose, onSubmit }) {
     }
 
     if (toDate <= fromDate) {
-      setError("Lỗi logic thời gian: Ngày giờ hẹn trả máy phải sau thời gian bắt đầu mượn ít nhất 15 phút.");
+      setError("Lỗi logic thời gian: Ngày giờ hẹn trả máy phải sau thời gian bắt đầu mượn.");
       return;
     }
 
     setError("");
     onSubmit(form);
   }
+
+  const toDateObj = form.requested_to ? new Date(form.requested_to) : null;
+  const isPM = toDateObj ? toDateObj.getHours() >= 12 : false;
+  const meridiemLabel = isPM ? "Chiều/Tối (PM)" : "Sáng (AM)";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -1964,6 +2161,75 @@ function BorrowModal({ open, device, onClose, onSubmit }) {
             </div>
           </div>
 
+          {/* Chọn nhanh thời hạn & chuyển đổi AM/PM */}
+          <div className="rounded-xl border border-border/80 bg-surface-elevated/40 p-3 space-y-2">
+            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+              <span className="font-semibold text-foreground">Chọn nhanh thời hạn mượn:</span>
+              <span className="text-slate-400">Tự động điền ngày giờ trả</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => applyPreset(5)}
+                className="px-2 py-1 rounded-lg text-[11px] font-semibold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 transition"
+                title="Đặt hạn trả sau 5 phút để thử nghiệm cảnh báo quá hạn"
+              >
+                ⚡ 5 phút (Test cảnh báo)
+              </button>
+              <button
+                type="button"
+                onClick={() => applyPreset(30)}
+                className="px-2 py-1 rounded-lg text-[11px] font-medium bg-surface-elevated border border-border hover:bg-border/60 transition"
+              >
+                30 phút
+              </button>
+              <button
+                type="button"
+                onClick={() => applyPreset(120)}
+                className="px-2 py-1 rounded-lg text-[11px] font-medium bg-surface-elevated border border-border hover:bg-border/60 transition"
+              >
+                2 giờ
+              </button>
+              <button
+                type="button"
+                onClick={() => applyPreset(1440)}
+                className="px-2 py-1 rounded-lg text-[11px] font-medium bg-surface-elevated border border-border hover:bg-border/60 transition"
+              >
+                1 ngày
+              </button>
+              <button
+                type="button"
+                onClick={() => applyPreset(4320)}
+                className="px-2 py-1 rounded-lg text-[11px] font-medium bg-surface-elevated border border-border hover:bg-border/60 transition"
+              >
+                3 ngày
+              </button>
+              <button
+                type="button"
+                onClick={() => applyPreset(10080)}
+                className="px-2 py-1 rounded-lg text-[11px] font-medium bg-surface-elevated border border-border hover:bg-border/60 transition"
+              >
+                7 ngày
+              </button>
+            </div>
+
+            {toDateObj && (
+              <div className="pt-2 border-t border-border/60 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <span className="text-muted-foreground">
+                  Hạn trả xác nhận: <strong className="text-blue-600 dark:text-blue-400 font-mono">{toDateObj.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} ({meridiemLabel})</strong>, {toDateObj.toLocaleDateString("vi-VN")}
+                </span>
+                <button
+                  type="button"
+                  onClick={toggleMeridiem}
+                  className="px-2 py-0.5 rounded text-[11px] font-semibold text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 transition"
+                  title="Chuyển đổi nhanh giữa giờ sáng (AM) và chiều (PM)"
+                >
+                  Đổi sang {isPM ? "Sáng (AM)" : "Chiều (PM)"}
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-xs text-blue-700 dark:text-blue-300">
             Cam kết: Sử dụng thiết bị đúng quy trình kỹ thuật, ngắt nguồn khi không dùng và hoàn trả đúng ngày giờ hẹn.
           </div>
@@ -2020,6 +2286,90 @@ function IncidentModal({ open, item, onClose, onSubmit }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function ConfirmReturnModal({ open, item, device, onClose, onSubmit }) {
+  const [condition, setCondition] = useState("Đã qua sử dụng - Hoạt động tốt");
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setCondition(device?.condition || "Đã qua sử dụng - Hoạt động tốt");
+      setNotes("");
+      setSubmitting(false);
+    }
+  }, [open, device]);
+
+  if (!open || !item) return null;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    await onSubmit(item, { condition, notes });
+    setSubmitting(false);
+  };
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Kiểm tra & Nghiệm thu nhận thiết bị hoàn trả"
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose} disabled={submitting}>Hủy</Button>
+          <Button onClick={handleSubmit} disabled={submitting} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 shrink-0">
+            {submitting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+            Xác nhận nhận trả & Nhập kho
+          </Button>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+        <div className="p-3.5 bg-surface-elevated rounded-xl border border-border space-y-1.5">
+          <p className="font-bold text-sm text-foreground">{device?.name || `Thiết bị #${item.device_id}`}</p>
+          <div className="grid grid-cols-2 gap-2 text-muted-foreground mt-1">
+            <p>Mã tài sản: <span className="font-mono font-semibold text-foreground">{device?.asset_code || "—"}</span></p>
+            <p>Người mượn: <span className="font-semibold text-foreground">User #{item.user_id}</span></p>
+          </div>
+          <p className="text-muted-foreground text-[11px]">Mục đích: <span className="italic text-foreground">{item.purpose}</span></p>
+        </div>
+
+        <div>
+          <label className="block font-semibold text-foreground mb-1.5">
+            Đánh giá tình trạng thực tế khi nhận lại thiết bị:
+          </label>
+          <Select
+            value={condition}
+            onChange={(e) => setCondition(e.target.value)}
+            className="w-full text-xs h-10"
+          >
+            {DEVICE_CONDITIONS.map((c) => (
+              <option key={c.value} value={c.value}>{c.label}</option>
+            ))}
+          </Select>
+          {condition.includes("Hỏng hóc") && (
+            <p className="mt-1.5 text-[11px] text-rose-600 dark:text-rose-400 font-medium">
+              ⚠️ Thiết bị được đánh giá hỏng hóc sẽ tự động chuyển sang trạng thái <b>Bảo trì</b> và tạo phiếu kiểm định kỹ thuật khẩn cấp.
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className="block font-semibold text-foreground mb-1.5">
+            Ghi chú biên bản kiểm tra & nghiệm thu:
+          </label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Ví dụ: Đã kiểm tra đầy đủ phụ kiện, dây cáp nguồn, que đo, ngoại quan nguyên vẹn..."
+            rows={3}
+            className="w-full rounded-xl border border-border bg-surface p-2.5 text-xs text-foreground placeholder:text-muted-foreground outline-none transition focus:border-blue-500"
+          />
+        </div>
+      </form>
+    </Modal>
   );
 }
 
@@ -2306,6 +2656,8 @@ function UserEditModal({ open, user, onClose, onSave }) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("user");
   const [isActive, setIsActive] = useState(true);
+  const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -2316,6 +2668,8 @@ function UserEditModal({ open, user, onClose, onSave }) {
       setEmail(user.email || "");
       setRole(user.role || "user");
       setIsActive(user.is_active ?? true);
+      setNewPassword("");
+      setShowPassword(false);
       setError("");
     }
   }, [user, open]);
@@ -2323,15 +2677,23 @@ function UserEditModal({ open, user, onClose, onSave }) {
   async function submit(e) {
     e.preventDefault();
     if (!fullName.trim() || !username.trim()) return;
+    if (newPassword.trim() && newPassword.trim().length < 8) {
+      setError("Mật khẩu mới phải có tối thiểu 8 ký tự.");
+      return;
+    }
     setBusy(true);
     try {
-      await onSave(user.id, { 
+      const payload = { 
         username: username.trim(),
         full_name: fullName.trim(), 
         email: email.trim(), 
         role, 
         is_active: isActive 
-      });
+      };
+      if (newPassword.trim()) {
+        payload.password = newPassword.trim();
+      }
+      await onSave(user.id, payload);
       onClose();
     } catch (err) {
       setError(err.message || "Không thể cập nhật tài khoản.");
@@ -2349,7 +2711,7 @@ function UserEditModal({ open, user, onClose, onSave }) {
         <>
           <Button variant="outline" size="sm" onClick={onClose}>Đóng</Button>
           <Button size="sm" onClick={submit} disabled={busy || !fullName.trim() || !username.trim()}>
-            {busy ? "Đang lưu..." : "Lưu thay đổi"}
+            {busy ? "Đang áp dụng..." : "Áp dụng thay đổi"}
           </Button>
         </>
       }
@@ -2412,6 +2774,71 @@ function UserEditModal({ open, user, onClose, onSave }) {
             </Select>
           </label>
         </div>
+
+        {/* Password Reset Section */}
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+              Quản lý mật khẩu tài khoản
+            </span>
+            <span className="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
+              <ShieldCheck size={13} className="text-emerald-500" /> Cán bộ quản lý
+            </span>
+          </div>
+
+          {/* Mật khẩu được mã hóa one-way, không hiển thị lại được */}
+          <div className="rounded-xl border border-border bg-slate-50/80 dark:bg-slate-900/60 p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Mật khẩu hiện tại:
+              </span>
+              <span className="flex items-center gap-2 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-border shadow-xs font-mono text-xs text-slate-400">
+                •••••••• <ShieldCheck size={13} className="text-emerald-500" />
+              </span>
+            </div>
+          </div>
+
+          {/* Dòng dưới: Thiết lập mật khẩu mới */}
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+            Đặt mật khẩu mới thay thế (Dòng dưới)
+            <div className="relative mt-1.5 flex items-center">
+              <Input
+                type={showPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Nhập mật khẩu mới thay thế (tối thiểu 8 ký tự)..."
+                className="pr-24 font-mono text-xs"
+              />
+              <div className="absolute right-1.5 flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  title={showPassword ? "Ẩn" : "Hiện"}
+                >
+                  {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const generated = "Lab@" + Math.random().toString(36).slice(-6) + "!";
+                    setNewPassword(generated);
+                    setShowPassword(true);
+                  }}
+                  className="px-2 py-0.5 text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition"
+                  title="Tự động tạo mật khẩu ngẫu nhiên an toàn"
+                >
+                  Tạo nhanh
+                </button>
+              </div>
+            </div>
+            {newPassword && (
+              <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+                * Mật khẩu mới sẽ được cập nhật ngay sau khi bấm "Áp dụng thay đổi".
+              </p>
+            )}
+          </label>
+        </div>
       </form>
     </Modal>
   );
@@ -2419,11 +2846,13 @@ function UserEditModal({ open, user, onClose, onSave }) {
 
 function AdminResetPasswordModal({ open, user, onClose, onReset }) {
   const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     setNewPassword("");
+    setShowPassword(false);
     setError("");
   }, [user, open]);
 
@@ -2453,7 +2882,7 @@ function AdminResetPasswordModal({ open, user, onClose, onReset }) {
         <>
           <Button variant="outline" onClick={onClose}>Hủy</Button>
           <Button onClick={submit} disabled={busy || newPassword.length < 8}>
-            {busy ? "Đang xử lý..." : "Xác nhận đặt lại"}
+            {busy ? "Đang áp dụng..." : "Áp dụng thay đổi"}
           </Button>
         </>
       }
@@ -2464,19 +2893,58 @@ function AdminResetPasswordModal({ open, user, onClose, onReset }) {
             {error}
           </div>
         )}
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          Bạn đang sử dụng quyền Quản lý phòng lab để đổi mật khẩu cho tài khoản <strong className="text-slate-800 dark:text-slate-200">@{user?.username}</strong>. Mật khẩu mới sẽ có hiệu lực ngay lập tức.
-        </p>
+
+        {/* Current password is stored as a one-way hash and cannot be displayed */}
+        <div className="rounded-xl border border-border bg-slate-50/80 dark:bg-slate-900/60 p-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Mật khẩu hiện tại:
+            </span>
+            <span className="flex items-center gap-2 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-border shadow-xs font-mono text-xs text-slate-400">
+              •••••••• <ShieldCheck size={13} className="text-emerald-500" />
+            </span>
+          </div>
+        </div>
+
         <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
-          Mật khẩu mới (tối thiểu 8 ký tự)
-          <Input
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="Nhập mật khẩu mới..."
-            className="mt-1.5"
-            required
-          />
+          Mật khẩu mới thay thế (Dòng dưới)
+          <div className="relative mt-1.5 flex items-center">
+            <Input
+              type={showPassword ? "text" : "password"}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Nhập mật khẩu mới thay thế (tối thiểu 8 ký tự)..."
+              className="pr-24 font-mono text-xs"
+              required
+            />
+            <div className="absolute right-1.5 flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                title={showPassword ? "Ẩn" : "Hiện"}
+              >
+                {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const generated = "Lab@" + Math.random().toString(36).slice(-6) + "!";
+                  setNewPassword(generated);
+                  setShowPassword(true);
+                }}
+                className="px-2 py-0.5 text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition"
+                title="Tự động tạo mật khẩu ngẫu nhiên an toàn"
+              >
+                Tạo nhanh
+              </button>
+            </div>
+          </div>
+          {newPassword && (
+            <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+              * Bấm "Áp dụng thay đổi" để cập nhật mật khẩu cho tài khoản.
+            </p>
+          )}
         </label>
       </form>
     </Modal>
@@ -2699,7 +3167,14 @@ function useDashboardData(includeUsers = false) {
 
   useEffect(() => {
     refresh();
-  }, []);
+    const interval = setInterval(refresh, 3000); // Tự động đồng bộ thời gian thực mỗi 3 giây
+    const handleFocus = () => refresh();
+    window.addEventListener("focus", handleFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [includeUsers]);
 
   return { data, offline, loading, setData, refresh };
 }
@@ -2707,7 +3182,7 @@ function useDashboardData(includeUsers = false) {
 /* ------------------------------------------------------------------ */
 /* Real-time Equipment Quick Control Board (Đề tài 23)                */
 /* ------------------------------------------------------------------ */
-function EquipmentQuickControlBoard({ devices = [], onUpdateStatus, onNavigate }) {
+function EquipmentQuickControlBoard({ devices = [], onUpdateStatus, onNavigate, role = "admin" }) {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
 
@@ -2815,7 +3290,7 @@ function EquipmentQuickControlBoard({ devices = [], onUpdateStatus, onNavigate }
               <tr key={d.id} className="hover:bg-surface-elevated/60 transition">
                 <td className="px-4 py-3 font-mono font-bold text-foreground">{d.asset_code}</td>
                 <td className="px-4 py-3 font-semibold text-foreground truncate max-w-[200px]" title={d.name}>{d.name}</td>
-                <td className="px-4 py-3 text-muted-foreground truncate max-w-[160px]" title={d.category}>{d.category}</td>
+                <td className="px-4 py-3 text-muted-foreground truncate max-w-[180px] font-medium" title={getCategoryLabel(d.category)}>{getCategoryLabel(d.category)}</td>
                 <td className="px-4 py-3">
                   <ConditionBadge condition={d.condition} />
                 </td>
@@ -2828,8 +3303,22 @@ function EquipmentQuickControlBoard({ devices = [], onUpdateStatus, onNavigate }
                     onChange={(e) => onUpdateStatus && onUpdateStatus(d, e.target.value)}
                     className="h-8 text-[11px] min-w-32 py-0 inline-block"
                   >
-                    {["available", "reserved", "borrowed", "maintenance"].map((st) => (
-                      <option key={st} value={st}>{statusMeta[st]?.label || st}</option>
+                    {[
+                      "available",
+                      "in_progress",
+                      "replace_partial",
+                      "replace_full",
+                      "maintenance",
+                      "pending_inspection",
+                      "reserved",
+                      "borrowed"
+                    ].filter(st => {
+                      if (role === "technician") {
+                        return ["pending_inspection", "in_progress", "replace_partial", "replace_full", "maintenance"].includes(st);
+                      }
+                      return true;
+                    }).map((st) => (
+                      <option key={st} value={st} className="bg-surface text-foreground">{statusMeta[st]?.label || st}</option>
                     ))}
                   </Select>
                 </td>
@@ -2854,6 +3343,14 @@ function EquipmentQuickControlBoard({ devices = [], onUpdateStatus, onNavigate }
 /* ------------------------------------------------------------------ */
 function AdminDashboard({ section = "Tổng quan", onNavigate }) {
   const { data, offline, setData, refresh } = useDashboardData(true);
+  const now = useRealtimeClock(3000);
+  
+  const overdueRequests = useMemo(() => {
+    return (data.requests || []).filter(
+      (r) => r.status === "borrowed" && r.requested_to && new Date(r.requested_to) < now
+    );
+  }, [data.requests, now]);
+
   const { user } = useAuth();
   const [toast, setToast] = useState(null);
   const [borrowModal, setBorrowModal] = useState({ open: false, device: null });
@@ -2903,15 +3400,32 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
     }
   }
 
-  async function returnDevice(item) {
+  const [confirmReturnModal, setConfirmReturnModal] = useState({ open: false, item: null });
+
+  function returnDevice(item) {
+    setConfirmReturnModal({ open: true, item });
+  }
+
+  async function handleConfirmReturn(item, { condition, notes }) {
     try {
-      const updated = await api.returnRequest(item.id);
+      const updated = await api.confirmReturn(item.id, { condition, notes });
+      const isFaulty = condition && (condition.toLowerCase().includes("hỏng") || condition.toLowerCase().includes("lỗi"));
       setData((current) => ({
         ...current,
         requests: current.requests.map((row) => row.id === item.id ? updated : row),
-        devices: current.devices.map((d) => d.id === item.device_id ? { ...d, status: "available" } : d),
+        devices: current.devices.map((d) => d.id === item.device_id ? {
+          ...d,
+          status: isFaulty ? "maintenance" : "available",
+          condition: condition || d.condition
+        } : d),
       }));
-      setToast({ message: "Đã xác nhận nhận trả và kiểm tra thiết bị thành công.", type: "success" });
+      setToast({ 
+        message: isFaulty 
+          ? "Đã nhận trả thiết bị. Thiết bị phát hiện lỗi, hệ thống đã chuyển sang chế độ Bảo trì." 
+          : "Đã kiểm tra và hoàn tất nhận trả thiết bị vào kho an toàn.", 
+        type: isFaulty ? "warning" : "success" 
+      });
+      setConfirmReturnModal({ open: false, item: null });
     } catch (error) {
       setToast({ message: error.message || "Không thể xác nhận trả thiết bị.", type: "error" });
     }
@@ -2947,7 +3461,7 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
   async function createDevice() {
     try {
       const created = await api.createDevice(deviceForm);
-      setData((current) => ({ ...current, devices: [...current.devices, created] }));
+      setData((current) => ({ ...current, devices: [created, ...current.devices] }));
       setDeviceForm({ asset_code: "", name: "", category: RESEARCH_CATEGORIES[0].value, condition: "Mới nguyên hộp", serial_number: "" });
       setDeviceModal(false);
       setToast({ message: "Đã thêm thiết bị mới vào kho.", type: "success" });
@@ -2959,7 +3473,7 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
   async function createUser(userPayload) {
     try {
       const created = await api.createUser(userPayload);
-      setData((current) => ({ ...current, users: [...current.users, created] }));
+      setData((current) => ({ ...current, users: [created, ...current.users] }));
       setToast({ message: `Đã tạo tài khoản cho ${created.full_name}`, type: "success" });
     } catch (error) {
       throw error;
@@ -3026,8 +3540,9 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
       onHandover={handoverRequest}
       onReturnDevice={returnDevice}
       onRecallDevice={recallDevice}
-      onOpenDeviceForm={() => setDeviceModal(true)} 
+      onOpenDeviceForm={() => setDeviceModal(true)}
       onDeviceStatus={updateDeviceStatus}
+      role="admin"
       onOpenEditDevice={(dev) => { setSelectedDevice(dev); setEditDeviceModal(true); }}
       onDeleteDevice={handleDeleteDevice}
       onOpenUserForm={() => setUserModal(true)}
@@ -3055,14 +3570,17 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
       <UserCreateModal open={userModal} onClose={() => setUserModal(false)} onSubmit={createUser} />
       <UserEditModal open={editUserModal} user={selectedUser} onClose={() => setEditUserModal(false)} onSave={handleUpdateUser} />
       <AdminResetPasswordModal open={resetPwdModal} user={selectedUser} onClose={() => setResetPwdModal(false)} onReset={handleResetPassword} />
+      <ConfirmReturnModal open={confirmReturnModal.open} item={confirmReturnModal.item} device={data.devices.find((d) => d.id === confirmReturnModal.item?.device_id)} onClose={() => setConfirmReturnModal({ open: false, item: null })} onSubmit={handleConfirmReturn} />
       <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
     </>
   );
 
+
+
   const pendingCount = data.requests.filter((r) => r.status === "pending").length;
   const availableCount = data.devices.filter((d) => d.status === "available").length;
 
-  const currentRole = localStorage.getItem("lab_role") || "admin";
+  const currentRole = sessionStorage.getItem("lab_role") || localStorage.getItem("lab_role") || "admin";
   const profileName = roles[currentRole]?.name || "Quản lý phòng lab";
 
   return (
@@ -3074,12 +3592,151 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
       />
       {offline && <OfflineNotice />}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <KPICard label="Tổng thiết bị" value={data.stats.devices} icon={Cpu} hint={`${availableCount} sẵn sàng`} />
         <KPICard label="Yêu cầu mượn" value={data.stats.requests} icon={Package} tone="blue" hint={`${pendingCount} chờ duyệt`} />
-        <KPICard label="Cần kiểm tra" value={data.stats.maintenance_open} icon={AlertTriangle} tone="amber" />
+        <KPICard 
+          label="Quá hạn hoàn trả" 
+          value={overdueRequests.length} 
+          icon={AlertTriangle} 
+          tone={overdueRequests.length > 0 ? "rose" : "slate"} 
+          hint={overdueRequests.length > 0 ? "Cần thu hồi ngay!" : "0 thiết bị quá hạn"} 
+        />
+        <KPICard label="Cần kiểm tra" value={data.stats.maintenance_open} icon={Wrench} tone="amber" />
         <KPICard label="Người dùng" value={data.stats.users} icon={Users} tone="green" />
       </div>
+
+      {overdueRequests.length > 0 && (
+        <div className="mt-6 rounded-2xl border-2 border-rose-500 bg-gradient-to-r from-rose-500/15 via-rose-500/5 to-transparent p-5 shadow-lg border-l-8 border-l-rose-600 animate-pulse">
+          <div className="flex items-start gap-3">
+            <div className="p-2.5 rounded-xl bg-rose-600 text-white shrink-0 animate-bounce">
+              <AlertTriangle size={24} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <h4 className="text-base font-extrabold text-rose-700 dark:text-rose-400">
+                  🚨 CẢNH BÁO QUẢN LÝ: CÓ {overdueRequests.length} THIẾT BỊ ĐANG MƯỢN ĐÃ QUÁ HẠN HOÀN TRẢ!
+                </h4>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => onNavigate?.("Yêu cầu mượn")} 
+                  className="border-rose-400 text-rose-600 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/60 font-bold text-xs"
+                >
+                  Xem danh sách chi tiết ➔
+                </Button>
+              </div>
+              <p className="text-xs text-rose-600/90 dark:text-rose-300/90 mt-1">
+                Cán bộ quản lý cần liên hệ người mượn hoặc bấm nút &quot;Thu hồi&quot; để cảnh báo yêu cầu hoàn trả thiết bị về kho lab.
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {overdueRequests.map((r) => {
+                  const dev = (data.devices || []).find((d) => d.id === r.device_id) || {};
+                  const borrower = (data.users || []).find((u) => u.id === r.user_id) || {};
+                  const diffMs = now - new Date(r.requested_to);
+                  return (
+                    <div key={r.id} className="p-3 rounded-xl bg-surface/90 border border-rose-300 dark:border-rose-900 shadow-sm flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-bold text-xs text-foreground truncate">{dev.name} ({dev.asset_code})</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                          Người mượn: <strong className="text-blue-600 dark:text-blue-400">{borrower.full_name || `@${borrower.username || r.user_id}`}</strong>
+                        </p>
+                        <p className="text-[11px] font-extrabold text-rose-600 dark:text-rose-400 mt-0.5">
+                          Quá hạn: {formatOverdueDuration(diffMs)} (Hạn: {new Date(r.requested_to).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} {new Date(r.requested_to).toLocaleDateString("vi-VN")})
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {["pending_inspection", "in_progress", "replace_partial", "replace_full"].includes(dev.status) ? (
+                          <span className="text-[11px] font-bold text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-950/60 px-2.5 py-1 rounded-lg border border-orange-300 dark:border-orange-800 flex items-center gap-1">
+                            <AlertTriangle size={12} /> Đang báo sự cố
+                          </span>
+                        ) : (
+                          <>
+                            <Button size="sm" variant="danger" onClick={() => recallDevice(r)} className="text-xs px-2.5 py-1">
+                              Thu hồi
+                            </Button>
+                            <Button size="sm" onClick={() => returnDevice(r)} className="text-xs px-2.5 py-1 bg-emerald-600 text-white hover:bg-emerald-500">
+                              Nhận trả
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* === CẢNH BÁO SỰ CỐ KHẨN CẤP === */}
+      {(() => {
+        const openIncidents = (data.maintenance || []).filter(m => m.kind === "incident" && (m.status === "open" || m.status === "in_progress"));
+        const pendingInspectionDevices = (data.devices || []).filter(d => d.status === "pending_inspection");
+        if (openIncidents.length === 0 && pendingInspectionDevices.length === 0) return null;
+        return (
+          <div className="mt-6 rounded-2xl border-2 border-orange-500 bg-gradient-to-r from-orange-500/15 via-orange-500/5 to-transparent p-5 shadow-lg border-l-8 border-l-orange-600">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-orange-600 text-white shrink-0 animate-bounce">
+                <AlertTriangle size={24} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <h4 className="text-base font-extrabold text-orange-700 dark:text-orange-400">
+                    🔧 SỰ CỐ THIẾT BỊ: CÓ {openIncidents.length} BÁO CÁO SỰ CỐ ĐANG CHỜ XỬ LÝ
+                  </h4>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => onNavigate?.("Bảo trì")} 
+                    className="border-orange-400 text-orange-600 dark:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-950/60 font-bold text-xs"
+                  >
+                    Quản lý bảo trì ➔
+                  </Button>
+                </div>
+                <p className="text-xs text-orange-600/90 dark:text-orange-300/90 mt-1">
+                  Người dùng đã báo cáo sự cố thiết bị. Kĩ thuật viên cần tiếp nhận kiểm tra và xử lý khẩn cấp.
+                </p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {openIncidents.map((m) => {
+                    const dev = (data.devices || []).find(d => d.id === m.device_id) || {};
+                    const isOpen = m.status === "open";
+                    return (
+                      <div key={m.id} className={`p-3 rounded-xl bg-surface/90 border shadow-sm ${isOpen ? "border-orange-400 dark:border-orange-800" : "border-blue-300 dark:border-blue-800"}`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-bold text-xs text-foreground truncate">{dev.name || `Thiết bị #${m.device_id}`} ({dev.asset_code || "?"})</p>
+                            <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{m.notes}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <StatusBadge status={m.status} />
+                              <StatusBadge status={dev.status || "unknown"} />
+                            </div>
+                          </div>
+                          {isOpen && (
+                            <Button 
+                              size="sm" 
+                              className="text-xs px-3 py-1.5 bg-orange-600 text-white hover:bg-orange-500 shrink-0 font-bold"
+                              onClick={async () => {
+                                try {
+                                  await api.acceptIncident(m.id);
+                                  refresh();
+                                } catch (e) { console.error(e); }
+                              }}
+                            >
+                              ✅ Tiếp nhận kiểm tra
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Bảng kiểm soát nhanh thiết bị hiện hành (Đặc tả Đề tài 23) */}
       <div className="mt-6">
@@ -3118,6 +3775,7 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
       <div className="mt-6">
         <AIChatPanel title="AI Summary" mode="summary" starter="Tôi có thể tóm tắt tình trạng thiết bị, yêu cầu và bảo trì từ dữ liệu hiện có." />
       </div>
+      <ConfirmReturnModal open={confirmReturnModal.open} item={confirmReturnModal.item} device={data.devices.find((d) => d.id === confirmReturnModal.item?.device_id)} onClose={() => setConfirmReturnModal({ open: false, item: null })} onSubmit={handleConfirmReturn} />
       <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
     </>
   );
@@ -3129,6 +3787,7 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
 function UserDashboard({ section = "Tổng quan", onNavigate }) {
   const { data, offline, setData } = useDashboardData();
   const { user } = useAuth();
+  const now = useRealtimeClock(3000);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [toast, setToast] = useState(null);
@@ -3148,8 +3807,15 @@ function UserDashboard({ section = "Tổng quan", onNavigate }) {
       return matchSearch && matchCategory;
     });
 
-  // Active loans for the current user
-  const myActiveLoans = data.requests.filter((r) => r.status === "borrowed" || r.status === "approved");
+  // Quá hạn mượn của tài khoản hiện tại
+  const myOverdueLoans = useMemo(() => {
+    return (data.requests || []).filter(
+      (r) => r.status === "borrowed" && r.requested_to && new Date(r.requested_to) < now
+    );
+  }, [data.requests, now]);
+
+  // Active loans for the current user (borrowed, approved, or waiting for lab return inspection)
+  const myActiveLoans = (data.requests || []).filter((r) => r.status === "borrowed" || r.status === "approved" || r.status === "return_pending");
 
   function borrow(device) {
     setBorrowModal({ open: true, device });
@@ -3158,7 +3824,7 @@ function UserDashboard({ section = "Tổng quan", onNavigate }) {
   async function handleConfirmBorrow(form) {
     try {
       const item = await api.borrow(borrowModal.device.id, form.purpose, form.requested_to, form.requested_from);
-      setData((current) => ({ ...current, requests: [...current.requests, item] }));
+      setData((current) => ({ ...current, requests: [item, ...current.requests] }));
       setToast({ message: "Đã gửi yêu cầu mượn thành công. Vui lòng chờ Quản lý duyệt.", type: "success" });
       setBorrowModal({ open: false, device: null });
     } catch (error) {
@@ -3194,15 +3860,18 @@ function UserDashboard({ section = "Tổng quan", onNavigate }) {
 
   async function returnBorrow(item) {
     try {
-      const updated = await api.returnRequest(item.id);
+      const updated = await api.requestReturn(item.id);
       setData((current) => ({
         ...current,
         requests: current.requests.map((row) => row.id === item.id ? updated : row),
-        devices: current.devices.map((d) => d.id === item.device_id ? { ...d, status: "available" } : d),
+        devices: current.devices.map((d) => d.id === item.device_id ? { ...d, status: "returning" } : d),
       }));
-      setToast({ message: "Đã ghi nhận hoàn trả thiết bị về kho an toàn.", type: "success" });
+      setToast({ 
+        message: "Đã gửi yêu cầu hoàn trả thiết bị! Vui lòng mang thiết bị đến bàn giao cho Cán bộ phòng lab để kiểm tra nghiệm thu.", 
+        type: "success" 
+      });
     } catch (error) {
-      setToast({ message: error.message || "Không thể ghi nhận trả thiết bị.", type: "error" });
+      setToast({ message: error.message || "Không thể gửi yêu cầu trả thiết bị.", type: "error" });
     }
   }
 
@@ -3259,7 +3928,7 @@ function UserDashboard({ section = "Tổng quan", onNavigate }) {
               className="h-10 w-36 text-xs"
             >
               {categories.map((cat) => (
-                <option value={cat} key={cat}>{cat === "all" ? "Tất cả nhóm" : cat}</option>
+                <option value={cat} key={cat}>{cat === "all" ? "Tất cả nhóm" : getCategoryLabel(cat)}</option>
               ))}
             </Select>
           </div>
@@ -3276,9 +3945,13 @@ function UserDashboard({ section = "Tổng quan", onNavigate }) {
                 <div className="grid h-10 w-10 place-items-center rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 shrink-0"><Cpu size={17} /></div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-200">{device.name}</p>
-                  <p className="mt-1 text-xs text-slate-400 truncate">{device.asset_code} • {device.category} • <StatusBadge status={device.status} /></p>
+                  <p className="mt-1 text-xs text-slate-400 truncate">{device.asset_code} • {getCategoryLabel(device.category)} • <StatusBadge status={device.status} role="user" /></p>
                 </div>
-                <Button size="sm" onClick={() => borrow(device)} className="shrink-0">Mượn</Button>
+                {device.status === "available" ? (
+                  <Button size="sm" onClick={() => borrow(device)} className="shrink-0">Mượn</Button>
+                ) : (
+                  <Button size="sm" variant="outline" disabled className="shrink-0 opacity-60 text-xs cursor-not-allowed">Đang bận</Button>
+                )}
               </div>
             ))}
           </div>
@@ -3286,10 +3959,6 @@ function UserDashboard({ section = "Tổng quan", onNavigate }) {
           <Empty text="Không tìm thấy thiết bị khả dụng phù hợp." />
         )}
       </Card>
-
-      <div className="mt-6">
-        <AuditLogViewer targetType="DEVICE" title="Nhật ký hoạt động thiết bị" />
-      </div>
 
       <BorrowModal open={borrowModal.open} device={borrowModal.device} onClose={() => setBorrowModal({ open: false, device: null })} onSubmit={handleConfirmBorrow} />
       <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
@@ -3307,11 +3976,63 @@ function UserDashboard({ section = "Tổng quan", onNavigate }) {
       {offline && <OfflineNotice />}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KPICard label="Đang giữ / Sử dụng" value={myBorrowed} icon={Package} />
+        <KPICard 
+          label="Đang giữ / Sử dụng" 
+          value={myBorrowed} 
+          icon={Package} 
+          tone={myOverdueLoans.length > 0 ? "rose" : "blue"} 
+          hint={myOverdueLoans.length > 0 ? `⚠️ ${myOverdueLoans.length} thiết bị quá hạn!` : undefined} 
+        />
         <KPICard label="Chờ duyệt" value={myPending} icon={ClipboardCheck} tone="amber" />
         <KPICard label="Đã hoàn trả" value={myReturned} icon={CheckCircle2} tone="green" />
         <KPICard label="Thiết bị khả dụng" value={data.devices.filter((item) => item.status === "available").length} icon={Cpu} tone="blue" />
       </div>
+
+      {/* Cảnh báo quá hạn khẩn cấp cho người mượn */}
+      {myOverdueLoans.length > 0 && (
+        <div className="mt-6 rounded-2xl border-2 border-rose-500 bg-gradient-to-r from-rose-500/15 via-rose-500/5 to-transparent p-5 shadow-lg border-l-8 border-l-rose-600 animate-pulse">
+          <div className="flex items-start gap-3">
+            <div className="p-2.5 rounded-xl bg-rose-600 text-white shrink-0 animate-bounce">
+              <AlertTriangle size={24} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-base font-extrabold text-rose-700 dark:text-rose-400 flex items-center gap-2">
+                ⚠️ CẢNH BÁO QUÁ HẠN: BẠN CÓ {myOverdueLoans.length} THIẾT BỊ ĐÃ QUÁ THỜI GIAN HOÀN TRẢ!
+              </h4>
+              <p className="text-xs text-rose-600/90 dark:text-rose-300/90 mt-1">
+                Quy chế phòng lab yêu cầu hoàn trả thiết bị đúng hạn để không ảnh hưởng lịch thực hành của sinh viên và nhóm nghiên cứu khác. Vui lòng mang thiết bị đến bàn giao cho Cán bộ phòng lab và nhấn &quot;Báo hoàn trả ngay&quot;.
+              </p>
+              <div className="mt-3 space-y-2">
+                {myOverdueLoans.map((item) => {
+                  const dev = data.devices.find((d) => d.id === item.device_id) || {};
+                  const diffMs = now - new Date(item.requested_to);
+                  return (
+                    <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-surface/90 border border-rose-300 dark:border-rose-900 shadow-sm">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-foreground">{dev.name}</span>
+                          <span className="font-mono text-xs px-2 py-0.5 rounded bg-surface-elevated border text-muted-foreground">{dev.asset_code}</span>
+                        </div>
+                        <div className="text-xs text-rose-600 dark:text-rose-400 font-semibold mt-0.5">
+                          Hạn trả: {new Date(item.requested_to).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} {new Date(item.requested_to).toLocaleDateString("vi-VN")} • <span className="font-black text-rose-700 dark:text-rose-300">ĐÃ QUÁ HẠN {formatOverdueDuration(diffMs).toUpperCase()}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" onClick={() => returnBorrow(item)} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold gap-1.5 shadow">
+                          <RotateCcw size={14} /> Báo hoàn trả ngay
+                        </Button>
+                        <Button size="sm" variant="danger" onClick={() => setIncidentModal({ open: true, item })}>
+                          <AlertTriangle size={14} /> Báo sự cố
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Card className="mt-6 p-5 sm:p-6 border-2 border-blue-500/30 dark:border-blue-500/20 overflow-hidden">
         <div className="flex items-center justify-between gap-2 mb-4">
@@ -3328,14 +4049,31 @@ function UserDashboard({ section = "Tổng quan", onNavigate }) {
           <div className="divide-y divide-border">
             {myActiveLoans.map((item) => {
               const dev = data.devices.find((d) => d.id === item.device_id) || {};
+              const isOverdue = item.status === "borrowed" && item.requested_to && new Date(item.requested_to) < now;
+              const diffMs = isOverdue ? now - new Date(item.requested_to) : 0;
               return (
-                <div key={item.id} className="py-3.5 first:pt-0 last:pb-0 flex flex-wrap items-center justify-between gap-3">
+                <div key={item.id} className={`py-3.5 first:pt-0 last:pb-0 flex flex-wrap items-center justify-between gap-3 rounded-xl transition ${isOverdue ? "bg-rose-50/70 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-900 p-3 my-1" : ""}`}>
                   <div className="min-w-0 flex-1">
-                    <p className="font-bold text-sm text-foreground truncate">
-                      {dev.name || `Thiết bị #${item.device_id}`}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-bold text-sm text-foreground truncate">
+                        {dev.name || `Thiết bị #${item.device_id}`}
+                      </p>
+                      {dev.asset_code && (
+                        <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-surface-elevated text-muted-foreground border border-border">
+                          {dev.asset_code}
+                        </span>
+                      )}
+                      {isOverdue && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-rose-600 text-white px-2 py-0.5 text-[10px] font-extrabold shadow-sm animate-pulse">
+                          <AlertTriangle size={11} /> QUÁ HẠN {formatOverdueDuration(diffMs).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       Mã: {dev.asset_code || "—"} • Mục đích: {item.purpose}
+                      {item.requested_to && (
+                        <> • Hạn trả: <strong className={isOverdue ? "text-rose-600 dark:text-rose-400 font-bold font-mono" : "text-blue-600 dark:text-blue-400 font-mono"}>{new Date(item.requested_to).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} {new Date(item.requested_to).toLocaleDateString("vi-VN")}</strong></>
+                      )}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -3347,13 +4085,18 @@ function UserDashboard({ section = "Tổng quan", onNavigate }) {
                     )}
                     {item.status === "borrowed" && (
                       <>
-                        <Button size="sm" variant="outline" onClick={() => returnBorrow(item)} className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/60" title="Bấm để xác nhận hoàn trả thiết bị về phòng thí nghiệm">
-                          <RotateCcw size={14} /> Hoàn trả thiết bị
+                        <Button size="sm" variant={isOverdue ? "default" : "outline"} onClick={() => returnBorrow(item)} className={isOverdue ? "bg-emerald-600 hover:bg-emerald-500 text-white font-bold gap-1.5 shadow" : "border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 gap-1.5"} title="Bấm để gửi yêu cầu hoàn trả thiết bị về phòng thí nghiệm">
+                          <RotateCcw size={14} /> Báo hoàn trả
                         </Button>
                         <Button size="sm" variant="danger" onClick={() => setIncidentModal({ open: true, item })} title="Báo cáo sự cố khi thiết bị gặp trục trặc, lỗi, chập cháy">
                           <AlertTriangle size={14} /> Báo sự cố
                         </Button>
                       </>
+                    )}
+                    {item.status === "return_pending" && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                        <RotateCcw size={12} className="animate-spin" /> Chờ Lab Manager nhận trả
+                      </span>
                     )}
                   </div>
                 </div>
@@ -3381,83 +4124,152 @@ function UserDashboard({ section = "Tổng quan", onNavigate }) {
 /* Technician dashboard                                                */
 /* ------------------------------------------------------------------ */
 
-function MaintenanceModal({ open, mode, item, devices, onClose, onSubmit, onDelete }) {
-  const [form, setForm] = useState({ device_id: "", notes: "", status: "open", kind: "inspection" });
+function MaintenanceModal({ open, mode, item, devices = [], onClose, onSubmit, onDelete }) {
+  const currentDevice = devices.find(d => d.id === (item?.device_id || devices[0]?.id));
+  const [form, setForm] = useState({ 
+    device_id: "", 
+    notes: "", 
+    status: "open", 
+    kind: "inspection",
+    device_condition: ""
+  });
+  
+  const prevOpenRef = useRef(false);
+  const prevItemIdRef = useRef(null);
   
   useEffect(() => {
-    if (open) {
+    const isNewlyOpened = open && !prevOpenRef.current;
+    const isItemChanged = open && (item?.id !== prevItemIdRef.current || mode !== prevItemIdRef.current_mode);
+
+    if (isNewlyOpened || isItemChanged) {
       if (mode === "create") {
-        setForm({ device_id: devices[0]?.id || "", notes: "", status: "open", kind: "inspection" });
+        const firstDev = devices.find(d => d.id === (item?.device_id || devices[0]?.id));
+        setForm({ 
+          device_id: item?.device_id || devices[0]?.id || "", 
+          notes: item?.notes || "", 
+          status: item?.status || "open", 
+          kind: item?.kind || "inspection",
+          device_condition: firstDev?.condition || "Mới nguyên hộp"
+        });
       } else if (item) {
-        setForm({ device_id: item.device_id, notes: item.notes || "", status: item.status, kind: item.kind });
+        const dev = devices.find(d => d.id === item.device_id);
+        setForm({ 
+          device_id: item.device_id, 
+          notes: item.notes || "", 
+          status: item.status || "open", 
+          kind: item.kind || "inspection",
+          device_condition: dev?.condition || "Đã qua sử dụng - Hoạt động tốt"
+        });
       }
     }
-  }, [open, mode, item, devices]);
+    prevOpenRef.current = open;
+    prevItemIdRef.current = item?.id;
+    prevItemIdRef.current_mode = mode;
+  }, [open, mode, item?.id]);
 
   if (!open) return null;
+
+  const targetDev = devices.find(d => d.id === Number(form.device_id)) || currentDevice;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md rounded-2xl bg-surface p-6 shadow-2xl">
+      <div className="relative w-full max-w-lg rounded-2xl bg-surface border border-border p-6 shadow-2xl text-foreground">
         <h3 className="mb-4 text-lg font-bold text-foreground">
-          {mode === "create" ? "Thêm mới / Lên lịch bảo trì" : "Cập nhật công việc bảo trì"}
+          {mode === "create" ? "Thêm mới / Lên lịch bảo trì" : "Cập nhật kết quả kiểm tra & Bảo trì"}
         </h3>
-        <div className="space-y-4">
+        <div className="space-y-4 text-xs">
           <div>
-            <label className="mb-1 block text-sm font-semibold text-foreground">Thiết bị</label>
+            <label className="mb-1.5 block font-semibold text-foreground">Thiết bị cần xử lý</label>
             <select
               value={form.device_id}
-              onChange={(e) => setForm({ ...form, device_id: e.target.value })}
-              className="w-full rounded-lg border border-input bg-surface-elevated p-2 text-sm focus:border-blue-500 focus:outline-none"
+              onChange={(e) => {
+                const devId = e.target.value;
+                const d = devices.find(x => x.id === Number(devId));
+                setForm({ ...form, device_id: devId, device_condition: d?.condition || form.device_condition });
+              }}
+              className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-xs text-foreground focus:border-blue-500 focus:outline-none"
               disabled={mode === "update"}
             >
-              {devices.map(d => <option key={d.id} value={d.id}>#{d.id} - {d.name}</option>)}
+              {devices.map(d => (
+                <option key={d.id} value={d.id} className="bg-surface text-foreground">
+                  #{d.id} - {d.name} ({d.asset_code}) [Hiện tại: {d.status}]
+                </option>
+              ))}
             </select>
+            {targetDev && (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Tình trạng hiện tại của máy: <strong className="text-foreground">{targetDev.condition || "Bình thường"}</strong> • Trạng thái kho: <strong className="text-blue-600 dark:text-blue-400">{statusMeta[targetDev.status]?.label || targetDev.status}</strong>
+              </p>
+            )}
           </div>
+
           <div>
-            <label className="mb-1 block text-sm font-semibold text-foreground">Trạng thái / Tác vụ</label>
+            <label className="mb-1.5 block font-semibold text-foreground">1. Kết quả kiểm tra / Trạng thái thiết bị</label>
             <select
               value={form.status}
-              onChange={(e) => setForm({ ...form, status: e.target.value })}
-              className="w-full rounded-lg border border-input bg-surface-elevated p-2 text-sm focus:border-blue-500 focus:outline-none"
+              onChange={(e) => {
+                const nextStatus = e.target.value;
+                if (nextStatus === "in_progress" || nextStatus === "open") {
+                  setForm({ ...form, status: nextStatus, device_condition: "" });
+                } else {
+                  setForm({ ...form, status: nextStatus });
+                }
+              }}
+              className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-xs font-semibold text-foreground focus:border-blue-500 focus:outline-none"
             >
-              <option value="open">Lên lịch bảo trì (Đang mở)</option>
-              <option value="replace_full">Phải thay thế mới</option>
-              <option value="replace_partial">Thay thế một phần</option>
-              <option value="completed">Đã hoàn thành</option>
+              <option value="in_progress" className="bg-surface text-foreground">🔄 Đang tiến hành kiểm tra / Đang xử lý</option>
+              <option value="completed" className="bg-surface text-foreground">✅ Hoàn thành / Bình thường (Đưa máy về kho Sẵn sàng)</option>
+              <option value="replace_partial" className="bg-surface text-foreground">⚠️ Sửa chữa 1 phần / Thay linh kiện phụ trợ</option>
+              <option value="replace_full" className="bg-surface text-foreground">❌ Phải thay thế mới / Hỏng nặng không thể phục hồi</option>
+              <option value="open" className="bg-surface text-foreground">📋 Chờ tiếp nhận / Lên lịch bảo trì mới</option>
             </select>
           </div>
-          {mode === "update" && (
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-foreground">Đánh giá tình trạng thiết bị</label>
-              <select
-                value={form.device_condition || ""}
-                onChange={(e) => setForm({ ...form, device_condition: e.target.value })}
-                className="w-full rounded-lg border border-input bg-surface-elevated p-2 text-sm focus:border-blue-500 focus:outline-none"
-              >
-                <option value="">-- Giữ nguyên tình trạng cũ --</option>
-                {DEVICE_CONDITIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-              </select>
-            </div>
-          )}
+
           <div>
-            <label className="mb-1 block text-sm font-semibold text-foreground">Ghi chú</label>
+            <label className="mb-1.5 block font-semibold text-foreground">2. Đánh giá tình trạng vật lý của thiết bị</label>
+            <select
+              value={form.device_condition || ""}
+              onChange={(e) => setForm({ ...form, device_condition: e.target.value })}
+              className={`w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-xs font-semibold text-foreground focus:border-blue-500 focus:outline-none ${
+                (form.status === "in_progress" || form.status === "open") ? "opacity-60 cursor-not-allowed" : ""
+              }`}
+              disabled={form.status === "in_progress" || form.status === "open"}
+            >
+              <option value="">--- Chưa đánh giá / Đang tiến hành kiểm tra ---</option>
+              {DEVICE_CONDITIONS.map(c => (
+                <option key={c.value} value={c.value} className="bg-surface text-foreground">
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              { (form.status === "in_progress" || form.status === "open") 
+                ? "Mục này tạm khóa vì thiết bị chưa có kết quả kiểm tra cuối cùng."
+                : "Bạn có thể tự do bấm chọn bất kỳ tình trạng vật lý nào ở trên để cập nhật vào hồ sơ thiết bị." }
+            </p>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block font-semibold text-foreground">3. Ghi chú kỹ thuật chi tiết</label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              className="w-full rounded-lg border border-input bg-surface-elevated p-2 text-sm focus:border-blue-500 focus:outline-none"
+              className="w-full rounded-xl border border-border bg-surface p-3 text-xs text-foreground focus:border-blue-500 focus:outline-none"
               rows={3}
-              placeholder="Nhập ghi chú chi tiết..."
+              placeholder="Ghi rõ hiện tượng lỗi, linh kiện đã thay thế, thông số kiểm định hoặc khuyến cáo sử dụng..."
             />
           </div>
-          <div className="mt-6 flex justify-between gap-3">
+
+          <div className="mt-6 flex items-center justify-between gap-3 pt-2 border-t border-border">
             {mode === "update" ? (
-              <Button size="sm" variant="danger" onClick={() => onDelete(item.id)}>Xóa</Button>
+              <Button size="sm" variant="danger" onClick={() => onDelete(item.id)}>Xóa phiếu</Button>
             ) : <div />}
-            <div className="flex gap-3">
-              <Button size="sm" variant="outline" onClick={onClose}>Hủy</Button>
-              <Button size="sm" onClick={() => onSubmit(form)}>Lưu</Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={onClose}>Đóng</Button>
+              <Button size="sm" onClick={() => onSubmit(form)} className="bg-blue-600 hover:bg-blue-500 text-white font-bold">
+                Lưu & Áp dụng
+              </Button>
             </div>
           </div>
         </div>
@@ -3467,7 +4279,7 @@ function MaintenanceModal({ open, mode, item, devices, onClose, onSubmit, onDele
 }
 
 function TechnicianDashboard({ section = "Tổng quan", onNavigate }) {
-  const { data, offline, setData } = useDashboardData();
+  const { data, offline, setData, refresh } = useDashboardData();
   const { user } = useAuth();
   const [toast, setToast] = useState(null);
   const [borrowModal, setBorrowModal] = useState({ open: false, device: null });
@@ -3483,8 +4295,7 @@ function TechnicianDashboard({ section = "Tổng quan", onNavigate }) {
         await api.updateMaintenance(modal.item.id, { status: form.status, notes: form.notes, device_condition: form.device_condition || undefined });
         setToast({ message: "Đã cập nhật bảo trì", type: "success" });
       }
-      const [devices, maintenance] = await Promise.all([api.devices(), api.maintenance()]);
-      setData(current => ({ ...current, devices, maintenance }));
+      refresh();
       setModal({ open: false, mode: 'create', item: null });
     } catch {
       setToast({ message: "Không thể cập nhật qua API", type: "error" });
@@ -3503,11 +4314,32 @@ function TechnicianDashboard({ section = "Tổng quan", onNavigate }) {
     }
   }
 
+  async function updateDeviceStatus(item, status) {
+    try {
+      const updated = await api.updateDeviceStatus(item.id, status);
+      setData((current) => ({ ...current, devices: current.devices.map((row) => row.id === item.id ? updated : row) }));
+      setToast({ message: `Đã cập nhật trạng thái thiết bị ${item.name}`, type: "success" });
+    } catch (error) {
+      setToast({ message: error.message || "Không thể cập nhật thiết bị.", type: "error" });
+    }
+  }
+
   if (section !== "Tổng quan") return (
     <>
       <PageHeader eyebrow="Khu vực kỹ thuật" title={section} description="Theo dõi và xử lý các công việc bảo trì." />
       {offline && <OfflineNotice />}
-      <WorkspaceSection section={section} role="technician" data={data} onComplete={(item) => setModal({ open: true, mode: 'update', item })} onSchedule={() => setModal({ open: true, mode: 'create', item: null })} onDownloadReportTXT={downloadReportTXT} onPrintReportPDF={printReportPDF} onNavigate={onNavigate} />
+      <WorkspaceSection 
+        section={section} 
+        role="technician" 
+        data={data} 
+        onComplete={(item) => setModal({ open: true, mode: 'update', item })} 
+        onSchedule={() => setModal({ open: true, mode: 'create', item: null })} 
+        onDownloadReportTXT={downloadReportTXT} 
+        onPrintReportPDF={printReportPDF} 
+        onNavigate={onNavigate} 
+        onUpdateDeviceStatus={updateDeviceStatus}
+        onOpenMaintenanceForDevice={(device) => setModal({ open: true, mode: 'create', item: { device_id: device.id, status: 'in_progress', kind: 'inspection', notes: '' } })}
+      />
       <MaintenanceModal open={modal.open} mode={modal.mode} item={modal.item} devices={data.devices} onClose={() => setModal({ open: false, mode: 'create', item: null })} onSubmit={handleSubmit} onDelete={handleDelete} />
     </>
   );
@@ -3527,6 +4359,64 @@ function TechnicianDashboard({ section = "Tổng quan", onNavigate }) {
       />
       {offline && <OfflineNotice />}
 
+      {/* === CẢNH BÁO SỰ CỐ KHẨN CẤP CHO KĨ THUẬT VIÊN === */}
+      {(() => {
+        const openIncidents = (data.maintenance || []).filter(m => m.kind === "incident" && (m.status === "open" || m.status === "in_progress"));
+        if (openIncidents.length === 0) return null;
+        return (
+          <div className="mb-6 rounded-2xl border-2 border-orange-500 bg-gradient-to-r from-orange-500/15 via-orange-500/5 to-transparent p-5 shadow-lg border-l-8 border-l-orange-600 animate-pulse">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-orange-600 text-white shrink-0 animate-bounce">
+                <AlertTriangle size={24} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-base font-extrabold text-orange-700 dark:text-orange-400">
+                  🔧 CÓ {openIncidents.length} SỰ CỐ THIẾT BỊ CẦN TIẾP NHẬN KIỂM TRA NGAY!
+                </h4>
+                <p className="text-xs text-orange-600/90 dark:text-orange-300/90 mt-1">
+                  Người dùng đã báo cáo sự cố. Vui lòng bấm "Tiếp nhận kiểm tra" để chuyển thiết bị sang trạng thái bảo trì và bắt đầu xử lý.
+                </p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {openIncidents.map((m) => {
+                    const dev = (data.devices || []).find(d => d.id === m.device_id) || {};
+                    const isOpen = m.status === "open";
+                    return (
+                      <div key={m.id} className={`p-3 rounded-xl bg-surface/90 border shadow-sm ${isOpen ? "border-orange-400 dark:border-orange-800" : "border-blue-300 dark:border-blue-800"}`}>
+                        <div className="min-w-0">
+                          <p className="font-bold text-xs text-foreground truncate">{dev.name || `Thiết bị #${m.device_id}`} ({dev.asset_code || "?"})</p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{m.notes}</p>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <StatusBadge status={m.status} />
+                            <StatusBadge status={dev.status || "unknown"} />
+                          </div>
+                        </div>
+                        {isOpen && (
+                          <Button 
+                            size="sm" 
+                            className="mt-2 w-full text-xs py-1.5 bg-orange-600 text-white hover:bg-orange-500 font-bold"
+                            onClick={async () => {
+                              try {
+                                await api.acceptIncident(m.id);
+                                refresh();
+                                setToast({ message: `Đã tiếp nhận sự cố thiết bị ${dev.name || m.device_id}`, type: "success" });
+                              } catch (e) { 
+                                setToast({ message: "Lỗi khi tiếp nhận sự cố", type: "error" });
+                              }
+                            }}
+                          >
+                            ✅ Tiếp nhận kiểm tra
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KPICard label="Đang bảo trì" value={openItems.length} icon={Wrench} tone="blue" />
         <KPICard label="Thay thế 1 phần" value={replacePartialItems.length} icon={Wrench} tone="amber" />
@@ -3539,18 +4429,36 @@ function TechnicianDashboard({ section = "Tổng quan", onNavigate }) {
           <SectionTitle title="Danh sách công việc cần làm (Chỉ xem / Cập nhật nhanh)" />
         </div>
         {openItems.length ? (
-          openItems.map((item) => (
+          openItems.map((item) => {
+            const dev = data.devices.find((d) => d.id === item.device_id) || {};
+            const devName = dev.name ? `${dev.name} (${dev.asset_code})` : `Thiết bị #${item.device_id}`;
+            const kindLabel = item.kind === "incident" ? "Báo cáo sự cố" : (item.kind === "inspection" ? "Kiểm tra định kỳ" : item.kind);
+            return (
             <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 py-4 last:border-0 dark:border-slate-800 min-w-0" key={item.id}>
               <div className="grid h-9 w-9 place-items-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 shrink-0"><Settings2 size={17} /></div>
-              <span className="flex-1 text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">Thiết bị #{item.device_id} • {item.kind}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{devName} • {kindLabel}</p>
+                {item.notes && <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{item.notes}</p>}
+              </div>
               <StatusBadge status={item.status} />
               <Button size="sm" variant="outline" onClick={() => setModal({ open: true, mode: 'update', item })} className="shrink-0">Cập nhật</Button>
             </div>
-          ))
+            );
+          })
         ) : (
           <Empty text="Không có công việc bảo trì từ API." />
         )}
       </Card>
+
+      {/* Bảng kiểm soát nhanh kho thiết bị cho Kỹ thuật viên */}
+      <div className="mt-6">
+        <EquipmentQuickControlBoard 
+          devices={data.devices} 
+          onUpdateStatus={updateDeviceStatus} 
+          onNavigate={onNavigate} 
+          role="technician"
+        />
+      </div>
 
       <div className="mt-6">
         <AIChatPanel title="AI Inspection Alert" mode="inspection_alert" starter="Bạn có thể hỏi về đề xuất kiểm tra. Tôi sẽ nêu rõ giới hạn nếu dữ liệu chưa đủ." />
@@ -3567,7 +4475,7 @@ function TechnicianDashboard({ section = "Tổng quan", onNavigate }) {
 /* ------------------------------------------------------------------ */
 function RequestList({ items, devices = [], users = [], onApprove, onReject, onHandover, onReturn, onRecall, role = "user" }) {
   const isManager = role === "admin" || role === "technician";
-  const now = new Date();
+  const now = useRealtimeClock(3000);
 
   return (
     <div className="space-y-3">
@@ -3578,12 +4486,11 @@ function RequestList({ items, devices = [], users = [], onApprove, onReject, onH
         let overdueBadge = null;
         if (isOverdue) {
           const diffMs = now - new Date(item.requested_to);
-          const diffHours = Math.round(diffMs / (1000 * 60 * 60));
-          const diffDays = Math.floor(diffHours / 24);
-          const text = diffDays > 0 ? `QUÁ HẠN ${diffDays} NGÀY` : `QUÁ HẠN ${diffHours} GIỜ`;
+          const text = formatOverdueDuration(diffMs);
           overdueBadge = (
-            <span className="inline-flex items-center gap-1 rounded-md bg-rose-600 text-white px-2 py-0.5 text-[10px] font-extrabold shadow-sm animate-pulse">
-              <AlertTriangle size={11} /> {text}
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 text-white px-2.5 py-1 text-[11px] font-black shadow-md animate-pulse border border-rose-400">
+              <AlertTriangle size={12} className="shrink-0 text-white" />
+              QUÁ HẠN {text.toUpperCase()}
             </span>
           );
         }
@@ -3601,7 +4508,7 @@ function RequestList({ items, devices = [], users = [], onApprove, onReject, onH
         }) : null;
 
         return (
-          <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border p-4 min-w-0 transition ${isOverdue ? "border-rose-300 dark:border-rose-900 bg-rose-50/30 dark:bg-rose-950/20" : "border-border bg-surface"}`} key={item.id}>
+          <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border p-4 min-w-0 transition ${isOverdue ? "border-rose-400 dark:border-rose-700 bg-rose-50/50 dark:bg-rose-950/30 ring-1 ring-rose-500/30 shadow-md" : "border-border bg-surface"}`} key={item.id}>
             <div className="flex items-start gap-3.5 min-w-0 flex-1">
               <div className={`grid h-11 w-11 place-items-center rounded-xl shrink-0 mt-0.5 ${isOverdue ? "bg-rose-100 text-rose-600 dark:bg-rose-900/60 dark:text-rose-400" : "bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400"}`}>
                 <ClipboardCheck size={20} />
@@ -3646,7 +4553,12 @@ function RequestList({ items, devices = [], users = [], onApprove, onReject, onH
                   )}
                   {dueStr && (
                     <span className="text-muted-foreground">
-                      Hạn trả: <strong className="text-blue-600 dark:text-blue-400">{dueStr}</strong>
+                      Hạn trả: <strong className={isOverdue ? "text-rose-600 dark:text-rose-400 font-bold" : "text-blue-600 dark:text-blue-400"}>{dueStr}</strong>
+                      {isOverdue && (
+                        <span className="ml-1.5 text-rose-600 dark:text-rose-400 font-black">
+                          (Đã quá hạn {formatOverdueDuration(now - new Date(item.requested_to))})
+                        </span>
+                      )}
                     </span>
                   )}
                 </div>
@@ -3655,38 +4567,63 @@ function RequestList({ items, devices = [], users = [], onApprove, onReject, onH
 
           <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
             {/* Action buttons matching exact business states */}
-            {item.status === "pending" && onApprove && (
-              <Button size="sm" onClick={() => onApprove(item)} className="shrink-0">Duyệt</Button>
-            )}
-            {item.status === "pending" && onReject && (
-              <Button size="sm" variant="danger" onClick={() => onReject(item)} className="shrink-0">Từ chối</Button>
-            )}
-            {item.status === "approved" && onHandover && (
-              <Button size="sm" onClick={() => onHandover(item)} className="shrink-0 bg-blue-600 text-white hover:bg-blue-500">
-                <CheckCheck size={14} /> Bàn giao máy
-              </Button>
-            )}
-            {item.status === "borrowed" && !isManager && onReturn && (
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => onReturn(item)} 
-                className="shrink-0 border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/60"
-                title="Bấm để xác nhận hoàn trả thiết bị về phòng thí nghiệm"
-              >
-                <RotateCcw size={14} /> Hoàn trả thiết bị
-              </Button>
-            )}
-            {item.status === "borrowed" && isManager && onReturn && (
-              <Button 
-                size="sm" 
-                onClick={() => onReturn(item)} 
-                className="shrink-0 bg-emerald-600 text-white hover:bg-emerald-500 shadow-sm"
-                title="Quản lý xác nhận nhận lại và kiểm tra tình trạng máy"
-              >
-                <CheckCircle2 size={14} /> Xác nhận nhận trả & Kiểm tra
-              </Button>
-            )}
+            {(() => {
+              const hasIncident = dev && ["pending_inspection", "in_progress", "replace_partial", "replace_full"].includes(dev.status);
+
+              return (
+                <>
+                  {item.status === "pending" && onApprove && (
+                    <Button size="sm" onClick={() => onApprove(item)} className="shrink-0">Duyệt</Button>
+                  )}
+                  {item.status === "pending" && onReject && (
+                    <Button size="sm" variant="danger" onClick={() => onReject(item)} className="shrink-0">Từ chối</Button>
+                  )}
+                  {item.status === "approved" && onHandover && (
+                    <Button size="sm" onClick={() => onHandover(item)} className="shrink-0 bg-blue-600 text-white hover:bg-blue-500">
+                      <CheckCheck size={14} /> Bàn giao máy
+                    </Button>
+                  )}
+                  {item.status === "borrowed" && !isManager && onReturn && (
+                    hasIncident ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-100 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300 font-bold text-xs border border-orange-300 dark:border-orange-800">
+                        <AlertTriangle size={13} className="text-orange-600" /> Đã báo sự cố (Chờ KTV)
+                      </span>
+                    ) : (
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => onReturn(item)} 
+                        className="shrink-0 border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 gap-1.5"
+                        title="Bấm để gửi yêu cầu hoàn trả thiết bị về phòng thí nghiệm"
+                      >
+                        <RotateCcw size={14} /> Báo hoàn trả thiết bị
+                      </Button>
+                    )
+                  )}
+                  {item.status === "return_pending" && !isManager && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 font-semibold text-xs border border-amber-200 dark:border-amber-800">
+                      <RotateCcw size={13} className="animate-spin" /> Chờ Lab Manager kiểm tra & nhận trả
+                    </span>
+                  )}
+                  {(item.status === "return_pending" || item.status === "borrowed") && isManager && onReturn && (
+                    hasIncident ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-100 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300 font-bold text-xs border border-orange-300 dark:border-orange-800">
+                        <AlertTriangle size={13} className="text-orange-600" /> Đang có sự cố (Chờ KTV)
+                      </span>
+                    ) : (
+                      <Button 
+                        size="sm" 
+                        onClick={() => onReturn(item)} 
+                        className="shrink-0 bg-emerald-600 text-white hover:bg-emerald-500 shadow-sm gap-1.5"
+                        title="Kiểm tra tình trạng thiết bị và xác nhận hoàn trả vào kho"
+                      >
+                        <CheckCircle2 size={14} /> Kiểm tra & Xác nhận hoàn trả
+                      </Button>
+                    )
+                  )}
+                </>
+              );
+            })()}
             {item.status === "borrowed" && isManager && onRecall && (
               <Button 
                 size="sm" 

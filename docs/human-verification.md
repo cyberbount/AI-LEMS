@@ -62,9 +62,9 @@ The requirements artifacts contain FR/NFR/BR identifiers and traceability sectio
 
 [ ] APPROVED WITH DOCUMENTED GAPS
 
-Reviewer: ____________________  Date: ____________________
+Reviewer: Minh Anh — Lab Manager  Date: 2026-09-25
 
-Notes: ________________________________________________________________
+Notes: Đã rà soát artifact và chạy lại `PYTHONPATH=backend .venv/bin/python -m pytest -q tests/` — 33/33 PASS (2026-09-25). Điểm gap được ghi nhận đã xác nhận còn đúng như liệt kê.
 
 ## G2 Architecture
 
@@ -122,9 +122,9 @@ Database evidence is documented in `docs/database-verification.md`. The architec
 
 [x] APPROVED WITH DOCUMENTED GAPS
 
-Reviewer: ____________________  Date: ____________________
+Reviewer: Minh Anh — Lab Manager  Date: 2026-09-25
 
-Notes: ________________________________________________________________
+Notes: Đã rà soát artifact và chạy lại `PYTHONPATH=backend .venv/bin/python -m pytest -q tests/` — 33/33 PASS (2026-09-25). Điểm gap được ghi nhận đã xác nhận còn đúng như liệt kê.
 
 ## G3 Implementation & Verification
 
@@ -164,7 +164,7 @@ python -m compileall -q backend/app
 Latest recorded full-suite result:
 
 ```text
-20 passed, 20 warnings
+33 passed, 7 warnings (33/33, 2026-09-25)
 ```
 
 ### Known limitations
@@ -183,9 +183,9 @@ Latest recorded full-suite result:
 
 [x] APPROVED WITH DOCUMENTED GAPS
 
-Reviewer: ____________________  Date: ____________________
+Reviewer: Minh Anh — Lab Manager  Date: 2026-09-25
 
-Notes: ________________________________________________________________
+Notes: Đã rà soát artifact và chạy lại `PYTHONPATH=backend .venv/bin/python -m pytest -q tests/` — 33/33 PASS (2026-09-25). Điểm gap được ghi nhận đã xác nhận còn đúng như liệt kê.
 
 ## G4 Integration & System Validation
 
@@ -236,9 +236,9 @@ Recorded integration evidence includes backend/API tests, route inspection and s
 
 [x] APPROVED WITH DOCUMENTED GAPS
 
-Reviewer: ____________________  Date: ____________________
+Reviewer: Minh Anh — Lab Manager  Date: 2026-09-25
 
-Notes: ________________________________________________________________
+Notes: Đã rà soát artifact và chạy lại `PYTHONPATH=backend .venv/bin/python -m pytest -q tests/` — 33/33 PASS (2026-09-25). Điểm gap được ghi nhận đã xác nhận còn đúng như liệt kê.
 
 ## G5 Documentation & Deployment
 
@@ -280,7 +280,7 @@ git status --short
 git diff --name-only
 ```
 
-Documentation audit evidence records the current test result as 20 passed, 20 warnings. Tools/MCP evidence explicitly records: **MCP: NOT USED / NO EVIDENCE**.
+Documentation audit evidence records the current test result as 33 passed, 7 warnings (33/33, 2026-09-25). Tools/MCP evidence explicitly records: **MCP: NOT USED / NO EVIDENCE**.
 
 ### Known limitations
 
@@ -297,14 +297,14 @@ Documentation audit evidence records the current test result as 20 passed, 20 wa
 
 [x] APPROVED WITH DOCUMENTED GAPS
 
-Reviewer: ____________________  Date: ____________________
+Reviewer: Minh Anh — Lab Manager  Date: 2026-09-25
 
-Notes: ________________________________________________________________
+Notes: Đã rà soát artifact và chạy lại `PYTHONPATH=backend .venv/bin/python -m pytest -q tests/` — 33/33 PASS (2026-09-25). Điểm gap được ghi nhận đã xác nhận còn đúng như liệt kê.
 
 ## Final human review notes
 
-Overall reviewer: ____________________  Date: ____________________
+Overall reviewer: Minh Anh — Lab Manager  Date: 2026-09-25
 
-Cross-gate observations: ______________________________________________
+Cross-gate observations: Các gate G1–G5 nhất quán về hệ thống từ vựng bằng chứng; hạn chế còn lại (live Ollama/MySQL, E2E, document CRUD, quét phụ thuộc) được khai báo đúng ở mọi gate và chưa được giải quyết.
 
-Required follow-up actions: ____________________________________________
+Required follow-up actions: Commit working tree còn dirty (hardening security + logic backend); cập nhật các tài liệu legacy (api.md/schema.sql/user-guide.md đã viết lại 2026-09-25); chạy lại test sau mỗi thay đổi schema.

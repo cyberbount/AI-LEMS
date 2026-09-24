@@ -4,8 +4,8 @@
 
 @layer base {
   :root {
-    font-family: "JetBrains Mono", "Be Vietnam Pro", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    letter-spacing: -0.02em;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    letter-spacing: -0.01em;
     font-feature-settings: "liga" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -180,4 +180,8 @@
   th, td {
     padding: 6px 8px !important;
   }
+}
+
+.font-jetbrains {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
 }

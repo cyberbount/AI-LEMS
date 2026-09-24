@@ -8,6 +8,7 @@ from app.config import get_settings
 from app.deps import Db, current_user
 from app.models import User
 from app.schemas import GoogleLoginRequest, PasswordChange, Token, UserCreate, UserOut
+from app.services.audit_service import record_audit_log
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -28,6 +29,16 @@ def register(data: UserCreate, db: Db):
     db.add(user)
     db.commit()
     db.refresh(user)
+    record_audit_log(
+        db=db,
+        user=user,
+        action="REGISTER",
+        target_type="USER",
+        target_id=user.id,
+        target_name=user.username,
+        details=f"Đăng ký tài khoản người dùng mới: {user.username} ({user.email}).",
+    )
+    db.commit()
     return user
 
 @router.post("/login", response_model=Token)
@@ -40,6 +51,17 @@ def login(form: Annotated[OAuth2PasswordRequestForm, Depends()], db: Db):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Người quản lý phòng lab.")
     if not verify_password(form.password, user.password_hash):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Tên đăng nhập hoặc mật khẩu không chính xác")
+
+    record_audit_log(
+        db=db,
+        user=user,
+        action="LOGIN",
+        target_type="USER",
+        target_id=user.id,
+        target_name=user.username,
+        details=f"Đăng nhập hệ thống thành công (Vai trò: {user.role}).",
+    )
+    db.commit()
     return Token(access_token=create_access_token(user.username, user.role))
 
 @router.post("/google", response_model=Token)
@@ -86,6 +108,16 @@ async def google_login(payload: GoogleLoginRequest, db: Db):
             f"Tài khoản {google_email} đã bị vô hiệu hóa. Vui lòng liên hệ Người quản lý phòng lab."
         )
 
+    record_audit_log(
+        db=db,
+        user=user,
+        action="LOGIN_GOOGLE",
+        target_type="USER",
+        target_id=user.id,
+        target_name=user.username,
+        details=f"Đăng nhập qua tài khoản Google OAuth: {google_email}.",
+    )
+    db.commit()
     return Token(access_token=create_access_token(user.username, user.role))
 
 @router.get("/me", response_model=UserOut)
@@ -99,4 +131,13 @@ def change_password(data: PasswordChange, db: Db, user: Annotated[User, Depends(
     if data.current_password == data.new_password:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "New password must differ from current password")
     user.password_hash = hash_password(data.new_password)
+    record_audit_log(
+        db=db,
+        user=user,
+        action="PASSWORD_CHANGE",
+        target_type="USER",
+        target_id=user.id,
+        target_name=user.username,
+        details="Người dùng đã cập nhật mật khẩu cá nhân thành công.",
+    )
     db.commit()

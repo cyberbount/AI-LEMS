@@ -10,16 +10,16 @@ Static review of the active backend/frontend implementation, configuration, depe
 |---|---|---|
 | SQL Injection | PASS for inspected active code | SQLAlchemy ORM queries are used; no raw SQL construction was found in active routers/services. This is static inspection, not penetration testing. |
 | XSS | PASS for inspected active code | No `dangerouslySetInnerHTML` or direct HTML injection was found in `frontend/src`. Browser testing was not executed. |
-| CSRF | NOT VERIFIED | Bearer JWT is used by the API, but no dedicated CSRF analysis or browser-origin test was executed. |
+| CSRF | MITIGATED BY DESIGN (see CSRF mitigation section) | The API uses `Authorization: Bearer <JWT>` headers only; no session/identity cookie is ever set, so no browser-ambient credential exists for a cross-site request to replay. Browser-origin testing was not executed. |
 | Authentication | PARTIAL | JWT decode/expiry and bcrypt password verification exist; targeted configuration check confirmed no placeholder fallback. Persistent deployment secret handling remains NOT VERIFIED. |
 | Authorization | PARTIAL | `current_user` and `require_roles` protect active endpoints; role assignment matrix has regression evidence, but not every endpoint matrix is tested. |
-| Secrets | PARTIAL | JWT and Compose credentials now come from ephemeral/environment configuration; production secret handling remains NOT VERIFIED. |
+| Secrets | PARTIAL | JWT and Compose credentials now come from ephemeral/environment configuration; production secret handling remains NOT VERIFIED. **Plaintext password storage (`raw_password`) removed 2026-09-25 — see SEC-006.** |
 | Input validation | PARTIAL | Pydantic schemas and enum-like status validation exist; complete boundary/error matrix was not tested. |
 | File upload | NOT VERIFIED / NOT IMPLEMENTED | No document upload endpoint was found. There is no upload attack surface in the current API, but no future-upload security control can be claimed. |
 | Dependency vulnerability | NOT VERIFIED | `backend/requirements.txt` and `frontend/package.json` were inspected. No vulnerability scanner was available/executed. |
 | Information leakage | PARTIAL | AI endpoint now returns controlled error text; `/health` and `/api/capabilities` still expose provider/model metadata. |
 | CORS/configuration | PARTIAL | CORS origins are configurable and credentials are enabled; no production-origin review was executed. |
-| AI/RAG prompt injection | PARTIAL | Retrieved context now has an explicit untrusted-reference delimiter. No live model security test or adversarial model evaluation was executed. |
+| AI/RAG prompt injection | PARTIALLY MITIGATED (see Prompt Injection mitigation section) | Retrieved context has an explicit untrusted-reference delimiter; client input is validated (Pydantic length/type bounds), client-supplied `system` messages are stripped, and the AI is read-only. No live/adversarial model evaluation was executed. |
 | Document poisoning | PASS for current surface / NOT VERIFIED for future surface | No upload or document mutation API was found; seed/database content is the current insertion path. |
 | Data leakage to AI | PARTIAL | Current context queries devices, maintenance and chunks, not password hashes; no live model output audit was performed. |
 
@@ -79,6 +79,41 @@ Static review of the active backend/frontend implementation, configuration, depe
 - Impact: a malicious document chunk or conversation message could influence model instructions.
 - Current disposition: PARTIALLY MITIGATED + TARGETED TESTED; no live/adversarial model evaluation was executed.
 - Verification after fix: offline/mock tests with adversarial chunk content and history.
+
+### SEC-006 — Plaintext password storage and exposure (`raw_password`)
+
+- Severity: HIGH
+- Location (original): `backend/app/models.py` (User model), `backend/app/schemas.py` (`UserOut`), `backend/app/routers/users.py`, `backend/init.sql`, `fix_db.py`.
+- Original finding: a `users.raw_password` column stored the plaintext password at account creation, password update and admin reset; `UserOut` returned it to any admin/manager listing users, and the frontend offered a "reveal password" eye toggle for other users' passwords.
+- Remediation implemented (2026-09-25): column removed from the ORM model, `init.sql` and all routers; `UserOut` no longer exposes it; the frontend password-reveal feature was replaced with a static mask plus a bcrypt one-way-hash notice; migration script `remove_raw_password.py` drops the column from existing SQLite databases (`ALTER TABLE users DROP COLUMN raw_password`).
+- Verification evidence: full suite **33/33 passed** after removal; `compileall` over `backend/app` passed; frontend `npm run build` passed; migration run against `lab.db` confirmed the column no longer exists.
+- Impact: any DB read, API response or browser session could disclose reusable user passwords.
+- Current disposition: **FIXED + REGRESSION TESTED.**
+- Verification after fix: `PRAGMA table_info(users)` shows no `raw_password`; re-running `remove_raw_password.py` is a no-op.
+
+## Mitigation: CSRF
+
+**Status: mitigated by design (bearer-token authentication model).**
+
+- The frontend authenticates every state-changing call with an `Authorization: Bearer <JWT>` header. The token lives in `sessionStorage` and is attached explicitly by JavaScript — it is **never stored in a cookie**.
+- CSRF attacks exploit *ambient* credentials (cookies/basic-auth) that the browser attaches automatically to cross-site requests. This application has no ambient credential: a forged cross-site form or `fetch` from another origin arrives **without** the JWT header and is rejected with `401` by `current_user`.
+- The session cookie surface is therefore empty: no `SameSite` policy is needed because no session cookie exists, and `document.cookie` contains no identity data.
+- CORS is additionally restricted (`CORS_ORIGINS`) so untrusted origins cannot read authenticated responses.
+- Residual limitations: XSS would still expose the in-page token (XSS is separately reviewed above); browser-origin/CSRF tooling tests were not executed; if cookie-based auth is ever introduced, `SameSite=Strict/Lax` + CSRF tokens must be added.
+
+## Mitigation: Prompt Injection (AI input hardening)
+
+**Status: partially mitigated with layered controls (see SEC-005 for the original finding).**
+
+Defense-in-depth applied to everything that reaches the LLM (Ollama):
+
+1. **Input validation before the model** — `ChatRequest`/`ChatMessage` are Pydantic-validated: message and every history item are bounded to 12,000 characters, `mode` is restricted to the four known literals (`chat`, `rag`, `summary`, `inspection_alert`); anything outside fails with `422` before touching the AI service.
+2. **History sanitation** — client-supplied history is bounded to `MAX_HISTORY_MESSAGES` (12) and any `system`-role message from the client is **stripped**; only the server builds system instructions, so an attacker cannot overwrite the operating prompt through history.
+3. **Untrusted-context delimiting** — retrieved RAG context is wrapped in `BEGIN UNTRUSTED REFERENCE CONTEXT ... END UNTRUSTED REFERENCE CONTEXT` and explicitly declared as reference data, not instructions (`backend/app/services/ai_service.py`).
+4. **Bounded retrieval surface** — retrieval only queries the managed `document_chunks` table seeded by `scripts/seed_sop_documents.py`; there is no upload endpoint, so third parties cannot poison the knowledge base through the API (document poisoning: PASS for current surface).
+5. **Read-only AI boundary (damage containment)** — even if injection succeeds, the model cannot mutate state: no tool/function calling is exposed, the system prompt forbids approvals/status changes, and BR-011 requires all state changes to be human actions through RBAC-protected endpoints.
+6. **No data exfiltration channel** — the prompt context is built from devices/maintenance/chunks only; credentials and password hashes are never sent to the model.
+- Residual limitation: no live adversarial red-team evaluation against the actual `qwen2.5:3b` model was executed; behavior beyond structural controls remains NOT VERIFIED.
 
 ## Not verified
 

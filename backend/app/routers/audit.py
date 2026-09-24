@@ -19,19 +19,11 @@ def get_audit_logs(
 ):
     query = db.query(AuditLog)
 
-    # Phân quyền truy cập log
+    # Phân quyền nghiêm ngặt: Chỉ Quản lý phòng lab (admin / manager) được xem toàn bộ nhật ký
+    # Mọi vai trò khác (user, technician) CHỈ ĐƯỢC XEM nhật ký do chính tài khoản mình thực hiện
     if user.role in ["admin", "manager"]:
-        pass  # Quản lý xem toàn bộ
-    elif user.role == "technician":
-        # Kỹ thuật viên xem các hoạt động bảo trì, thiết bị hoặc do chính mình thao tác
-        query = query.filter(
-            or_(
-                AuditLog.target_type.in_(["MAINTENANCE", "DEVICE"]),
-                AuditLog.user_id == user.id,
-            )
-        )
+        pass
     else:
-        # User thông thường chỉ xem log do chính mình thực hiện
         query = query.filter(AuditLog.user_id == user.id)
 
     if target_type:
@@ -39,5 +31,5 @@ def get_audit_logs(
     if action:
         query = query.filter(AuditLog.action == action)
 
-    return query.order_by(AuditLog.created_at.desc()).limit(limit).all()
+    return query.order_by(AuditLog.id.desc()).limit(limit).all()
 

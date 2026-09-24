@@ -12,7 +12,7 @@ export const fallbackData = {
 };
 
 async function request(path, options = {}) {
-  const token = localStorage.getItem("lab_token");
+  const token = sessionStorage.getItem("lab_token") || localStorage.getItem("lab_token");
   const headers = { ...(options.body instanceof URLSearchParams ? {} : { "Content-Type": "application/json" }), ...(options.headers || {}) };
   if (token) headers.Authorization = `Bearer ${token}`;
   const fetchOptions = { ...options, headers };
@@ -31,7 +31,8 @@ async function request(path, options = {}) {
 
 export async function login(username, password) {
   const data = await request("/api/auth/login", { method: "POST", body: new URLSearchParams({ username, password }) });
-  localStorage.setItem("lab_token", data.access_token);
+  sessionStorage.setItem("lab_token", data.access_token);
+  localStorage.removeItem("lab_token");
   return request("/api/auth/me");
 }
 
@@ -40,7 +41,8 @@ export async function googleLogin(idToken) {
     method: "POST",
     body: JSON.stringify({ id_token: idToken }),
   });
-  localStorage.setItem("lab_token", data.access_token);
+  sessionStorage.setItem("lab_token", data.access_token);
+  localStorage.removeItem("lab_token");
   return request("/api/auth/me");
 }
 
@@ -66,10 +68,13 @@ export const api = {
   reportIncident: (request_id, description) => request(`/api/requests/${request_id}/incident`, { method: "POST", body: JSON.stringify({ description }) }),
   approveRequest: (id, status) => request(`/api/requests/${id}/status?status=${encodeURIComponent(status)}`, { method: "PATCH" }),
   handoverRequest: (id) => request(`/api/requests/${id}/borrow`, { method: "PATCH" }),
+  requestReturn: (id) => request(`/api/requests/${id}/request-return`, { method: "PATCH" }),
+  confirmReturn: (id, payload = {}) => request(`/api/requests/${id}/confirm-return`, { method: "PATCH", body: JSON.stringify(payload) }),
   returnRequest: (id) => request(`/api/requests/${id}/return`, { method: "PATCH" }),
 
   maintenance: () => request("/api/maintenance"),
   completeMaintenance: (id) => request(`/api/maintenance/${id}/complete`, { method: "PATCH" }),
+  acceptIncident: (id) => request(`/api/maintenance/${id}/accept`, { method: "PATCH" }),
   updateMaintenance: (id, payload) => request(`/api/maintenance/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   deleteMaintenance: (id) => request(`/api/maintenance/${id}`, { method: "DELETE" }),
   createMaintenance: (device_id, notes, status = "open", kind = "inspection") => request("/api/maintenance", { method: "POST", body: JSON.stringify({ device_id, notes, status, kind }) }),
@@ -98,4 +103,11 @@ export const api = {
   },
 };
 
-export function clearSession() { localStorage.removeItem("lab_token"); localStorage.removeItem("lab_role"); localStorage.removeItem("lab_user"); }
+export function clearSession() {
+  sessionStorage.removeItem("lab_token");
+  sessionStorage.removeItem("lab_role");
+  sessionStorage.removeItem("lab_user");
+  localStorage.removeItem("lab_token");
+  localStorage.removeItem("lab_role");
+  localStorage.removeItem("lab_user");
+}

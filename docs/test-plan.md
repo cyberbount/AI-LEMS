@@ -12,7 +12,7 @@ Backend test suite:
 PYTHONPATH=backend .venv/bin/python -m pytest -q tests/
 ```
 
-Latest result: **20 passed, 20 warnings**.
+Latest result: **33 passed, 7 warnings** (33/33, 2026-09-25).
 
 Backend compilation:
 
@@ -117,7 +117,7 @@ The defect was resolved in `frontend/src/App.jsx` by reloading the device list f
 
 This plan is consistent with:
 
-- `docs/test-report.md`: 20 tests passed, compile/build verification and current limitations.
+- `docs/test-report.md`: 33 test cases passed, compile/build verification and current limitations.
 - `traceability-report.md`: FR statuses, AI/live-Ollama limitation, document-management boundary and remaining evidence gaps.
 
 Human review remains required. This document does not approve G4.

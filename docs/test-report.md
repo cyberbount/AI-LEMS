@@ -24,17 +24,17 @@ This report records tests that are actually present and executed in this reposit
 
 ## Current test suite
 
-| Area | Test file | Status |
-|---|---|---|
-| Authentication and `/me` | `tests/test_api.py` | Executed |
-| RBAC device creation | `tests/test_api.py` | Executed |
-| Borrow, approve, borrow and return lifecycle | `tests/test_api.py` | Executed |
-| Reject unavailable device | `tests/test_api.py` | Executed |
-| Maintenance completion and statistics | `tests/test_operations.py`, `tests/test_g3.py` | Executed |
-| Keyword retrieval, bounded history and AI authentication | `tests/test_ai.py` | Executed |
-| Password change and account authorization | `tests/test_g3.py` | Executed |
-| ORM/database schema verification | `tests/test_database_schema.py` | Executed |
-| Ollama provider failure through the live provider | Not yet automated | Pending |
+The suite comprises **33 test cases** across 6 files:
+
+| Area | Test file | Tests | Status |
+|---|---|---|---|
+| Local login (username + email), wrong/disabled credentials, Google OAuth (mocked), backend RBAC enforcement | `tests/test_auth_real.py` | 10 | Executed |
+| Login/`/me`, RBAC device creation, borrow→approve→borrow→return lifecycle, two-step return + inspection, user CRUD + reset password, unavailable-device rejection, device condition | `tests/test_api.py` | 7 | Executed |
+| Password change, account-authorization matrix (manager cannot create admin), maintenance-until-completion availability, statistics time-range + authorization | `tests/test_g3.py` | 8 | Executed |
+| Keyword retrieval grounding, bounded chat history, AI endpoint authentication (401 unauthenticated / 200 authenticated) | `tests/test_ai.py` | 4 | Executed |
+| ORM schema entities/constraints, SQLite↔MySQL DDL parity, seeded passwords are bcrypt hashes | `tests/test_database_schema.py` | 3 | Executed |
+| Maintenance completion + aggregate statistics | `tests/test_operations.py` | 1 | Executed |
+| Ollama provider failure through the live provider | Not yet automated | — | Pending |
 
 ## Execution record
 
@@ -46,14 +46,24 @@ PYTHONPATH=backend .venv/bin/python -m pytest -q tests/
 
 The pass/fail count below must be updated from the command output after each run. No historical QA team, external test-management system or unverified pass rate is claimed here.
 
-- Last execution: 2026-09-08, local development environment
+- Last execution: 2026-09-25, local development environment
 - Command: `PYTHONPATH=backend .venv/bin/python -m pytest -q tests/`
-- Tests run: 20
-- Passed: 20
+- Test cases run: **33**
+- Passed: **33** (pass rate 100% — 33/33)
 - Failed: 0
 - Errors: 0
+- Warnings: 7 (deprecation warnings for `datetime.utcnow`, no test failures)
 - Result: PASS
+
+The executed suite covers, among others: **RBAC** (user blocked from device creation,
+user management and admin endpoints; technician restricted to technical device
+statuses; manager cannot create admin accounts), the **full borrow lifecycle**
+(create → approve → borrow → two-step return → confirm-return, plus rejection of
+unavailable devices) and **authentication** (local login by username/email, disabled
+accounts, mocked Google OAuth, AI endpoint rejecting unauthenticated requests).
+`compileall` over `backend/app` and `npm run build` over the frontend both pass
+after the latest changes (raw-password removal and password-reveal feature removal).
 
 ## Limitations
 
-The suite does not prove complete requirements coverage. The traceability report continues to show gaps for untested workflows, live Ollama behavior, and document-management CRUD/upload.
+The suite does not prove complete requirements coverage. The traceability report continues to show gaps for untested workflows, live Ollama behavior, and document-management CRUD/upload. UI/E2E browser testing and performance testing remain pending.

@@ -4,6 +4,7 @@ from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
+from app.utils.tz import hanoi_now_naive
 
 
 class User(Base):
@@ -15,7 +16,7 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[str] = mapped_column(String(30), ForeignKey("roles.name"), default="user", index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=hanoi_now_naive)
 
 
 class Role(Base):
@@ -64,7 +65,7 @@ class BorrowRequest(Base):
     status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
     requested_from: Mapped[datetime | None] = mapped_column(DateTime)
     requested_to: Mapped[datetime | None] = mapped_column(DateTime)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=hanoi_now_naive)
     user: Mapped[User] = relationship()
     device: Mapped[Device] = relationship()
 
@@ -96,7 +97,7 @@ class Document(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(200), unique=True)
     description: Mapped[str] = mapped_column(Text, default="")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=hanoi_now_naive)
 
 
 class DocumentChunk(Base):
@@ -115,7 +116,7 @@ class UsageHistory(Base):
     device_id: Mapped[int] = mapped_column(ForeignKey("devices.id"))
     borrow_request_id: Mapped[int | None] = mapped_column(ForeignKey("borrow_requests.id"))
     action: Mapped[str] = mapped_column(String(30))
-    occurred_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime, default=hanoi_now_naive)
 
 
 class AuditLog(Base):
@@ -129,5 +130,5 @@ class AuditLog(Base):
     target_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     target_name: Mapped[str] = mapped_column(String(160), default="")
     details: Mapped[str] = mapped_column(Text, default="")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=hanoi_now_naive, index=True)
 

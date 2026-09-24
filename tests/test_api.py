@@ -77,6 +77,42 @@ class ApiWorkflowTests(unittest.TestCase):
         self.assertEqual(returned.status_code, 200)
         self.assertEqual(returned.json()["status"], "returned")
 
+    def test_two_step_return_and_inspection_workflow(self):
+        asset_code = f"{self.asset_prefix}-RETURN"
+        dev_res = self.client.post(
+            "/api/devices",
+            headers=self.admin,
+            json={"asset_code": asset_code, "name": "Device for two-step return", "category": "Đo lường & Phân tích tín hiệu"},
+        )
+        self.assertEqual(dev_res.status_code, 201)
+        device_id = dev_res.json()["id"]
+
+        req_res = self.client.post(
+            "/api/requests",
+            headers=self.user,
+            json={"device_id": device_id, "purpose": "Testing two-step return inspection"},
+        )
+        self.assertEqual(req_res.status_code, 201)
+        request_id = req_res.json()["id"]
+
+        # 1. Admin duyệt mượn & Bàn giao
+        self.client.patch(f"/api/requests/{request_id}/approve", headers=self.admin)
+        self.client.patch(f"/api/requests/{request_id}/borrow", headers=self.user)
+
+        # 2. Bước 1: User yêu cầu hoàn trả
+        step1 = self.client.patch(f"/api/requests/{request_id}/request-return", headers=self.user)
+        self.assertEqual(step1.status_code, 200)
+        self.assertEqual(step1.json()["status"], "return_pending")
+
+        # 3. Bước 2: Quản lý hoặc Kỹ thuật viên kiểm tra thực tế & xác nhận nhận trả
+        step2 = self.client.patch(
+            f"/api/requests/{request_id}/confirm-return",
+            headers=self.admin,
+            json={"condition": "Đã qua sử dụng - Hoạt động tốt", "notes": "Thiết bị nguyên vẹn, đầy đủ phụ kiện"},
+        )
+        self.assertEqual(step2.status_code, 200)
+        self.assertEqual(step2.json()["status"], "returned")
+
     def test_user_management_crud_and_reset_password(self):
         suffix = str(time.time_ns())[-6:]
         username = f"testuser_{suffix}"

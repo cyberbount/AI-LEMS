@@ -1,759 +1,352 @@
-# API Documentation
+# API Documentation — AI-LEMS (LyxLab)
 
-## Overview
+Tài liệu này mô tả **đúng các endpoint đang chạy thực tế** của backend FastAPI
+(mã nguồn: `backend/app/routers/`, ứng dụng: `backend/app/main.py`).
+Mọi endpoint cũng có thể xem dạng OpenAPI tương tác tại `http://localhost:8000/docs`.
 
-This document provides comprehensive API documentation for the Laboratory Equipment Management System with AI Integration (AI-LEMS). The API is built using FastAPI and follows RESTful principles.
+## Thông tin chung
 
-## Base URL
+- **Base URL:** `http://localhost:8000`
+- **Kiểu xác thực:** JWT Bearer (HS256, hết hạn 60 phút) qua header
+  `Authorization: Bearer <token>`
+- **Vai trò (RBAC):** `admin` (Quản lý phòng lab), `manager` (Quản lý, được hỗ trợ trong API),
+  `technician` (Kỹ thuật viên), `user` (Người sử dụng)
+- **Định dạng:** JSON, trừ `POST /api/auth/login` dùng form-urlencoded (OAuth2 password flow)
+- **Múi giờ:** mọi datetime trả về ở dạng ISO 8601 múi giờ `+07:00` (Hà Nội)
 
-```
-http://localhost:8000
-```
+## Danh mục endpoint
 
-## Authentication
-
-All API endpoints (except authentication endpoints) require a valid JWT token in the Authorization header:
-
-```
-Authorization: Bearer <token>
-```
-
-## API Endpoints
-
-### Authentication
-
-#### POST /auth/login
-Authenticate user and return JWT token
-
-**Request Body:**
-```json
-{
-  "username": "string",
-  "password": "string"
-}
-```
-
-**Response:**
-```json
-{
-  "access_token": "string",
-  "token_type": "bearer"
-}
-```
-
-**Status Codes:**
-- 200: Success
-- 401: Invalid credentials
-
----
-
-### Equipment Management
-
-#### GET /equipment
-Get all equipment with pagination
-
-**Query Parameters:**
-- `page`: Page number (default: 1)
-- `size`: Items per page (default: 10)
-- `search`: Search term (optional)
-- `group`: Equipment group filter (optional)
-- `location`: Equipment location filter (optional)
-
-**Response:**
-```json
-{
-  "items": [
-    {
-      "id": 1,
-      "name": "Oscilloscope",
-      "description": "Digital oscilloscope for signal analysis",
-      "group": "Test Equipment",
-      "location": "Lab A",
-      "status": "available",
-      "created_at": "2023-01-01T00:00:00Z",
-      "updated_at": "2023-01-01T00:00:00Z"
-    }
-  ],
-  "total": 25,
-  "page": 1,
-  "size": 10
-}
-```
-
-**Status Codes:**
-- 200: Success
-- 401: Unauthorized
+| # | Endpoint | Method | Quyền |
+|---|----------|--------|-------|
+| 1 | `/api/auth/register` | POST | Công khai |
+| 2 | `/api/auth/login` | POST | Công khai (form) |
+| 3 | `/api/auth/google` | POST | Công khai (Google ID token) |
+| 4 | `/api/auth/me` | GET | Đã đăng nhập |
+| 5 | `/api/auth/password` | PATCH | Đã đăng nhập |
+| 6 | `/api/users` | GET | admin, manager |
+| 7 | `/api/users` | POST | admin, manager |
+| 8 | `/api/users/{id}` | PATCH | admin, manager |
+| 9 | `/api/users/{id}` | DELETE | admin, manager |
+| 10 | `/api/users/{id}/reset-password` | POST | admin, manager |
+| 11 | `/api/devices` | GET | Đã đăng nhập |
+| 12 | `/api/devices` | POST | admin, manager |
+| 13 | `/api/devices/{id}/status` | PATCH | admin, manager, technician |
+| 14 | `/api/devices/{id}` | PATCH | admin, manager |
+| 15 | `/api/devices/{id}` | DELETE | admin, manager |
+| 16 | `/api/requests` | GET / POST | Đã đăng nhập |
+| 17 | `/api/requests/{id}/status` | PATCH | admin, manager |
+| 18 | `/api/requests/{id}/approve` | PATCH | admin, manager |
+| 19 | `/api/requests/{id}/borrow` | PATCH | chủ yêu cầu, admin, manager |
+| 20 | `/api/requests/{id}/request-return` | PATCH | chủ yêu cầu, admin, manager |
+| 21 | `/api/requests/{id}/confirm-return` | PATCH | admin, manager, technician |
+| 22 | `/api/requests/{id}/return` | PATCH | chủ yêu cầu, admin, manager, technician |
+| 23 | `/api/requests/{id}/incident` | POST | chủ yêu cầu, admin, manager, technician |
+| 24 | `/api/maintenance` | GET / POST | GET: đã đăng nhập; POST: admin/manager/technician |
+| 25 | `/api/maintenance/{id}/complete` | PATCH | admin, manager, technician |
+| 26 | `/api/maintenance/{id}/accept` | PATCH | technician |
+| 27 | `/api/maintenance/{id}` | PATCH / DELETE | admin, manager, technician |
+| 28 | `/api/maintenance/schedules` | GET / POST | GET: đã đăng nhập; POST: admin/manager/technician |
+| 29 | `/api/stats` | GET | Đã đăng nhập |
+| 30 | `/api/groups` | GET / POST | GET: đã đăng nhập; POST: admin, manager |
+| 31 | `/api/locations` | GET / POST | GET: đã đăng nhập; POST: admin, manager |
+| 32 | `/api/ai/chat` | POST | Đã đăng nhập |
+| 33 | `/api/audit-logs` | GET | admin/manager: tất cả; role khác: của chính mình |
+| 34 | `/health`, `/api/capabilities` | GET | Công khai |
 
 ---
 
-#### POST /equipment
-Create new equipment
+## 1. Xác thực — `/api/auth`
 
-**Request Body:**
+### POST /api/auth/register — đăng ký tài khoản
+Đăng ký công khai; **luôn được gán role `user`** (không thể tự nâng quyền).
+
 ```json
-{
-  "name": "string",
-  "description": "string",
-  "group": "string",
-  "location": "string"
-}
+// Request
+{ "username": "sinhvien01", "email": "sv01@uit.edu.vn", "full_name": "Nguyen Van A", "password": "matkhau8kitu" }
+// Response 201
+{ "id": 5, "username": "sinhvien01", "email": "sv01@uit.edu.vn", "full_name": "Nguyen Van A", "role": "user", "is_active": true }
 ```
 
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "string",
-  "description": "string",
-  "group": "string",
-  "location": "string",
-  "status": "available",
-  "created_at": "2023-01-01T00:00:00Z",
-  "updated_at": "2023-01-01T00:00:00Z"
-}
+`400` nếu thiếu trường, `403` nếu cố gửi `role` khác `user`, `409` nếu username/email đã tồn tại.
+
+### POST /api/auth/login — đăng nhập
+**OAuth2 form-urlencoded** (đúng chuẩn Swagger UI): `username=...&password=...`
+Trường `username` chấp nhận **tên đăng nhập hoặc email**.
+
+```
+// Response 200
+{ "access_token": "eyJhbGciOi...", "token_type": "bearer" }
 ```
 
-**Status Codes:**
-- 201: Created
-- 400: Bad request
-- 401: Unauthorized
-- 403: Forbidden
+`401` sai thông tin đăng nhập, `403` tài khoản bị khóa (`is_active = false`).
+
+### POST /api/auth/google — đăng nhập Google Workspace
+```json
+// Request
+{ "id_token": "<Google ID token>" }
+```
+Token được xác thực với `https://oauth2.googleapis.com/tokeninfo`; email phải đã
+`email_verified`, **phải tồn tại sẵn trong hệ thống** và đang hoạt động — nếu chưa,
+tài khoản cần do quản lý cấp trước. `200` trả về Token; `401` token không hợp lệ;
+`403` email chưa được phân quyền / bị vô hiệu hóa.
+
+### GET /api/auth/me — thông tin tài khoản hiện tại
+```json
+{ "id": 1, "username": "admin", "email": "admin@lab.local", "full_name": "Administrator", "role": "admin", "is_active": true }
+```
+
+### PATCH /api/auth/password — đổi mật khẩu của chính mình
+```json
+// Request  →  Response 204 (không có body)
+{ "current_password": "...", "new_password": "matkhaumoi8kitu" }
+```
+`400` mật khẩu hiện tại sai hoặc trùng mật khẩu mới; `422` mật khẩu mới < 8 ký tự.
 
 ---
 
-#### PUT /equipment/{id}
-Update equipment
+## 2. Quản lý tài khoản — `/api/users` (admin, manager)
 
-**Path Parameters:**
-- `id`: Equipment ID
+### GET /api/users
+Danh sách tất cả tài khoản (mới nhất trước).
 
-**Request Body:**
+### POST /api/users — tạo tài khoản
 ```json
-{
-  "name": "string",
-  "description": "string",
-  "group": "string",
-  "location": "string"
-}
+// Request
+{ "username": "tech02", "email": "tech02@lab.local", "full_name": "Ky Thuat Vien 02", "password": "matkhau8kitu", "role": "technician" }
+// Response 201 — UserOut
 ```
+Phân quyền theo người tạo: **admin** được gán `admin | manager | user | technician`;
+**manager** chỉ được gán `user | technician`. `400` role không hợp lệ,
+`409` username/email trùng.
 
-**Response:**
+### PATCH /api/users/{id} — cập nhật một phần
+Các trường tùy chọn: `username`, `full_name`, `email`, `role`, `is_active`, `password`.
+Chỉ ghi những trường thực sự thay đổi vào audit log. `400` mật khẩu mới < 8 ký tự
+hoặc username trùng.
+
+### DELETE /api/users/{id}
+`204`. `400` không thể tự xóa tài khoản đang đăng nhập.
+
+### POST /api/users/{id}/reset-password
 ```json
-{
-  "id": 1,
-  "name": "string",
-  "description": "string",
-  "group": "string",
-  "location": "string",
-  "status": "available",
-  "created_at": "2023-01-01T00:00:00Z",
-  "updated_at": "2023-01-01T00:00:00Z"
-}
+// Request  →  Response 204
+{ "new_password": "matkhaumoi8kitu" }
 ```
-
-**Status Codes:**
-- 200: Success
-- 400: Bad request
-- 401: Unauthorized
-- 403: Forbidden
-- 404: Not found
+Mật khẩu được bcrypt-hash trước khi lưu; hệ thống **không lưu plaintext**.
 
 ---
 
-#### DELETE /equipment/{id}
-Delete equipment
+## 3. Thiết bị — `/api/devices`
 
-**Path Parameters:**
-- `id`: Equipment ID
+### GET /api/devices?status=available
+Lọc tùy chọn theo `status`. Mỗi thiết bị gồm: `id, asset_code, name, category,
+status, condition, serial_number, group_id, location_id`.
 
-**Response:**
+`DeviceStatus` hợp lệ: `available`, `reserved`, `borrowed`, `maintenance`,
+`returning`, `pending_inspection`, `in_progress`, `replace_partial`, `replace_full`.
+
+### POST /api/devices (admin, manager)
 ```json
-{
-  "message": "Equipment deleted successfully"
-}
+// Request
+{ "asset_code": "EQ-026", "name": "Oscilloscope Rigol DS1054Z", "category": "Máy đo",
+  "serial_number": "DS1ZA234567", "group_id": 4, "location_id": 2,
+  "condition": "Mới nguyên hộp" }
+// Response 201 — DeviceOut
 ```
+`400` nếu `asset_code` hoặc `serial_number` đã tồn tại.
 
-**Status Codes:**
-- 200: Success
-- 401: Unauthorized
-- 403: Forbidden
-- 404: Not found
+### PATCH /api/devices/{id}/status?status=maintenance&condition=Hỏng%20một%20phần
+Đổi trạng thái thiết bị. **Technician bị giới hạn** chỉ được đặt các trạng thái
+kỹ thuật: `inspection`, `in_progress`, `replace_partial`, `replace_full`,
+`maintenance`. `403` nếu vượt quyền, `404` không tìm thấy.
+
+### PATCH /api/devices/{id} (admin, manager)
+Cập nhật `name, category, condition, serial_number, location_id, group_id, status`
+(kiểm tra trùng serial khi đổi).
+
+### DELETE /api/devices/{id} (admin, manager)
+Thanh lý/xóa thiết bị. `409` nếu thiết bị đang `borrowed`.
 
 ---
 
-### Borrow Management
+## 4. Mượn — Trả thiết bị — `/api/requests`
 
-#### GET /borrow-requests
-Get all borrow requests with filtering
-
-**Query Parameters:**
-- `status`: Filter by status (pending, approved, rejected, returned)
-- `user_id`: Filter by user ID
-- `equipment_id`: Filter by equipment ID
-
-**Response:**
-```json
-{
-  "items": [
-    {
-      "id": 1,
-      "user_id": 1,
-      "equipment_id": 1,
-      "status": "pending",
-      "created_at": "2023-01-01T00:00:00Z",
-      "updated_at": "2023-01-01T00:00:00Z",
-      "equipment": {
-        "id": 1,
-        "name": "Oscilloscope",
-        "group": "Test Equipment",
-        "location": "Lab A"
-      }
-    }
-  ],
-  "total": 5,
-  "page": 1,
-  "size": 10
-}
+### Máy trạng thái (request status)
 ```
+pending ──approve──▶ approved ──borrow──▶ borrowed ──request-return──▶ return_pending ──confirm-return──▶ returned
+   │                    │                                                    │
+   └──reject──▶ rejected └──reject──▶ rejected        (return trực tiếp: borrowed ──return──▶ returned)
+```
+Đồng thời, trạng thái **thiết bị** được đồng bộ tự động:
+`pending→available` · `approved→reserved` · `borrow→borrowed` ·
+`request-return→returning` · `return/confirm-return→available` (hoặc `maintenance`
+nếu phát hiện hỏng hóc).
 
-**Status Codes:**
-- 200: Success
-- 401: Unauthorized
+### GET /api/requests
+Role `user` chỉ thấy yêu cầu của chính mình; admin/manager/technician thấy tất cả.
+
+### POST /api/requests — tạo yêu cầu mượn
+```json
+// Request
+{ "device_id": 3, "purpose": "Bài thực hành vi điều khiển tuần 6",
+  "requested_from": "2026-09-25T08:00:00+07:00",
+  "requested_to":   "2026-09-25T11:00:00+07:00" }
+// Response 201 — RequestOut
+```
+`409` nếu thiết bị không ở trạng thái `available`; `422` nếu thời điểm bắt đầu quá
+quá khứ (> 15 phút), kết thúc trước bắt đầu, hoặc kết thúc trong quá khứ.
+
+### PATCH /api/requests/{id}/approve · /reject (admin, manager)
+`approve`: `pending → approved`. Từ chối dùng `PATCH /status?status=rejected`.
+
+### PATCH /api/requests/{id}/borrow (chủ yêu cầu, admin, manager)
+`approved → borrowed`, thiết bị `reserved → borrowed`.
+
+### PATCH /api/requests/{id}/request-return (chủ yêu cầu, admin, manager)
+Bước 1 của trả 2 bước: `borrowed → return_pending`, thiết bị `→ returning`.
+
+### PATCH /api/requests/{id}/confirm-return (admin, manager, technician)
+Bước 2 — tiếp nhận và xác nhận trả:
+```json
+// Request
+{ "condition": "Đã qua sử dụng - Hoạt động tốt", "notes": "Kiểm tra đầu dò OK" }
+```
+- Tình trạng tốt → `returned`, thiết bị `→ available`.
+- Tình trạng có từ khóa hỏng hóc ("hỏng", "lỗi", "sự cố", "damaged", "faulty"…) →
+  thiết bị `→ maintenance` và **tự tạo phiếu bảo trì `kind="inspection"`**.
+- **Chặn nếu thiết bị đang trong luồng sự cố** (`pending_inspection`/`in_progress`/
+  `replace_*` còn phiếu `kind="incident"` mở): `409`.
+
+### PATCH /api/requests/{id}/return (chủ yêu cầu, admin, manager, technician)
+Trả trực tiếp một bước từ `borrowed → returned` (cùng logic chặn sự cố như trên).
+
+### POST /api/requests/{id}/incident — báo sự cố
+```json
+// Request  →  Response 200 — RequestOut
+{ "description": "Rơi máy, màn hình không lên" }
+```
+Chỉ khi yêu cầu đang `borrowed`. Thiết bị `→ pending_inspection`, condition ghi
+"Hỏng hóc / Lỗi phần cứng", tự tạo phiếu bảo trì `kind="incident"` mở.
 
 ---
 
-#### POST /borrow-requests
-Create new borrow request
+## 5. Bảo trì — `/api/maintenance`
 
-**Request Body:**
+### GET /api/maintenance
+Danh sách phiếu bảo trì/sửa chữa. `MaintenanceOut` gồm: `id, device_id,
+technician_id, kind, notes, status, scheduled_at, completed_at`.
+
+### POST /api/maintenance (admin, manager, technician)
 ```json
-{
-  "equipment_id": 1,
-  "purpose": "string",
-  "start_date": "2023-01-01T00:00:00Z",
-  "end_date": "2023-01-02T00:00:00Z"
-}
+// Request
+{ "device_id": 3, "kind": "inspection", "notes": "Kiểm tra định kỳ 6 tháng",
+  "scheduled_at": "2026-10-01T09:00:00+07:00", "status": "open" }
+// Response 201 — MaintenanceOut
 ```
+Đồng bộ trạng thái thiết bị: `completed` → `available`; trạng thái khác → `maintenance`.
 
-**Response:**
-```json
-{
-  "id": 1,
-  "user_id": 1,
-  "equipment_id": 1,
-  "status": "pending",
-  "purpose": "string",
-  "start_date": "2023-01-01T00:00:00Z",
-  "end_date": "2023-01-02T00:00:00Z",
-  "created_at": "2023-01-01T00:00:00Z",
-  "updated_at": "2023-01-01T00:00:00Z",
-  "equipment": {
-    "id": 1,
-    "name": "Oscilloscope",
-    "group": "Test Equipment",
-    "location": "Lab A"
-  }
-}
-```
+### PATCH /api/maintenance/{id}/complete
+Hoàn tất phiếu: `status=completed`, `completed_at` = giờ Hà Nội hiện tại,
+thiết bị `→ available`.
 
-**Status Codes:**
-- 201: Created
-- 400: Bad request
-- 401: Unauthorized
+### PATCH /api/maintenance/{id}/accept (technician)
+Kỹ thuật viên **tiếp nhận sự cố**: phiếu phải đang `open` + `kind="incident"`;
+thiết bị `→ in_progress`; ghi nhận `technician_id`.
+
+### PATCH /api/maintenance/{id} (admin, manager, technician)
+Cập nhật `status, notes, device_condition` với đồng bộ trạng thái thiết bị đầy đủ:
+`completed → available`; `replace_partial / replace_full →` trạng thái tương ứng
+(tự đóng yêu cầu mượn đang mở); `in_progress → in_progress`; `open → maintenance`
+nếu thiết bị đang available.
+
+### DELETE /api/maintenance/{id} — xóa phiếu (admin, manager, technician).
+
+### GET/POST /api/maintenance/schedules
+Lịch bảo trì định kỳ: `{ "device_id": 3, "interval_days": 180,
+"next_due_at": "2027-03-01T09:00:00+07:00", "active": true, "notes": "" }`.
 
 ---
 
-#### PUT /borrow-requests/{id}/approve
-Approve borrow request
+## 6. Thống kê — `/api/stats`
 
-**Path Parameters:**
-- `id`: Borrow request ID
+### GET /api/stats?start=2026-09-01&end=2026-09-30
+Khoảng thời gian tùy chọn (phải truyền **cả hai hoặc không truyền cả hai**, ngược lại `422`).
 
-**Response:**
 ```json
+// Response 200
 {
-  "id": 1,
-  "user_id": 1,
-  "equipment_id": 1,
-  "status": "approved",
-  "purpose": "string",
-  "start_date": "2023-01-01T00:00:00Z",
-  "end_date": "2023-01-02T00:00:00Z",
-  "created_at": "2023-01-01T00:00:00Z",
-  "updated_at": "2023-01-01T00:00:00Z",
-  "equipment": {
-    "id": 1,
-    "name": "Oscilloscope",
-    "group": "Test Equipment",
-    "location": "Lab A"
-  }
+  "users": 8, "devices": 26, "requests": 15, "maintenance_open": 2,
+  "usage": 24, "usage_frequency": 6,
+  "selected_from": "2026-09-01T00:00:00+07:00", "selected_to": "2026-09-30T23:59:59+07:00",
+  "usage_by_action": { "BORROW": 10, "RETURN": 8, "INCIDENT": 1 }
 }
 ```
-
-**Status Codes:**
-- 200: Success
-- 400: Bad request
-- 401: Unauthorized
-- 403: Forbidden
-- 404: Not found
 
 ---
 
-#### PUT /borrow-requests/{id}/reject
-Reject borrow request
+## 7. Danh mục — `/api/groups`, `/api/locations`
 
-**Path Parameters:**
-- `id`: Borrow request ID
-
-**Request Body:**
-```json
-{
-  "reason": "string"
-}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "user_id": 1,
-  "equipment_id": 1,
-  "status": "rejected",
-  "purpose": "string",
-  "start_date": "2023-01-01T00:00:00Z",
-  "end_date": "2023-01-02T00:00:00Z",
-  "created_at": "2023-01-01T00:00:00Z",
-  "updated_at": "2023-01-01T00:00:00Z",
-  "equipment": {
-    "id": 1,
-    "name": "Oscilloscope",
-    "group": "Test Equipment",
-    "location": "Lab A"
-  }
-}
-```
-
-**Status Codes:**
-- 200: Success
-- 400: Bad request
-- 401: Unauthorized
-- 403: Forbidden
-- 404: Not found
+- `GET /api/groups`, `GET /api/locations` — mọi người dùng đã đăng nhập.
+- `POST` — admin, manager:
+  `{ "name": "Máy đo", "description": "..." }` · `{ "name": "Lab 301", "building": "A3" }`
 
 ---
 
-#### PUT /borrow-requests/{id}/return
-Return borrowed equipment
+## 8. Trợ lý AI — `/api/ai/chat`
 
-**Path Parameters:**
-- `id`: Borrow request ID
+**Bắt buộc JWT** (endpoint không cho người ẩn danh). Model local Ollama
+(`qwen2.5:3b`), RAG truy hồi từ khóa trên `document_chunks` (SOP/hướng dẫn).
 
-**Response:**
 ```json
+// Request
 {
-  "id": 1,
-  "user_id": 1,
-  "equipment_id": 1,
-  "status": "returned",
-  "purpose": "string",
-  "start_date": "2023-01-01T00:00:00Z",
-  "end_date": "2023-01-02T00:00:00Z",
-  "created_at": "2023-01-01T00:00:00Z",
-  "updated_at": "2023-01-01T00:00:00Z",
-  "equipment": {
-    "id": 1,
-    "name": "Oscilloscope",
-    "group": "Test Equipment",
-    "location": "Lab A"
-  }
+  "message": "Làm thế nào để đo an toàn trên máy soi hỏng cách điện?",
+  "history": [ { "role": "user", "content": "..." }, { "role": "assistant", "content": "..." } ],
+  "mode": "chat"
+}
+// Response 200
+{
+  "answer": "Trước tiên ngắt nguồn... (tiếng Việt)",
+  "model": "qwen2.5:3b",
+  "provider": "ollama",
+  "mode": "chat",
+  "grounded": true,
+  "sources": ["SOP-01 An toàn điện", "SOP-02 Máy soi Tektronix"]
 }
 ```
 
-**Status Codes:**
-- 200: Success
-- 400: Bad request
-- 401: Unauthorized
-- 403: Forbidden
-- 404: Not found
+- `mode`: `chat` (hỏi đáp) | `rag` (truy hồi tài liệu) | `summary` (tóm tắt tình
+  trạng thiết bị/bảo trì từ DB) | `inspection_alert` (cảnh báo thiết bị cần kiểm tra).
+- Lịch sử hội thoại bị chặn giới hạn (`MAX_HISTORY_MESSAGES`, mặc định 12) và
+  luôn loại bỏ `system` message do client gửi.
+- AI **chỉ mang tính tham khảo (read-only)**: không tự duyệt yêu cầu, không tự đổi
+  trạng thái thiết bị — mọi thay đổi phải do con người thao tác.
+- `502` nếu nhà cung cấp AI không khả dụng (không lộ chi tiết lỗi nội bộ).
 
 ---
 
-### Maintenance Management
+## 9. Nhật ký kiểm toán — `/api/audit-logs`
 
-#### GET /maintenance-records
-Get all maintenance records
-
-**Query Parameters:**
-- `status`: Filter by status (scheduled, in_progress, completed)
-- `equipment_id`: Filter by equipment ID
-
-**Response:**
-```json
-{
-  "items": [
-    {
-      "id": 1,
-      "equipment_id": 1,
-      "title": "Annual calibration",
-      "description": "Perform annual calibration of oscilloscope",
-      "status": "scheduled",
-      "scheduled_date": "2023-01-15T00:00:00Z",
-      "completed_date": null,
-      "created_at": "2023-01-01T00:00:00Z",
-      "updated_at": "2023-01-01T00:00:00Z",
-      "equipment": {
-        "id": 1,
-        "name": "Oscilloscope",
-        "group": "Test Equipment",
-        "location": "Lab A"
-      }
-    }
-  ],
-  "total": 3,
-  "page": 1,
-  "size": 10
-}
-```
-
-**Status Codes:**
-- 200: Success
-- 401: Unauthorized
+### GET /api/audit-logs?target_type=DEVICE&action=UPDATE&limit=200
+`limit` 1–1000 (mặc định 200). admin/manager thấy toàn bộ; role khác chỉ thấy
+bản ghi do chính mình tạo. Mỗi bản ghi: `id, user_id, username, user_role, action,
+target_type, target_id, target_name, details, created_at`.
 
 ---
 
-#### POST /maintenance-records
-Create new maintenance record
+## 10. Endpoint hệ thống (công khai)
 
-**Request Body:**
-```json
-{
-  "equipment_id": 1,
-  "title": "string",
-  "description": "string",
-  "scheduled_date": "2023-01-15T00:00:00Z"
-}
-```
+- `GET /health` → `{ "status": "ok" | "degraded", "ollama": true, "model": "qwen2.5:3b", "provider": "ollama", "capabilities": [...] }`
+- `GET /api/capabilities` → thông tin provider/model/ năng lực AI.
+- `GET /` → thông tin dịch vụ.
 
-**Response:**
-```json
-{
-  "id": 1,
-  "equipment_id": 1,
-  "title": "Annual calibration",
-  "description": "Perform annual calibration of oscilloscope",
-  "status": "scheduled",
-  "scheduled_date": "2023-01-15T00:00:00Z",
-  "completed_date": null,
-  "created_at": "2023-01-01T00:00:00Z",
-  "updated_at": "2023-01-01T00:00:00Z",
-  "equipment": {
-    "id": 1,
-    "name": "Oscilloscope",
-    "group": "Test Equipment",
-    "location": "Lab A"
-  }
-}
-```
+## Mã lỗi dùng chung
 
-**Status Codes:**
-- 201: Created
-- 400: Bad request
-- 401: Unauthorized
-- 403: Forbidden
-
----
-
-#### PUT /maintenance-records/{id}/start
-Start maintenance work
-
-**Path Parameters:**
-- `id`: Maintenance record ID
-
-**Response:**
-```json
-{
-  "id": 1,
-  "equipment_id": 1,
-  "title": "Annual calibration",
-  "description": "Perform annual calibration of oscilloscope",
-  "status": "in_progress",
-  "scheduled_date": "2023-01-15T00:00:00Z",
-  "completed_date": null,
-  "created_at": "2023-01-01T00:00:00Z",
-  "updated_at": "2023-01-01T00:00:00Z",
-  "equipment": {
-    "id": 1,
-    "name": "Oscilloscope",
-    "group": "Test Equipment",
-    "location": "Lab A"
-  }
-}
-```
-
-**Status Codes:**
-- 200: Success
-- 400: Bad request
-- 401: Unauthorized
-- 403: Forbidden
-- 404: Not found
-
----
-
-#### PUT /maintenance-records/{id}/complete
-Complete maintenance work
-
-**Path Parameters:**
-- `id`: Maintenance record ID
-
-**Request Body:**
-```json
-{
-  "notes": "string"
-}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "equipment_id": 1,
-  "title": "Annual calibration",
-  "description": "Perform annual calibration of oscilloscope",
-  "status": "completed",
-  "scheduled_date": "2023-01-15T00:00:00Z",
-  "completed_date": "2023-01-16T00:00:00Z",
-  "created_at": "2023-01-01T00:00:00Z",
-  "updated_at": "2023-01-01T00:00:00Z",
-  "equipment": {
-    "id": 1,
-    "name": "Oscilloscope",
-    "group": "Test Equipment",
-    "location": "Lab A"
-  }
-}
-```
-
-**Status Codes:**
-- 200: Success
-- 400: Bad request
-- 401: Unauthorized
-- 403: Forbidden
-- 404: Not found
-
----
-
-### AI Assistant
-
-#### POST /ai/ask
-Ask question to AI assistant
-
-**Request Body:**
-```json
-{
-  "question": "How do I use the oscilloscope?",
-  "context": "optional context information"
-}
-```
-
-**Response:**
-```json
-{
-  "answer": "To use the oscilloscope, follow these steps: 1) Turn on the power, 2) Connect the probe to the circuit, 3) Adjust the time and voltage scales, 4) Observe the waveform on the display.",
-  "sources": [
-    {
-      "document_name": "Oscilloscope User Manual",
-      "relevance_score": 0.95
-    }
-  ],
-  "processing_time": 2.5
-}
-```
-
-**Status Codes:**
-- 200: Success
-- 400: Bad request
-- 401: Unauthorized
-- 500: AI service error
-
----
-
-#### GET /ai/stats
-Get AI service statistics
-
-**Response:**
-```json
-{
-  "total_requests": 150,
-  "successful_requests": 145,
-  "failed_requests": 5,
-  "average_response_time": 2.3,
-  "available_devices": 25,
-  "open_maintenance_records": 3
-}
-```
-
-**Status Codes:**
-- 200: Success
-- 401: Unauthorized
-
----
-
-### Statistics and Reports
-
-#### GET /stats/equipment
-Get equipment statistics
-
-**Response:**
-```json
-{
-  "total_equipment": 50,
-  "available_equipment": 35,
-  "borrowed_equipment": 10,
-  "maintenance_equipment": 5,
-  "by_group": {
-    "Test Equipment": 20,
-    "Measurement Tools": 15,
-    "Development Kits": 10,
-    "Components": 5
-  },
-  "by_location": {
-    "Lab A": 25,
-    "Lab B": 15,
-    "Lab C": 10
-  }
-}
-```
-
-**Status Codes:**
-- 200: Success
-- 401: Unauthorized
-
----
-
-#### GET /stats/borrow
-Get borrow statistics
-
-**Response:**
-```json
-{
-  "total_borrows": 100,
-  "active_borrows": 10,
-  "completed_borrows": 90,
-  "average_borrow_duration": 3.5,
-  "by_month": {
-    "2023-01": 25,
-    "2023-02": 30,
-    "2023-03": 45
-  }
-}
-```
-
-**Status Codes:**
-- 200: Success
-- 401: Unauthorized
-
----
-
-#### GET /stats/maintenance
-Get maintenance statistics
-
-**Response:**
-```json
-{
-  "total_maintenance": 30,
-  "scheduled_maintenance": 5,
-  "in_progress_maintenance": 3,
-  "completed_maintenance": 22,
-  "overdue_maintenance": 2,
-  "average_completion_time": 5.2
-}
-```
-
-**Status Codes:**
-- 200: Success
-- 401: Unauthorized
-
----
-
-## Error Responses
-
-All endpoints return appropriate HTTP status codes and error messages in JSON format:
-
-```json
-{
-  "detail": "Error message describing what went wrong"
-}
-```
-
-Common error codes:
-- 400: Bad Request - Invalid input data
-- 401: Unauthorized - Authentication required
-- 403: Forbidden - Insufficient permissions
-- 404: Not Found - Resource not found
-- 422: Unprocessable Entity - Validation error
-- 500: Internal Server Error - Server-side error
-
-## Rate Limiting
-
-API endpoints are rate limited to prevent abuse:
-- Authentication endpoints: 5 requests per minute
-- General endpoints: 100 requests per minute
-- AI endpoints: 20 requests per minute
-
-## Data Models
-
-### Equipment
-```json
-{
-  "id": 1,
-  "name": "string",
-  "description": "string",
-  "group": "string",
-  "location": "string",
-  "status": "available|borrowed|maintenance",
-  "created_at": "2023-01-01T00:00:00Z",
-  "updated_at": "2023-01-01T00:00:00Z"
-}
-```
-
-### Borrow Request
-```json
-{
-  "id": 1,
-  "user_id": 1,
-  "equipment_id": 1,
-  "status": "pending|approved|rejected|returned",
-  "purpose": "string",
-  "start_date": "2023-01-01T00:00:00Z",
-  "end_date": "2023-01-02T00:00:00Z",
-  "created_at": "2023-01-01T00:00:00Z",
-  "updated_at": "2023-01-01T00:00:00Z"
-}
-```
-
-### Maintenance Record
-```json
-{
-  "id": 1,
-  "equipment_id": 1,
-  "title": "string",
-  "description": "string",
-  "status": "scheduled|in_progress|completed",
-  "scheduled_date": "2023-01-15T00:00:00Z",
-  "completed_date": "2023-01-16T00:00:00Z",
-  "created_at": "2023-01-01T00:00:00Z",
-  "updated_at": "2023-01-01T00:00:00Z"
-}
-```
-
-### User
-```json
-{
-  "id": 1,
-  "username": "string",
-  "email": "string",
-  "role": "admin|user|technician",
-  "created_at": "2023-01-01T00:00:00Z",
-  "updated_at": "2023-01-01T00:00:00Z"
-}
-```
+| Mã | Ý nghĩa |
+|----|---------|
+| 401 | Chưa đăng nhập / token hết hạn hoặc không hợp lệ |
+| 403 | Vượt quyền RBAC, tài khoản bị khóa, hoặc gán role vượt thẩm quyền |
+| 404 | Không tìm thấy tài nguyên |
+| 409 | Trạng thái xung đột (thiết bị không available, serial trùng, luồng sự cố đang mở…) |
+| 422 | Dữ liệu không hợp lệ (Pydantic / khoảng thời gian thống kê) |
+| 502 | Nhà cung cấp AI (Ollama) không phản hồi |

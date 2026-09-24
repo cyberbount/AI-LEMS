@@ -1,464 +1,167 @@
-# User Guide
-
-## Table of Contents
-
-1. [Introduction](#introduction)
-2. [Getting Started](#getting-started)
-3. [Authentication](#authentication)
-4. [Equipment Management](#equipment-management)
-5. [Borrow System](#borrow-system)
-6. [Maintenance Management](#maintenance-management)
-7. [AI Assistant](#ai-assistant)
-8. [Reporting and Statistics](#reporting-and-statistics)
-9. [User Roles and Permissions](#user-roles-and-permissions)
-10. [Troubleshooting](#troubleshooting)
-
-## Introduction
-
-Welcome to the Laboratory Equipment Management System with AI Integration (AI-LEMS). This guide will help you understand how to use the system effectively for managing laboratory equipment, borrowing items, tracking maintenance, and getting AI-powered assistance.
-
-## Getting Started
-
-### System Access
-
-1. **Web Application**: Open your web browser and navigate to the system URL
-2. **Mobile Access**: The system is responsive and works on mobile devices
-3. **API Access**: Developers can access the REST API for integration
-
-### System Requirements
-
-- Modern web browser (Chrome, Firefox, Safari, Edge)
-- JavaScript enabled
-- Internet connection (for AI features)
-
-### First Time Login
-
-1. Use your assigned credentials to log in
-2. Change your password after first login
-3. Review your profile information
-4. Explore the system interface
-
-## Authentication
-
-### Login Process
-
-1. Enter your username and password
-2. Click "Login" button
-3. You will be redirected to the dashboard
-
-### Password Management
-
-- **Change Password**: Navigate to Profile > Settings > Change Password
-- **Reset Password**: Click "Forgot Password" on login page
-- **Password Requirements**: Minimum 8 characters, include uppercase, lowercase, numbers, and special characters
-
-### Session Management
-
-- Sessions timeout after 30 minutes of inactivity
-- "Remember Me" option available for trusted devices
-- Logout when using shared computers
-
-## Equipment Management
-
-### Equipment Catalog
-
-The equipment catalog displays all available laboratory equipment with the following information:
-
-- Equipment name and description
-- Group and location
-- Current status (Available, Borrowed, Maintenance)
-- Last updated date
-
-### Search and Filter
-
-- **Search**: Use the search bar to find equipment by name or description
-- **Filter by Group**: Select equipment groups (Test Equipment, Measurement Tools, etc.)
-- **Filter by Location**: Select specific laboratories or storage areas
-
-### Equipment Details
-
-Click on any equipment item to view detailed information:
-
-- Complete equipment specifications
-- Current status and location
-- Borrow history
-- Maintenance records
-- Associated documents
-
-### Adding New Equipment
-
-1. Navigate to Equipment > Add Equipment
-2. Fill in the required fields:
-   - Equipment name
-   - Description
-   - Group (select from predefined list)
-   - Location (select from predefined list)
-3. Click "Save" to add the equipment
-
-### Editing Equipment
-
-1. Find the equipment in the catalog
-2. Click "Edit" button
-3. Modify the required fields
-4. Click "Save" to update
-
-### Equipment Status Management
-
-Equipment can have one of three statuses:
-
-- **Available**: Equipment is ready for borrowing
-- **Borrowed**: Equipment is currently in use
-- **Maintenance**: Equipment is under maintenance
-
-Status changes are automatically managed by the system when:
-- Equipment is borrowed or returned
-- Maintenance is scheduled or completed
-
-## Borrow System
-
-### Creating a Borrow Request
-
-1. Navigate to Borrow > New Request
-2. Select the equipment you want to borrow
-3. Fill in the request details:
-   - Purpose of borrowing
-   - Start date and time
-   - End date and time
-4. Click "Submit Request"
-
-### Borrow Request Status
-
-Borrow requests go through the following lifecycle:
-
-1. **Pending**: Awaiting approval
-2. **Approved**: Request approved, equipment available
-3. **Rejected**: Request denied by manager
-4. **Returned**: Equipment has been returned
-
-### Viewing Borrow Requests
-
-- **My Requests**: View requests you have submitted
-- **All Requests**: View all requests (manager only)
-- **Active Requests**: View currently active borrowings
-
-### Approving/Rejecting Requests
-
-Managers can approve or reject borrow requests:
-
-1. Navigate to Borrow > Pending Requests
-2. Select a request to review
-3. Click "Approve" or "Reject"
-4. Add comments if rejecting
-
-### Returning Equipment
-
-1. Navigate to Borrow > My Active Loans
-2. Find the equipment you want to return
-3. Click "Return" button
-4. Confirm the return
-
-### Borrow Rules
-
-- Equipment must be available before a new request can be created
-- Borrow duration is limited to 14 days
-- Requests must be approved before equipment can be borrowed
-- Equipment must be returned by the agreed date
-
-## Maintenance Management
-
-### Creating Maintenance Records
-
-1. Navigate to Maintenance > New Record
-2. Select the equipment requiring maintenance
-3. Fill in maintenance details:
-   - Title of maintenance task
-   - Description of work needed
-   - Scheduled date
-4. Click "Create Record"
-
-### Maintenance Status
-
-Maintenance records have the following statuses:
-
-- **Scheduled**: Maintenance planned
-- **In Progress**: Work is being performed
-- **Completed**: Maintenance finished
-
-### Viewing Maintenance Records
-
-- **Scheduled Maintenance**: View upcoming maintenance tasks
-- **Active Maintenance**: View maintenance in progress
-- **Completed Maintenance**: View historical maintenance records
-
-### Managing Maintenance
-
-1. **Start Maintenance**: Click "Start" to begin work on a scheduled task
-2. **Complete Maintenance**: Click "Complete" when work is finished
-3. **Add Notes**: Add comments about maintenance work performed
-
-### Maintenance History
-
-View complete maintenance history for any equipment:
-
-1. Navigate to Equipment Catalog
-2. Click on equipment item
-3. View "Maintenance History" tab
-4. See all past maintenance records and details
-
-## AI Assistant
-
-### Accessing AI Assistant
-
-The AI Assistant is available in two ways:
-
-1. **Chat Interface**: Click the chat icon in the bottom-right corner
-2. **Equipment Context**: Click "Ask AI" on equipment details page
-
-### Asking Questions
-
-Type your question in the chat interface:
-
-- **Equipment Usage**: "How do I use the oscilloscope?"
-- **Maintenance Guidelines**: "What are the maintenance procedures for this multimeter?"
-- **Safety Information**: "What safety precautions should I follow when using this equipment?"
-- **General Support**: "I need help with my experiment"
-
-### AI Context
-
-The AI Assistant has access to:
-
-- Equipment manuals and documentation
-- Maintenance records and procedures
-- Safety guidelines and SOPs
-- General laboratory procedures
-
-### AI Response Features
-
-- **Contextual Answers**: Responses are tailored to your specific equipment and laboratory
-- **Source References**: AI provides references to source documents
-- **Safety Emphasis**: Safety-related answers include appropriate warnings
-- **Limitations**: AI states limitations when official context is unavailable
-
-### AI Usage Guidelines
-
-- AI responses are advisory and do not replace professional judgment
-- Always verify critical information with official documentation
-- Report any AI inaccuracies to the system administrator
-- Use AI as a learning tool and reference, not as a replacement for training
-
-## Reporting and Statistics
-
-### Equipment Statistics
-
-View comprehensive equipment statistics:
-
-- Total equipment count
-- Equipment by group and location
-- Equipment status distribution
-- Equipment utilization rates
-
-### Borrow Statistics
-
-Analyze borrowing patterns:
-
-- Total borrow requests
-- Active vs. completed borrows
-- Average borrow duration
-- Borrow trends over time
-
-### Maintenance Statistics
-
-Track maintenance activities:
-
-- Scheduled vs. completed maintenance
-- Maintenance completion times
-- Equipment failure rates
-- Maintenance costs (if tracking)
-
-### Generating Reports
-
-1. Navigate to Reports section
-2. Select report type (Equipment, Borrow, Maintenance)
-3. Configure date range and filters
-4. Click "Generate Report"
-5. Download or print the report
-
-## User Roles and Permissions
-
-### Administrator
-
-Full system access and management capabilities:
-
-- User management (create, edit, delete users)
-- System configuration
-- All equipment management functions
-- All borrow management functions
-- All maintenance management functions
-- Access to all reports and statistics
-- AI assistant access
-
-### Manager
-
-Laboratory management capabilities:
-
-- Equipment management
-- Borrow request approval/rejection
-- Maintenance management
-- Report generation
-- AI assistant access
-
-### User
-
-Basic laboratory user capabilities:
-
-- View equipment catalog
-- Create borrow requests
-- View borrowed items
-- Return borrowed equipment
-- View maintenance records
-- AI assistant access
-
-### Technician
-
-Maintenance-focused capabilities:
-
-- View equipment catalog
-- Create maintenance records
-- Update maintenance status
-- View equipment history
-- AI assistant access
-
-## Troubleshooting
-
-### Common Issues
-
-**Login Problems**
-- Verify username and password
-- Check if account is active
-- Reset password if needed
-- Contact administrator if issues persist
-
-**Equipment Not Available**
-- Check equipment status in catalog
-- Verify equipment is not borrowed
-- Check if equipment is in maintenance
-- Contact manager if equipment should be available
-
-**Borrow Request Issues**
-- Ensure equipment is available
-- Verify dates are within allowed range
-- Check if you have permission to borrow
-- Contact manager for approval issues
-
-**AI Assistant Problems**
-- Check internet connection
-- Verify AI service is running
-- Try rephrasing your question
-- Report persistent issues to administrator
-
-### Error Messages
-
-**"Authentication Failed"**
-- Check login credentials
-- Ensure account is active
-- Clear browser cache and cookies
-
-**"Equipment Not Found"**
-- Verify equipment ID
-- Check if equipment exists
-- Refresh the page
-
-**"Permission Denied"**
-- Verify user role and permissions
-- Contact administrator if access should be granted
-
-**"AI Service Unavailable"**
-- Check internet connection
-- Verify Ollama service is running
-- Try again later
-
-### Getting Help
-
-1. **AI Assistant**: Use the built-in AI assistant for help
-2. **Documentation**: Access comprehensive documentation
-3. **Administrator**: Contact system administrator for technical issues
-4. **Support Portal**: Submit support requests through the system
-
-## Best Practices
-
-### Equipment Management
-
-- Keep equipment information up to date
-- Use descriptive names and descriptions
-- Regularly audit equipment inventory
-- Maintain accurate location records
-
-### Borrow System
-
-- Plan borrow requests in advance
-- Return equipment on time
-- Provide accurate purpose information
-- Communicate any issues with borrowed equipment
-
-### Maintenance Management
-
-- Schedule regular maintenance
-- Document all maintenance activities
-- Use standardized procedures
-- Track maintenance history
-
-### AI Assistant Usage
-
-- Use specific, clear questions
-- Verify critical information
-- Report AI inaccuracies
-- Use AI as a learning tool
-
-## Keyboard Shortcuts
-
-- **Ctrl/Cmd + K**: Open AI Assistant
-- **Ctrl/Cmd + S**: Save form
-- **Ctrl/Cmd + R**: Refresh page
-- **Esc**: Close modal/dialog
-- **Tab**: Navigate between form fields
-
-## Mobile App Usage
-
-The system is optimized for mobile devices:
-
-- Responsive design adapts to screen size
-- Touch-friendly interface
-- Offline access to cached data
-- Push notifications for important updates
-
-## Accessibility
-
-The system includes accessibility features:
-
-- Screen reader compatibility
-- Keyboard navigation
-- High contrast mode
-- Adjustable text sizes
-- ARIA labels for improved accessibility
-
-## Updates and Changelog
-
-The system is regularly updated with new features and improvements. Check the changelog for:
-
-- New features and enhancements
-- Bug fixes and improvements
-- Security updates
-- Documentation updates
-
-## Contact Information
-
-For additional support:
-
-- **Email**: support@ai-lems.com
-- **Phone**: +1 (555) 123-4567
-- **Support Portal**: Available within the system
-- **Documentation**: https://docs.ai-lems.com
+# Hướng dẫn sử dụng — AI-LEMS (LyxLab)
+
+Hệ thống Quản lý Thiết bị Phòng thí nghiệm có tích hợp AI.
+Tài liệu này mô tả đúng các tính năng **đang hoạt động** của hệ thống
+(React frontend + FastAPI backend + Ollama AI local), theo 4 vai trò:
+**Admin (Quản lý phòng lab), Manager (Quản lý), Technician (Kỹ thuật viên), User (Người sử dụng)**.
+
+## Mục lục
+
+1. [Đăng nhập & tài khoản](#đăng-nhập--tài-khoản)
+2. [Vai trò và quyền hạn](#vai-trò-và-quyền-hạn)
+3. [Luồng mượn — trả thiết bị](#luồng-mượn--trả-thiết-bị)
+4. [Luồng sự cố và sửa chữa](#luồng-sự-cố-và-sửa-chữa)
+5. [Trang theo từng vai trò](#trang-theo-từng-vai-trò)
+6. [Bảo trì định kỳ](#bảo-trì-định-kỳ)
+7. [Trợ lý AI](#trợ-lý-ai)
+8. [Thống kê & báo cáo](#thống-kê--báo-cáo)
+9. [Xử lý sự cố kỹ thuật](#xử-lý-sự-cố-kỹ-thuật)
 
 ---
 
-*This user guide will be updated regularly to reflect system changes and new features. For the most current information, please refer to the online documentation.*
+## Đăng nhập & tài khoản
+
+- Truy cập giao diện web (mặc định `http://localhost:5173` khi chạy dev) và đăng nhập bằng
+  **tên đăng nhập hoặc email** + mật khẩu. Hỗ trợ đăng nhập Google Workspace (tài khoản
+  phải được quản lý cấp sẵn trong hệ thống).
+- Tài khoản mẫu sau khi seed:
+  - `admin` / `admin123` — Quản lý phòng lab
+  - `technician` / `tech123` — Kỹ thuật viên
+  - `user` / `user123` — Người sử dụng
+  - (`manager` được hỗ trợ trong API/schema; chỉ có trong dữ liệu mẫu MySQL `init.sql`)
+- **Đổi mật khẩu:** mở biểu tượng hồ sơ → *Đổi mật khẩu*. Mật khẩu mới tối thiểu 8 ký tự.
+  Mật khẩu được mã hóa một chiều (bcrypt) — **không ai (kể cả quản trị viên) xem lại
+  được mật khẩu cũ**; nếu quên, quản trị viên đặt mật khẩu mới giúp bạn.
+- Tự đăng ký tài khoản công khai luôn được gán vai trò `user`; tài khoản vai trò khác
+  do Admin/Manager tạo trong mục *Người dùng*.
+
+## Vai trò và quyền hạn
+
+| Chức năng | Admin | Manager | Technician | User |
+|---|:---:|:---:|:---:|:---:|
+| Xem danh sách thiết bị | ✅ | ✅ | ✅ | ✅ |
+| Thêm / sửa / thanh lý thiết bị | ✅ | ✅ | ❌ | ❌ |
+| Đổi trạng thái kỹ thuật của thiết bị | ✅ | ✅ | ✅ (giới hạn các trạng thái kỹ thuật) | ❌ |
+| Tạo yêu cầu mượn | ✅ | ✅ | ✅ | ✅ |
+| Duyệt / từ chối yêu cầu | ✅ | ✅ | ❌ | ❌ |
+| Nhận máy / báo hoàn trả | ✅ | ✅ | ✅ | ✅ (yêu cầu của mình) |
+| Xác nhận hoàn trả, thu hồi | ✅ | ✅ | ✅ | ❌ |
+| Tạo / cập nhật / hoàn tất phiếu bảo trì | ✅ | ✅ | ✅ | ❌ |
+| Tiếp nhận sự cố (bắt đầu sửa) | ❌ | ❌ | ✅ | ❌ |
+| Quản lý tài khoản (tạo / khóa / xóa) | ✅ | ✅ (chỉ tạo `user`, `technician`) | ❌ | ❌ |
+| Xem nhật ký kiểm toán | ✅ (tất cả) | ✅ (tất cả) | của mình | của mình |
+| Trợ lý AI | ✅ | ✅ | ✅ | ✅ |
+
+## Luồng mượn — trả thiết bị
+
+1. **User tạo yêu cầu mượn**: chọn thiết bị đang *Khả dụng* → bấm **Mượn** → nhập mục đích,
+   thời gian mượn/trả mong muốn (hệ thống chặn mượn thời điểm trong quá khứ).
+   Trạng thái yêu cầu: `pending` (Chờ duyệt).
+2. **Manager/Admin duyệt**: trong mục *Yêu cầu mượn* → **Duyệt** (thiết bị chuyển sang
+   *Đã đặt trước*) hoặc **Từ chối**.
+3. **User nhận máy**: bấm **Nhận máy** (bàn giao). Trạng thái: yêu cầu `borrowed`,
+   thiết bị `borrowed` (Đang mượn).
+4. **Trả máy — quy trình 2 bước**:
+   - User bấm **Báo hoàn trả** → yêu cầu chuyển `return_pending`, thiết bị `returning`
+     (chờ kiểm tra).
+   - Manager/Admin/Technician kiểm tra tình trạng → **Xác nhận hoàn trả** với đánh giá
+     tình trạng thiết bị → `returned`, thiết bị trở lại *Khả dụng*.
+   - Nếu tình trạng có dấu hiệu hỏng hóc, hệ thống **tự chuyển thiết bị sang bảo trì
+     và tạo phiếu kiểm tra**.
+5. **Quá hạn**: yêu cầu mượn quá giờ trả hiển thị huy hiệu đỏ **QUÁ HẠN** kèm thời gian
+   trễ chính xác; Admin thấy cảnh báo tổng trên trang Tổng quan và có nút **Thu hồi** /
+   **Nhận trả** trực tiếp.
+6. Mọi bước chuyển trạng thái được ghi vào **lịch sử sử dụng** và **nhật ký kiểm toán**.
+
+## Luồng sự cố và sửa chữa
+
+Khi thiết bị gặp sự cố trong lúc mượn (hoặc phát hiện hư hỏng khi tiếp nhận trả):
+
+1. **Báo sự cố**: User (nút **Báo sự cố** trên lượt mượn của mình) hoặc Manager/Admin
+   nhập mô tả hư hỏng. Hệ thống:
+   - chuyển thiết bị sang `pending_inspection` (Chờ kiểm tra),
+   - tự tạo phiếu sửa chữa loại `incident` đang mở.
+2. **Tiếp nhận**: **Technician** bấm **Tiếp nhận kiểm tra** — thiết bị chuyển
+   `in_progress` (Đang sửa chữa), phiếu ghi nhận kỹ thuật viên phụ trách.
+3. **Sửa chữa & cập nhật**: Technician cập nhật trạng thái phiếu
+   (Đang sửa / Thay thế một phần / Thay thế toàn bộ), tình trạng thiết bị và ghi chú.
+4. **Hoàn tất**: Technician bấm **Hoàn tất** — phiếu chuyển `completed`, thiết bị
+   trở lại *Khả dụng*, sẵn sàng cho lượt mượn tiếp theo.
+5. Trong lúc thiết bị hỏng/bảo trì, mọi yêu cầu mượn mới đối với thiết bị đó bị từ chối (409).
+
+> Lưu ý: Trợ lý AI chỉ **gợi ý/ tham khảo**, không tự duyệt hay thay đổi bất kỳ trạng thái nào.
+
+## Trang theo từng vai trò
+
+### Admin (và Manager) — "Quản lý phòng lab"
+- **Tổng quan**: KPI (thiết bị, đang mượn, quá hạn, chờ duyệt...), băng cảnh báo đỏ
+  các lượt mượn quá hạn (Thu hồi / Nhận trả), băng sự cố (Tiếp nhận kiểm tra),
+  bảng điều khiển nhanh thiết bị real-time (làm mới mỗi ~3 giây), biểu đồ sử dụng.
+- **Người dùng**: tạo/sửa/khóa/xóa tài khoản, đặt lại mật khẩu, gán vai trò.
+- **Thiết bị**: tìm kiếm, lọc trạng thái, thêm/sửa/thanh lý thiết bị.
+- **Bảo trì**: danh sách phiếu, tạo phiếu mới, hoàn tất.
+- **Yêu cầu mượn**: duyệt / từ chối / bàn giao / xác nhận trả / thu hồi.
+- **Nhật ký hệ thống**: tra cứu theo loại đối tượng, hành động, khoảng thời gian;
+  xuất TXT; tự làm mới 10 giây.
+- **Báo cáo**: thống kê + xuất file TXT / in PDF.
+- **Trợ lý AI**: chế độ tóm tắt tình trạng từ dữ liệu hiện có.
+
+### User — "Người sử dụng"
+- **Tổng quan**: KPI cá nhân, cảnh báo quá hạn của chính mình (Báo hoàn trả ngay /
+  Báo sự cố), thiết bị đang mượn.
+- **Thiết bị**: danh mục + tìm kiếm + lọc nhóm; chỉ thấy nút **Mượn** trên thiết bị khả dụng.
+- **Lượt mượn của tôi**: nhận máy / báo hoàn trả / báo sự cố; trạng thái chờ duyệt.
+- **Trợ lý AI**: hỏi đáp SOP/hướng dẫn sử dụng.
+- Giao diện che các trạng thái sửa chữa nội bộ thành một nhãn "Đang bảo trì".
+
+### Technician — "Kỹ thuật viên"
+- **Tổng quan**: danh sách công việc cần làm, băng sự cố chờ tiếp nhận.
+- **Thiết bị**: bảng điều khiển nhanh; chỉ được đặt các trạng thái kỹ thuật
+  (chờ kiểm tra, đang sửa, thay thế một phần/toàn bộ, bảo trì).
+- **Bảo trì**: tạo / cập nhật / xóa / hoàn tất phiếu, tiếp nhận sự cố,
+  lên lịch bảo trì ("+ Lên lịch / Thêm tác vụ").
+- **Lịch sử**: phiếu đã xử lý, xuất báo cáo.
+- **Cảnh báo AI**: danh sách thiết bị cần kiểm tra do AI gợi ý (chế độ `inspection_alert`).
+
+## Bảo trì định kỳ
+
+- Mục *Bảo trì* cho tạo **lịch định kỳ** theo thiết bị: chu kỳ ngày
+  (`interval_days`, mặc định 180) và hạn kiểm tra tiếp theo (`next_due_at`).
+- Phiếu bảo trì thường (`kind="inspection"`) dùng cho kiểm tra/bảo dưỡng;
+  `kind="incident"` tự sinh khi có sự cố.
+
+## Trợ lý AI
+
+- Nút nổi trên mọi trang (kéo được), hoặc mục **Trợ lý AI** / **Cảnh báo AI** trong sidebar.
+- Chế độ: **hỏi đáp** (chat/RAG theo SOP), **tóm tắt** (Admin: tình trạng thiết bị —
+  bảo trì từ dữ liệu thật), **cảnh báo** (Technician: thiết bị cần kiểm tra).
+- Câu trả lời tiếng Việt, kèm **nguồn trích dẫn** (tên tài liệu SOP) và nhãn
+  *RAG Grounded* khi có ngữ cảnh; không có ngữ cảnh phù hợp thì AI tự nhận "không đủ dữ liệu".
+- Có các phím hỏi nhanh: an toàn điện, máy soi Tektronix, nguồn DC Keysight, quy trình mượn-trả.
+- Có thể **dừng phản hồi** đang chờ; lịch sử hội thoại được giới hạn 12 thông điệp gần nhất.
+- AI chạy hoàn toàn local (Ollama `qwen2.5:3b`) — dữ liệu không rời khỏi máy.
+- AI chỉ tham khảo: không tự duyệt mượn, không đổi trạng thái thiết bị.
+
+## Thống kê & báo cáo
+
+- `/api/stats` và trang **Báo cáo**: số liệu tổng hợp + **tần suất sử dụng theo
+  khoảng thời gian tùy chọn** (chọn cả `start` và `end`), phân rã theo loại hành động.
+- Xuất báo cáo dạng TXT và in/PDF (bố cục in được tối ưu riêng).
+
+## Xử lý sự cố kỹ thuật
+
+| Hiện tượng | Nguyên nhân & cách xử lý |
+|---|---|
+| Không đăng nhập được (401) | Sai tên đăng nhập/email hoặc mật khẩu; kiểm tra tài khoản đã được cấp |
+| "Tài khoản bị khóa" (403) | Liên hệ Admin mở khóa (is_active) |
+| Nút Mượn bị lỗi 409 | Thiết bị không còn khả dụng hoặc đang trong luồng sự cố — chọn thiết bị khác |
+| Trợ lý AI báo "nhà cung cấp AI không khả dụng" (502) | Ollama chưa chạy: `ollama serve`, kiểm tra `ollama list` có `qwen2.5:3b` |
+| Câu trả lời AI chậm | Lần đầu chạy model phải load vào RAM/GPU; chờ hoặc dùng model nhỏ hơn |
+| Token hết hạn sau 60 phút | Đăng nhập lại |
+| Lỗi CORS khi dev | Kiểm tra `CORS_ORIGINS` trong `.env` chứa cổng frontend (5173/3000) |
+| Xem chi tiết API | Mở `http://localhost:8000/docs` (Swagger UI) |
+
+---
+
+*Tài liệu khớp với mã nguồn tại `backend/app/routers/` và `frontend/src/App.jsx`;
+chi tiết kỹ thuật từng endpoint xem `docs/api.md`, cấu trúc dữ liệu xem `docs/schema.sql`.*

@@ -2,16 +2,17 @@ from typing import Annotated
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from app.deps import Db, current_user, require_roles
-from app.models import Device, MaintenanceRecord, MaintenanceSchedule, User
+from app.models import BorrowRequest, Device, MaintenanceRecord, MaintenanceSchedule, User
 from app.schemas import MaintenanceCreate, MaintenanceOut, MaintenanceScheduleCreate, MaintenanceScheduleOut, MaintenanceUpdate
 from app.services.audit_service import record_audit_log
+from app.utils.tz import hanoi_now_naive
 
 router = APIRouter(prefix="/api/maintenance", tags=["maintenance"])
 
 
 @router.get("", response_model=list[MaintenanceOut])
 def maintenance(db: Db, _: Annotated[User, Depends(current_user)]):
-    return db.query(MaintenanceRecord).all()
+    return db.query(MaintenanceRecord).order_by(MaintenanceRecord.id.desc()).all()
 
 
 @router.post("", response_model=MaintenanceOut, status_code=201)
@@ -24,7 +25,7 @@ def create(data: MaintenanceCreate, db: Db, user: Annotated[User, Depends(requir
 
     if data.status in ["completed", "replace_full", "replace_partial"]:
         if data.status == "completed":
-            item.completed_at = datetime.utcnow()
+            item.completed_at = hanoi_now_naive()
         if device.status == "maintenance" and data.status == "completed":
             device.status = "available"
         elif device.status == "available" and data.status != "completed":
@@ -63,6 +64,7 @@ def complete(item_id: int, db: Db, user: Annotated[User, Depends(require_roles("
         raise HTTPException(404, "Maintenance record not found")
     item.status = "completed"
     item.completed_at = datetime.utcnow()
+    item.completed_at = hanoi_now_naive()
     device = db.get(Device, item.device_id)
     if device and device.status == "maintenance":
         device.status = "available"
@@ -76,6 +78,46 @@ def complete(item_id: int, db: Db, user: Annotated[User, Depends(require_roles("
         target_name=f"Thiết bị #{item.device_id} - {device.name if device else ''}",
         details="Hoàn thành công việc bảo trì.",
     )
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@router.patch("/{item_id}/accept", response_model=MaintenanceOut)
+def accept_incident(
+    item_id: int,
+    db: Db,
+    user: Annotated[User, Depends(require_roles("admin", "manager", "technician"))],
+):
+    """Kĩ thuật viên tiếp nhận sự cố → chuyển thiết bị từ pending_inspection sang in_progress (Đang kiểm tra sự cố)."""
+    item = db.get(MaintenanceRecord, item_id)
+    if not item:
+        raise HTTPException(404, "Bản ghi bảo trì không tồn tại.")
+    if item.status != "open" or item.kind != "incident":
+        raise HTTPException(400, "Chỉ có thể tiếp nhận sự cố đang mở (open).")
+
+    device = db.get(Device, item.device_id)
+    if not device:
+        raise HTTPException(404, "Thiết bị không tồn tại.")
+    if device.status not in ["pending_inspection", "maintenance", "borrowed"]:
+        raise HTTPException(400, f"Thiết bị không ở trạng thái chờ tiếp nhận sự cố (hiện tại: {device.status}).")
+
+    # Chuyển thiết bị sang trạng thái Đang kiểm tra sự cố (in_progress)
+    device.status = "in_progress"
+    # Gán kĩ thuật viên và chuyển trạng thái bản ghi sang in_progress
+    item.technician_id = user.id
+    item.status = "in_progress"
+
+    record_audit_log(
+        db=db,
+        user=user,
+        action="ACCEPT_INCIDENT",
+        target_type="MAINTENANCE",
+        target_id=item.id,
+        target_name=f"Thiết bị #{item.device_id} - {device.name if device else ''}",
+        details=f"Tiếp nhận sự cố #{item.id}: {device.name} ({device.asset_code}). Chuyển trạng thái: Chờ tiếp nhận -> Đang kiểm tra sự cố.",
+    )
+
     db.commit()
     db.refresh(item)
     return item
@@ -99,13 +141,53 @@ def update(
 
     device = db.get(Device, item.device_id)
 
-    if data.status in ["completed", "replace_full", "replace_partial"]:
+    # Đồng bộ trạng thái thiết bị theo kết quả đánh giá kỹ thuật
+    if device:
         if data.status == "completed":
-            item.completed_at = datetime.utcnow()
-        if device and device.status == "maintenance" and data.status == "completed":
+            item.completed_at = hanoi_now_naive()
             device.status = "available"
+            if not data.device_condition:
+                device.condition = "Đã qua sử dụng - Hoạt động tốt"
+            # Tự động chốt hoàn tất lượt mượn liên quan (nếu thiết bị trước đó đang mượn mà bị sự cố)
+            open_borrow = db.query(BorrowRequest).filter(
+                BorrowRequest.device_id == device.id,
+                BorrowRequest.status.in_(["borrowed", "return_pending"])
+            ).order_by(BorrowRequest.id.desc()).first()
+            if open_borrow:
+                open_borrow.status = "returned"
 
-    # Cập nhật tình trạng vật lý (condition) nếu KTV đánh giá lại
+        elif data.status == "replace_partial":
+            device.status = "replace_partial"
+            if not data.device_condition:
+                device.condition = "Đang sửa chữa / Thay thế một phần"
+            # Kết thúc lượt mượn vì máy đã thu hồi về xưởng kỹ thuật sửa chữa
+            open_borrow = db.query(BorrowRequest).filter(
+                BorrowRequest.device_id == device.id,
+                BorrowRequest.status.in_(["borrowed", "return_pending"])
+            ).order_by(BorrowRequest.id.desc()).first()
+            if open_borrow:
+                open_borrow.status = "returned"
+
+        elif data.status == "replace_full":
+            device.status = "replace_full"
+            if not data.device_condition:
+                device.condition = "Hỏng hóc nặng / Chờ thanh lý hoặc thay mới"
+            # Kết thúc lượt mượn
+            open_borrow = db.query(BorrowRequest).filter(
+                BorrowRequest.device_id == device.id,
+                BorrowRequest.status.in_(["borrowed", "return_pending"])
+            ).order_by(BorrowRequest.id.desc()).first()
+            if open_borrow:
+                open_borrow.status = "returned"
+
+        elif data.status == "in_progress":
+            device.status = "in_progress"
+
+        elif data.status == "open":
+            if device.status == "available":
+                device.status = "maintenance"
+
+    # Cập nhật tình trạng vật lý (condition) nếu KTV đánh giá riêng
     condition_detail = ""
     if data.device_condition and device:
         old_condition = device.condition
@@ -119,7 +201,7 @@ def update(
         target_type="MAINTENANCE",
         target_id=item.id,
         target_name=f"Thiết bị #{item.device_id} - {device.name if device else ''}",
-        details=f"Cập nhật bảo trì: Trạng thái {old_status} -> {data.status}, Ghi chú: {item.notes}{condition_detail}",
+        details=f"Cập nhật bảo trì: Trạng thái {old_status} -> {data.status}, Thiết bị: {device.status if device else 'N/A'}, Ghi chú: {item.notes}{condition_detail}",
     )
 
     db.commit()

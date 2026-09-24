@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/users", tags=["users"])
 
 @router.get("", response_model=list[UserOut])
 def users(db: Db, _: Annotated[User, Depends(require_roles("admin", "manager"))]):
-    return db.query(User).all()
+    return db.query(User).order_by(User.id.desc()).all()
 
 
 @router.post("", response_model=UserOut, status_code=201)
@@ -81,6 +81,12 @@ def update_user(user_id: int, data: UserUpdate, db: Db, admin: Annotated[User, D
         status_text = "Mở khóa tài khoản" if data.is_active else "Khóa tài khoản"
         changes.append(f"Trạng thái: {status_text}")
         user.is_active = data.is_active
+    if data.password is not None and data.password.strip():
+        pwd = data.password.strip()
+        if len(pwd) < 8:
+            raise HTTPException(400, "Mật khẩu mới phải có tối thiểu 8 ký tự.")
+        user.password_hash = hash_password(pwd)
+        changes.append("Đặt lại mật khẩu mới")
 
     if changes:
         record_audit_log(
