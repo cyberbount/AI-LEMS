@@ -1,0 +1,6 @@
+run:
+  soft_probe_prompt_cap: 32
+  generations: 1
+system:
+  parallel_requests: false
+  parallel_attempts: false
