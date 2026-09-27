@@ -12,7 +12,7 @@ Backend test suite:
 PYTHONPATH=backend .venv/bin/python -m pytest -q tests/
 ```
 
-Latest result: **33 passed, 7 warnings** (33/33, 2026-09-25).
+Latest result: **62 passed, 7 warnings** (62/62, 2026-09-27).
 
 Backend compilation:
 

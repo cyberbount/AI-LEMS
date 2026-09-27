@@ -140,6 +140,8 @@ Khi thiết bị gặp sự cố trong lúc mượn (hoặc phát hiện hư h�
 - Có các phím hỏi nhanh: an toàn điện, máy soi Tektronix, nguồn DC Keysight, quy trình mượn-trả.
 - Có thể **dừng phản hồi** đang chờ; lịch sử hội thoại được giới hạn 12 thông điệp gần nhất.
 - AI chạy hoàn toàn local (Ollama `qwen2.5:3b`) — dữ liệu không rời khỏi máy.
+- **Phân quyền tri thức theo vai**: mỗi chatbot hiển thị nhãn "Phạm vi" — Quản lý thấy dữ liệu vận hành + toàn bộ SOP, Kỹ thuật viên thấy SOP sửa chữa/hàn/ESD nội bộ, Người dùng chỉ thấy hướng dẫn sử dụng + quy định mượn-trả. Hỏi "liệt kê thiết bị" sẽ nhận danh sách thật đúng phạm vi của mình.
+- Câu trả lời có thể kèm **cảnh báo an toàn** (safety_note) khi chạm chủ đề điện/hàn/khẩn cấp.
 - AI chỉ tham khảo: không tự duyệt mượn, không đổi trạng thái thiết bị.
 
 ## Thống kê & báo cáo

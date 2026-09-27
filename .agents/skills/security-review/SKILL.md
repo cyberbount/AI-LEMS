@@ -49,3 +49,14 @@ FAIL if: a reviewed area is missing, a finding lacks evidence, or the review sta
 ## Project gate alignment
 A human reviewer decides the disposition of each finding: fix now, accept risk, or backlog. AI does not decide which risks are acceptable.
 Security review evidence belongs to the existing G3/G4/G5 process. Do not create G6 or G7. Findings require human disposition before implementation changes.
+
+## Framework mapping (added 2026-09-27)
+
+AI-related findings are classified against real, verified framework IDs — never guessed:
+
+- **MITRE ATLAS**: `AML.T0051` (LLM Prompt Injection, direct), `AML.T0051.001` (Indirect — via retrieved documents), `AML.T0054` (LLM Jailbreak). Used by the SEC-05 pre-flight filter and role-scoped retrieval (BR-015).
+- **NIST AI RMF 1.0**: `MEASURE-2.7` (AI system security & resilience) for AI error/context exposure; `MANAGE-4.1` (post-deployment monitoring) for the AI_QUERY audit trail.
+- **OWASP LLM Top 10**: LLM01 Prompt Injection, LLM02 Sensitive Information Disclosure, LLM03 Supply Chain (mitigated by local-only Ollama).
+
+Non-AI findings (JWT secret, RBAC breadth, compose credentials) stay un-mapped rather than force-fitted.
+Reference: `Anthropic-Cybersecurity-Skills` (agentskills.io standard) methodology.

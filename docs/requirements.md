@@ -38,7 +38,7 @@ Business actors:
 | FR-011 | AI Assistant uses managed instructional-document context and identifies sources where available. | AI Assistant | Source Requirement | Code/test: `backend/app/services/ai_service.py`, `tests/test_ai.py`; keyword test PASSED |
 | FR-012 | AI Assistant summarizes available official equipment, usage and maintenance data. | AI Assistant, requested by Lab Manager/Maintenance Technician | Source Requirement | Summary code exists; dedicated test: TEST NOT AVAILABLE |
 | FR-013 | AI Assistant produces evidence-based inspection suggestions from available data. | AI Assistant, reviewed by Lab Manager/Maintenance Technician | Source Requirement | Alert code exists; dedicated test: TEST NOT AVAILABLE |
-| FR-014 | The system manages instructional-document data used as retrieval sources. | Lab Manager, authorized staff, System | Source Requirement | Tables/retrieval exist; document-management API: NOT IMPLEMENTED |
+| FR-014 | The system manages instructional-document data used as retrieval sources. | Lab Manager, authorized staff, System | Source Requirement | IMPLEMENTED: documents CRUD/upload API with role scoping + tests (2026-09-27) |
 | FR-015 | An authenticated actor can change the password of their own account. | Lab User, Lab Manager, Maintenance Technician | Source Requirement | Endpoint: NOT FOUND; test: TEST NOT AVAILABLE |
 | FR-016 | Lab Manager can create accounts and assign approved business roles. | Lab Manager | Source Requirement | Management endpoint: NOT FOUND; test: TEST NOT AVAILABLE |
 
@@ -73,9 +73,10 @@ Human review before operational action is classified as BR-014, not duplicated a
 | BR-009 | A maintenance record identifies its device and responsible actor where applicable. | Code/test PASSED for completion path |
 | BR-010 | Maintenance status affects equipment availability. | Partial code; test NOT AVAILABLE |
 | BR-011 | AI cannot approve/reject, change equipment state or confirm failure autonomously. | No AI mutation endpoint found; negative test NOT AVAILABLE |
-| BR-012 | RAG uses context from managed instructional documents. | Keyword retrieval test PASSED |
+| BR-012 | RAG uses context from managed instructional documents. | Keyword retrieval test PASSED; role scoping verified |
 | BR-013 | AI states limitations when official evidence is insufficient. | Prompt exists; no-context test NOT AVAILABLE |
 | BR-014 | Summary and Inspection Alert are advisory and require human review before action. | Documentation exists; workflow test NOT AVAILABLE |
+| BR-015 | AI retrieval respects role-based document access: `documents.allowed_roles` filters the RAG pipeline per requester role (report §2.11), and AI chat modes are role-gated. | Implemented 2026-09-27; verified by tests/test_ai_roles.py (54-test suite PASS) |
 
 ## Constraints and implementation context
 

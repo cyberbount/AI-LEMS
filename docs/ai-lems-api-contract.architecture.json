@@ -1,0 +1,331 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AI-LEMS — Tầng API: hợp đồng thiết kế (mục 3.4) so với cài đặt thật",
+    "output": "ai-lems-api-contract.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1250,
+      900
+    ],
+    "views": [
+      {
+        "id": "main",
+        "label": "Luồng chính",
+        "focus": [
+          "spa",
+          "gateway",
+          "borrow-api",
+          "db"
+        ],
+        "note": "Mọi request đi qua một Gateway duy nhất; quyền kiểm tra tại server."
+      },
+      {
+        "id": "contract-vs-code",
+        "label": "Hợp đồng vs cài đặt",
+        "focus": [
+          "equip-api",
+          "borrow-api",
+          "ai-api",
+          "stats-audit",
+          "maint-api"
+        ],
+        "note": "8 endpoint khác tên giữa thiết kế và cài đặt — xử lý bằng bảng ánh xạ trong mục 3.4."
+      },
+      {
+        "id": "gaps",
+        "label": "Đồng bộ cần làm",
+        "focus": [
+          "todo",
+          "stats-audit",
+          "doc-api"
+        ],
+        "note": "4 endpoint thiết kế chưa cài; thiết kế thiếu audit-logs, incident, trả 2 bước, register/Google."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "spa",
+      "type": "frontend",
+      "label": "LyxLab React SPA",
+      "sublabel": "REST + Bearer JWT",
+      "pos": [
+        470,
+        40
+      ],
+      "size": [
+        320,
+        70
+      ],
+      "tag": "3 dashboard RBAC"
+    },
+    {
+      "id": "gateway",
+      "type": "backend",
+      "label": "FastAPI Gateway :8000",
+      "sublabel": "JWT + RBAC · 36 endpoint thật",
+      "pos": [
+        470,
+        330
+      ],
+      "size": [
+        320,
+        90
+      ],
+      "tag": "mọi quyền kiểm tra tại server"
+    },
+    {
+      "id": "auth-api",
+      "type": "backend",
+      "label": "Xác thực & Tài khoản",
+      "sublabel": "thiết kế: /api/auth, /api/users",
+      "pos": [
+        60,
+        140
+      ],
+      "size": [
+        200,
+        110
+      ],
+      "tag": "thật: PATCH /api/auth/password · /google · /register"
+    },
+    {
+      "id": "equip-api",
+      "type": "backend",
+      "label": "Thiết bị & Danh mục",
+      "sublabel": "thiết kế: /api/equipment, /locations",
+      "pos": [
+        60,
+        270
+      ],
+      "size": [
+        200,
+        110
+      ],
+      "tag": "thật: /api/devices · /groups · /locations"
+    },
+    {
+      "id": "doc-api",
+      "type": "backend",
+      "label": "Tài liệu (FR-11)",
+      "sublabel": "thiết kế = thật: /api/documents",
+      "pos": [
+        60,
+        470
+      ],
+      "size": [
+        200,
+        110
+      ],
+      "tag": "upload .txt/.md · 1MB"
+    },
+    {
+      "id": "ai-api",
+      "type": "backend",
+      "label": "Trợ lý AI (FR-12..14)",
+      "sublabel": "thiết kế: /api/ai/{rag|summary|alert}",
+      "pos": [
+        60,
+        600
+      ],
+      "size": [
+        200,
+        110
+      ],
+      "tag": "thật: POST /api/ai/chat + mode · role-scoped"
+    },
+    {
+      "id": "borrow-api",
+      "type": "backend",
+      "label": "Mượn – Trả – Sự cố",
+      "sublabel": "thiết kế: /api/borrow-requests",
+      "pos": [
+        860,
+        140
+      ],
+      "size": [
+        200,
+        116
+      ],
+      "tag": "thật: /api/requests · trả 2 bước · incident"
+    },
+    {
+      "id": "maint-api",
+      "type": "backend",
+      "label": "Bảo trì",
+      "sublabel": "thiết kế: /api/maintenance/*",
+      "pos": [
+        860,
+        270
+      ],
+      "size": [
+        200,
+        110
+      ],
+      "tag": "thật: records ≈ POST /api/maintenance"
+    },
+    {
+      "id": "stats-audit",
+      "type": "backend",
+      "label": "Thống kê & Truy vết",
+      "sublabel": "thiết kế: /statistics ↔ thật: /api/stats",
+      "pos": [
+        860,
+        470
+      ],
+      "size": [
+        220,
+        105
+      ],
+      "tag": "cần bổ sung /api/audit-logs vào thiết kế"
+    },
+    {
+      "id": "todo",
+      "type": "backend",
+      "label": "4 endpoint chưa cài",
+      "sublabel": "GET /equipment/{id} · 3 PATCH",
+      "pos": [
+        860,
+        600
+      ],
+      "size": [
+        200,
+        110
+      ],
+      "tag": "cần cài (~45 phút)"
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "SQLite lab.db",
+      "sublabel": "12 bảng · SQLAlchemy",
+      "pos": [
+        470,
+        730
+      ],
+      "size": [
+        320,
+        90
+      ],
+      "tag": "MySQL 8 Docker là phương án thay thế"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Backend FastAPI — quyền kiểm tra tại server",
+      "wraps": [
+        "gateway",
+        "auth-api",
+        "equip-api",
+        "doc-api",
+        "ai-api",
+        "borrow-api",
+        "maint-api",
+        "stats-audit",
+        "todo"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "JWT + RBAC",
+      "wraps": [
+        "gateway"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "spa-gateway",
+      "from": "spa",
+      "to": "gateway",
+      "label": "REST + Bearer JWT",
+      "variant": "emphasis",
+      "labelAt": [
+        630,
+        124
+      ]
+    },
+    {
+      "id": "gateway-db",
+      "from": "gateway",
+      "to": "db",
+      "label": "SQLAlchemy ORM — 12 bảng",
+      "labelAt": [
+        630,
+        434
+      ]
+    },
+    {
+      "id": "auth-gw",
+      "from": "auth-api",
+      "to": "gateway"
+    },
+    {
+      "id": "equip-gw",
+      "from": "equip-api",
+      "to": "gateway"
+    },
+    {
+      "id": "doc-gw",
+      "from": "doc-api",
+      "to": "gateway"
+    },
+    {
+      "id": "ai-gw",
+      "from": "ai-api",
+      "to": "gateway"
+    },
+    {
+      "id": "borrow-gw",
+      "from": "borrow-api",
+      "to": "gateway"
+    },
+    {
+      "id": "maint-gw",
+      "from": "maint-api",
+      "to": "gateway"
+    },
+    {
+      "id": "stats-gw",
+      "from": "stats-audit",
+      "to": "gateway"
+    },
+    {
+      "id": "todo-gw",
+      "from": "todo",
+      "to": "gateway"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Khớp trực tiếp — 15/27",
+      "items": [
+        "login, users CRUD, devices CRUD, groups/locations, borrow POST/GET, approve, schedules GET/POST, documents GET/POST",
+        "Không cần thay đổi gì ở 2 phía"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Khác tên — xử lý bằng bảng ánh xạ — 8/27",
+      "items": [
+        "change-password → PATCH /api/auth/password",
+        "statistics/usage → GET /api/stats",
+        "3 endpoint AI (rag/summary/inspection-alert) → 1 endpoint /api/ai/chat + mode",
+        "handover → PATCH /borrow · return → quy trình 2 bước · reject → PATCH /status"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Đồng bộ cần làm",
+      "items": [
+        "Thiết kế thiếu: /api/audit-logs (§3.8 bắt buộc), incident, trả 2 bước, register/Google → bổ sung vào bảng 3.9/3.10",
+        "Thiết kế có mà code chưa có: 4 endpoint (nhóm chưa cài) → cài bổ sung ~45 phút",
+        "Sau đồng bộ: hợp đồng = thực tế 100%"
+      ]
+    }
+  ]
+}

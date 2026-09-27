@@ -284,43 +284,63 @@ Khoảng thời gian tùy chọn (phải truyền **cả hai hoặc không truy�
 
 ---
 
-## 7. Danh mục — `/api/groups`, `/api/locations`
+## 7. Danh mục — `/api/groups`, `/api/locations`, `/api/documents`
 
 - `GET /api/groups`, `GET /api/locations` — mọi người dùng đã đăng nhập.
 - `POST` — admin, manager:
   `{ "name": "Máy đo", "description": "..." }` · `{ "name": "Lab 301", "building": "A3" }`
+
+### `/api/documents` — quản lý tài liệu/SOP (FR-014)
+
+| Endpoint | Method | Quyền | Ghi chú |
+|---|---|---|---|
+| `/api/documents` | GET | Đã đăng nhập | Danh sách + `chunk_count` + `allowed_roles` |
+| `/api/documents/{id}` | GET | Đã đăng nhập | Chi tiết một tài liệu |
+| `/api/documents` | POST | admin, manager | JSON `{name, description, allowed_roles, content}` — nội dung tự động chia chunk |
+| `/api/documents/upload` | POST | admin, manager | Multipart file **.txt/.md** (tối đa 1 MB, UTF-8) + form `name`, `description`, `allowed_roles` |
+| `/api/documents/{id}` | PATCH | admin, manager | Cập nhật `description` / `allowed_roles` |
+| `/api/documents/{id}` | DELETE | admin, manager | Xóa tài liệu + toàn bộ chunks |
+
+- `allowed_roles` là chuỗi vai trò phân cách bởi dấu phẩy (vd `"admin,manager,technician"`) —
+  quyết định SOP nào xuất hiện trong ngữ cảnh RAG của vai trò nào (BR-015, báo cáo §2.11).
+- `400` sai vai trò/format, `409` trùng tên tài liệu, `413` file vượt 1 MB.
 
 ---
 
 ## 8. Trợ lý AI — `/api/ai/chat`
 
 **Bắt buộc JWT** (endpoint không cho người ẩn danh). Model local Ollama
-(`qwen2.5:3b`), RAG truy hồi từ khóa trên `document_chunks` (SOP/hướng dẫn).
+(`qwen2.5:3b`), RAG truy hồi từ khóa trên `document_chunks` (SOP/hướng dẫn),
+**lọc theo phân quyền tri thức của vai trò** (BR-015).
 
 ```json
 // Request
 {
-  "message": "Làm thế nào để đo an toàn trên máy soi hỏng cách điện?",
+  "message": "Hãy liệt kê tất cả các thiết bị trong hệ thống cho tôi",
   "history": [ { "role": "user", "content": "..." }, { "role": "assistant", "content": "..." } ],
   "mode": "chat"
 }
 // Response 200
 {
-  "answer": "Trước tiên ngắt nguồn... (tiếng Việt)",
+  "answer": "Danh sách toàn bộ kho thiết bị (26 thiết bị): EQ-001 ... (tiếng Việt)",
   "model": "qwen2.5:3b",
   "provider": "ollama",
   "mode": "chat",
   "grounded": true,
-  "sources": ["SOP-01 An toàn điện", "SOP-02 Máy soi Tektronix"]
+  "sources": ["database:devices"],
+  "safety_note": null
 }
 ```
 
-- `mode`: `chat` (hỏi đáp) | `rag` (truy hồi tài liệu) | `summary` (tóm tắt tình
-  trạng thiết bị/bảo trì từ DB) | `inspection_alert` (cảnh báo thiết bị cần kiểm tra).
+- `mode`: `chat` (hỏi đáp) | `rag` (truy hồi tài liệu) | `summary` (tóm tắt vận hành — **chỉ admin/manager**) | `inspection_alert` (cảnh báo cần kiểm tra — **chỉ admin/manager/technician**). Mode không đúng vai trò → **403**.
+- **Phân quyền tri thức (BR-015)**: RAG chỉ truy hồi SOP mà `documents.allowed_roles` cho phép vai trò của người hỏi; persona system prompt thay đổi theo vai (quản lý = vận hành, kỹ thuật = sửa chữa/SOP nội bộ, người dùng = hướng dẫn sử dụng).
+- **Ngữ cảnh liệt kê thiết bị (inventory)**: câu hỏi dạng "liệt kê/danh sách thiết bị" nạp danh sách thật từ `database:devices` theo phạm vi vai — quản lý thấy toàn bộ, kỹ thuật thấy nhóm kỹ thuật, người dùng thấy máy `available`.
+- `safety_note`: chuỗi cảnh báo an toàn (hoặc `null`) đính kèm khi câu hỏi chạm chủ đề an toàn điện/hàn/E-Stop.
 - Lịch sử hội thoại bị chặn giới hạn (`MAX_HISTORY_MESSAGES`, mặc định 12) và
   luôn loại bỏ `system` message do client gửi.
 - AI **chỉ mang tính tham khảo (read-only)**: không tự duyệt yêu cầu, không tự đổi
   trạng thái thiết bị — mọi thay đổi phải do con người thao tác.
+- Mỗi lượt hỏi được ghi `audit_logs` (`AI_QUERY`) để truy vết.
 - `502` nếu nhà cung cấp AI không khả dụng (không lộ chi tiết lỗi nội bộ).
 
 ---

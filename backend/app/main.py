@@ -6,7 +6,7 @@ from app.schemas import HealthResponse
 from app.services.ai_service import AIService, build_ai_service
 from app.db import init_db
 from app.deps import Db
-from app.routers import auth, users, devices, requests, maintenance, stats, catalog, audit
+from app.routers import auth, users, devices, requests, maintenance, stats, catalog, audit, documents
 
 settings = get_settings()
 service: AIService = build_ai_service(settings)
@@ -18,6 +18,7 @@ app.include_router(requests.router); app.include_router(maintenance.router); app
 app.include_router(catalog.router)
 app.include_router(ai.router)
 app.include_router(audit.router)
+app.include_router(documents.router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,

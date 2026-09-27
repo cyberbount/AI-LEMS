@@ -9,6 +9,7 @@ from app.main import app
 from app.db import SessionLocal
 from app.models import User
 from app.auth import hash_password
+from app.config import get_settings
 
 
 class RealAuthenticationTests(unittest.TestCase):
@@ -114,7 +115,7 @@ class RealAuthenticationTests(unittest.TestCase):
             "email": self.active_user_email,
             "email_verified": "true",
             "name": "Active Lab User",
-            "aud": "",
+            "aud": get_settings().google_client_id,
         }
         mock_get.return_value = mock_resp
 
@@ -143,7 +144,7 @@ class RealAuthenticationTests(unittest.TestCase):
             "email": f"stranger_{self.suffix}@unknown.com",
             "email_verified": True,
             "name": "Stranger",
-            "aud": "",
+            "aud": get_settings().google_client_id,
         }
         mock_get.return_value = mock_resp
 
@@ -162,7 +163,7 @@ class RealAuthenticationTests(unittest.TestCase):
             "email": self.inactive_user_email,
             "email_verified": True,
             "name": "Disabled User",
-            "aud": "",
+            "aud": get_settings().google_client_id,
         }
         mock_get.return_value = mock_resp
 

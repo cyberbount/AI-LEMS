@@ -79,7 +79,7 @@ Static review of `backend/app`, `frontend/src`, existing tests, locked requireme
 
 - SQLAlchemy is used for application queries; no raw SQL construction was found in the active backend routers/services.
 - React rendering uses normal JSX; no `dangerouslySetInnerHTML` was found.
-- Existing automated suite: 33 passed, 7 warnings (33/33, 2026-09-25).
+- Existing automated suite: 62 passed, 7 warnings (62/62, 2026-09-27).
 - G4 defect DEF-G4-001 was addressed, but no browser/E2E test exists.
 
 ## Review disposition

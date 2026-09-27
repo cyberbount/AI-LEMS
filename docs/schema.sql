@@ -131,12 +131,15 @@ CREATE INDEX ix_maintenance_records_status ON maintenance_records(status);
 
 -- ============================================================
 -- 10. DOCUMENTS — tài liệu hướng dẫn/SOP (nguồn cho RAG)
+-- allowed_roles: RBAC tri thức — vai trò được phép truy hồi SOP này
+-- (mục 2.11 Báo cáo: kiểm soát quyền truy cập tài liệu trước RAG)
 -- ============================================================
 CREATE TABLE documents (
-    id          INTEGER      PRIMARY KEY AUTOINCREMENT,
-    name        VARCHAR(200) NOT NULL UNIQUE,
-    description TEXT         NOT NULL DEFAULT '',
-    created_at  DATETIME     NOT NULL
+    id            INTEGER      PRIMARY KEY AUTOINCREMENT,
+    name          VARCHAR(200) NOT NULL UNIQUE,
+    description   TEXT         NOT NULL DEFAULT '',
+    allowed_roles VARCHAR(120) NOT NULL DEFAULT 'admin,manager,technician,user',
+    created_at    DATETIME     NOT NULL
 );
 
 -- ============================================================

@@ -72,7 +72,7 @@ class AiAuthenticationTests(unittest.TestCase):
         class FakeService:
             provider = type("Provider", (), {"model": "test-model", "name": "fake"})()
 
-            async def chat(self, message, history, mode, db):
+            async def chat(self, message, history, mode, db, user_role="user"):
                 return ChatResult(answer="ok", mode=mode, grounded=False, sources=[])
 
         with patch.object(ai_router, "service", FakeService()):

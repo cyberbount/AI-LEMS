@@ -23,6 +23,7 @@ class ChatResponse(BaseModel):
     mode: str = "chat"
     grounded: bool | None = None
     sources: list[str] = Field(default_factory=list)
+    safety_note: str | None = None
 
 
 DeviceStatus = Literal["available", "reserved", "borrowed", "maintenance", "returning", "pending_inspection", "in_progress", "replace_partial", "replace_full"]
@@ -197,4 +198,29 @@ class GroupCreate(BaseModel):
 
 class LocationCreate(BaseModel):
     name: str; building: str = ""
+
+
+class DocumentCreate(BaseModel):
+    name: str = Field(min_length=3, max_length=200)
+    description: str = ""
+    allowed_roles: str = "admin,manager,technician,user"
+    content: str = Field(default="", max_length=200_000, description="Nội dung văn bản sẽ tự động được chia chunk")
+
+
+class DocumentUpdate(BaseModel):
+    description: str | None = None
+    allowed_roles: str | None = None
+
+
+class DocumentOut(ORMModel):
+    id: int
+    name: str
+    description: str
+    allowed_roles: str
+    chunk_count: int = 0
+    created_at: datetime
+
+    @field_serializer("created_at")
+    def serialize_doc_dt(self, dt: datetime, _info):
+        return to_hanoi_iso(dt)
 

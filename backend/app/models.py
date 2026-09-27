@@ -97,6 +97,8 @@ class Document(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(200), unique=True)
     description: Mapped[str] = mapped_column(Text, default="")
+    # RBAC tri thức (mục 2.9/2.11 Báo cáo): ai được phép truy hồi SOP này trong RAG
+    allowed_roles: Mapped[str] = mapped_column(String(120), default="admin,manager,technician,user")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=hanoi_now_naive)
 
 

@@ -64,7 +64,7 @@ export function Badge({ className, tone = "slate", dot = false, ...props }) {
   );
 }
 
-export function Input({ className, icon, ...props }) {
+export const Input = React.forwardRef(function Input({ className, icon, ...props }, ref) {
   const inputClass = cn(
     "h-11 w-full rounded-xl border border-border bg-surface px-3.5 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10",
     icon && "pl-10",
@@ -74,12 +74,12 @@ export function Input({ className, icon, ...props }) {
     return (
       <div className={cn("relative", className)}>
         <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">{icon}</span>
-        <input className={inputClass} {...props} />
+        <input ref={ref} className={inputClass} {...props} />
       </div>
     );
   }
-  return <input className={inputClass} {...props} />;
-}
+  return <input ref={ref} className={inputClass} {...props} />;
+});
 
 export function Select({ className, children, ...props }) {
   return (

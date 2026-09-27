@@ -47,9 +47,21 @@ else
 fi
 
 # ── 3. FastAPI backend ──────────────────────────────────────────
-if ss -tlnp 2>/dev/null | grep -q ':8000 '; then
+# Kiem tra /health chu khong phai chi port: process zombie co the van giu
+# port 8000 ma khong phuc vu request — neu chi nhin port se bo khoi dong.
+backend_alive() {
+    curl -fsS --max-time 3 http://localhost:8000/health >/dev/null 2>&1
+}
+
+if backend_alive; then
     log "FastAPI dang chay tren :8000"
 else
+    if ss -tlnp 2>/dev/null | grep -q ':8000 '; then
+        warn "Port 8000 bi giu boi process khong phuc vu (zombie). Dang don dep..."
+        ss -tlnp 2>/dev/null | grep ':8000 ' | grep -oP 'pid=\K[0-9]+' | sort -u | xargs -r kill -9 2>/dev/null || true
+        pkill -9 -f "uvicorn app.main:app" 2>/dev/null || true
+        sleep 1
+    fi
     warn "Dang khoi dong FastAPI..."
     cd "$PROJECT_DIR"
     VENV_PYTHON="$PROJECT_DIR/.venv/bin/python"
@@ -61,14 +73,15 @@ else
         > "$PROJECT_DIR/logs/backend.log" 2>&1 &
     mkdir -p "$PROJECT_DIR/logs"
     for i in $(seq 1 15); do
-        if ss -tlnp 2>/dev/null | grep -q ':8000 '; then
-            log "FastAPI da khoi dong (PID $BACKEND_PID)"
+        if backend_alive; then
+            log "FastAPI da khoi dong va phan hoi /health"
             break
         fi
         sleep 1
     done
-    if ! ss -tlnp 2>/dev/null | grep -q ':8000 '; then
+    if ! backend_alive; then
         err "FastAPI khoi dong that bai. Xem log: $PROJECT_DIR/logs/backend.log"
+        exit 1
     fi
 fi
 

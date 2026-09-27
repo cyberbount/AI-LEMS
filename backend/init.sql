@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS documents (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(200) UNIQUE NOT NULL,
     description TEXT,
+    allowed_roles VARCHAR(120) NOT NULL DEFAULT 'admin,manager,technician,user',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -260,13 +261,14 @@ INSERT IGNORE INTO maintenance_records (id, device_id, technician_id, kind, note
 (6, 5, 4, 'inspection', 'Lên lịch kiểm tra thay pin 9V và dây đo Fluke 87V định kỳ tháng 10.', 'open', '2026-10-05 08:00:00', NULL);
 
 -- 10. DOCUMENTS (SOP & Technical Manuals for RAG)
-INSERT IGNORE INTO documents (id, name, description, created_at) VALUES
-(1, 'SOP-01: Quy trình an toàn phòng thí nghiệm và bảo hộ lao động', 'Quy chuẩn an toàn chung, an toàn điện, phòng chống cháy nổ và thao tác khẩn cấp', '2026-09-01 08:00:00'),
-(2, 'SOP-02: Hướng dẫn vận hành máy hiện sóng Tektronix TBS1102B', 'Các bước thiết lập kênh đo, nút Autoset, bù que đo và giới hạn điện áp đo an toàn', '2026-09-01 08:00:00'),
-(3, 'SOP-03: Quy chuẩn vận hành nguồn DC Keysight E3631A', 'Hướng dẫn đặt dòng giới hạn, chọn kênh ngõ ra độc lập và phòng chống ngắn mạch', '2026-09-01 08:00:00'),
-(4, 'SOP-04: Quy định mượn, trả và bàn giao thiết bị phòng Lab', 'Quy trình đăng ký trên hệ thống LyxLab, điều kiện bàn giao, gia hạn và trách nhiệm', '2026-09-01 08:00:00'),
-(5, 'SOP-05: Quy trình hàn linh kiện SMD và an toàn tĩnh điện ESD', 'Kiểm soát nhiệt độ mỏ hàn Hakko/Quick, đeo vòng chống tĩnh điện và thông gió khói chì', '2026-09-01 08:00:00'),
-(6, 'SOP-06: Hướng dẫn xử lý sự cố thiết bị và kích hoạt bảo trì khẩn cấp', 'Quy trình ngắt nguồn E-Stop, cách thức bấm nút Báo sự cố trên phần mềm và lập biên bản', '2026-09-01 08:00:00');
+-- allowed_roles: RBAC tri thức (mục 2.11 báo cáo) — SOP vận hành nội bộ (SOP-05/06) giới hạn cán bộ & kỹ thuật
+INSERT IGNORE INTO documents (id, name, description, allowed_roles, created_at) VALUES
+(1, 'SOP-01: Quy trình an toàn phòng thí nghiệm và bảo hộ lao động', 'Quy chuẩn an toàn chung, an toàn điện, phòng chống cháy nổ và thao tác khẩn cấp', 'admin,manager,technician,user', '2026-09-01 08:00:00'),
+(2, 'SOP-02: Hướng dẫn vận hành máy hiện sóng Tektronix TBS1102B', 'Các bước thiết lập kênh đo, nút Autoset, bù que đo và giới hạn điện áp đo an toàn', 'admin,manager,technician,user', '2026-09-01 08:00:00'),
+(3, 'SOP-03: Quy chuẩn vận hành nguồn DC Keysight E3631A', 'Hướng dẫn đặt dòng giới hạn, chọn kênh ngõ ra độc lập và phòng chống ngắn mạch', 'admin,manager,technician,user', '2026-09-01 08:00:00'),
+(4, 'SOP-04: Quy định mượn, trả và bàn giao thiết bị phòng Lab', 'Quy trình đăng ký trên hệ thống LyxLab, điều kiện bàn giao, gia hạn và trách nhiệm', 'admin,manager,technician,user', '2026-09-01 08:00:00'),
+(5, 'SOP-05: Quy trình hàn linh kiện SMD và an toàn tĩnh điện ESD', 'Kiểm soát nhiệt độ mỏ hàn Hakko/Quick, đeo vòng chống tĩnh điện và thông gió khói chì', 'admin,manager,technician', '2026-09-01 08:00:00'),
+(6, 'SOP-06: Hướng dẫn xử lý sự cố thiết bị và kích hoạt bảo trì khẩn cấp', 'Quy trình ngắt nguồn E-Stop, cách thức bấm nút Báo sự cố trên phần mềm và lập biên bản', 'admin,manager,technician', '2026-09-01 08:00:00');
 
 -- 11. DOCUMENT CHUNKS (For Local AI RAG context)
 INSERT IGNORE INTO document_chunks (id, document_id, document_name, content, chunk_index) VALUES

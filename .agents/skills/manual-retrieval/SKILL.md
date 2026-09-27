@@ -58,3 +58,14 @@ Before completing, verify:
 - top-k bound is respected;
 - safety intent queries never return an empty result when SOP chunks exist;
 - empty result is a valid, handled outcome.
+
+## Role-scoped retrieval authorization (added 2026-09-27, BR-015)
+
+Retrieval is **not** role-neutral. Before any chunk is returned:
+
+- load `documents.allowed_roles` for the chunk's managed document;
+- drop every chunk whose document's `allowed_roles` does not contain the requester's role (taken from the JWT, never from the request body);
+- chunks without a managed `Document` record keep legacy public behavior and must be listed as a known data-hygiene exception;
+- the filter runs **before** scoring, so forbidden content must never appear in context — not even in low-scored results.
+
+Runtime: `AIService._allowed_document_names` + filter in `_rag_context`. Verified by `tests/test_ai_roles.py`.

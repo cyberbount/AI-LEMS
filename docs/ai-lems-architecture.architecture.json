@@ -1,0 +1,352 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AI-LEMS (LyxLab) — Hệ thống Quản lý Thiết bị Phòng Lab tích hợp AI",
+    "output": "ai-lems-architecture.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Luồng request chính",
+        "focus": [
+          "users",
+          "spa",
+          "api",
+          "db"
+        ],
+        "note": "Từ dashboard RBAC qua REST + Bearer JWT xuống SQLAlchemy và SQLite."
+      },
+      {
+        "id": "ai-rag-path",
+        "label": "Luồng AI có phân quyền",
+        "focus": [
+          "spa",
+          "api",
+          "aisvc",
+          "db",
+          "ollama"
+        ],
+        "note": "RAG lọc allowed_roles theo vai (BR-015), mode 403, audit AI_QUERY, model local Ollama."
+      },
+      {
+        "id": "auth-path",
+        "label": "Đăng nhập & Google SSO",
+        "focus": [
+          "users",
+          "google",
+          "spa",
+          "api"
+        ],
+        "note": "Đăng nhập local (username/email) hoặc Google Workspace qua tokeninfo."
+      }
+    ],
+    "viewBox": [
+      1375,
+      1000
+    ]
+  },
+  "components": [
+    {
+      "id": "users",
+      "type": "external",
+      "label": "Người dùng",
+      "sublabel": "Admin / Kỹ thuật / Sinh viên",
+      "pos": [
+        60,
+        430
+      ],
+      "size": [
+        170,
+        76
+      ],
+      "tag": "3 vai RBAC"
+    },
+    {
+      "id": "google",
+      "type": "external",
+      "label": "Google Workspace",
+      "sublabel": "OAuth id_token",
+      "pos": [
+        60,
+        150
+      ],
+      "size": [
+        170,
+        66
+      ],
+      "tag": "email_verified"
+    },
+    {
+      "id": "spa",
+      "type": "frontend",
+      "label": "LyxLab React SPA",
+      "sublabel": "Vite :5173 · Tailwind",
+      "pos": [
+        300,
+        415
+      ],
+      "size": [
+        200,
+        106
+      ],
+      "tag": "3 dashboard + 5 AI panel"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "FastAPI Gateway",
+      "sublabel": ":8000 · 36 endpoint",
+      "pos": [
+        560,
+        415
+      ],
+      "size": [
+        200,
+        106
+      ],
+      "tag": "JWT HS256 · bcrypt · require_roles"
+    },
+    {
+      "id": "aisvc",
+      "type": "backend",
+      "label": "AIService",
+      "sublabel": "RAG 4 mode + inventory",
+      "pos": [
+        830,
+        415
+      ],
+      "size": [
+        200,
+        106
+      ],
+      "tag": "role-scoped · safety_note"
+    },
+    {
+      "id": "ollama",
+      "type": "external",
+      "label": "Ollama (local)",
+      "sublabel": "qwen2.5:3b :11434",
+      "pos": [
+        1095,
+        430
+      ],
+      "size": [
+        175,
+        76
+      ],
+      "tag": "AI không rời máy"
+    },
+    {
+      "id": "audit",
+      "type": "security",
+      "label": "AuditService",
+      "sublabel": "mọi thao tác quan trọng",
+      "pos": [
+        560,
+        650
+      ],
+      "size": [
+        200,
+        66
+      ],
+      "tag": "AI_QUERY · LOGIN · CRUD"
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "SQLite lab.db",
+      "sublabel": "12 bảng ORM",
+      "pos": [
+        830,
+        645
+      ],
+      "size": [
+        200,
+        86
+      ],
+      "tag": "SQLAlchemy 2.0"
+    },
+    {
+      "id": "mysql",
+      "type": "database",
+      "label": "MySQL 8 (Docker)",
+      "sublabel": "init.sql seed",
+      "pos": [
+        560,
+        150
+      ],
+      "size": [
+        200,
+        66
+      ],
+      "tag": "DATABASE_URL thay thế"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Dev host WSL2 — local-lab-ai/",
+      "wraps": [
+        "api",
+        "aisvc",
+        "ollama",
+        "audit",
+        "db"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "JWT + RBAC · AI read-only (BR-011)",
+      "wraps": [
+        "api",
+        "aisvc",
+        "audit"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "users-to-spa",
+      "from": "users",
+      "to": "spa",
+      "label": "HTTPS :5173/:3000",
+      "variant": "emphasis",
+      "labelAt": [
+        265,
+        535
+      ]
+    },
+    {
+      "id": "spa-to-api",
+      "from": "spa",
+      "to": "api",
+      "label": "REST + Bearer JWT",
+      "variant": "emphasis",
+      "labelAt": [
+        525,
+        536
+      ]
+    },
+    {
+      "id": "spa-to-google",
+      "from": "spa",
+      "to": "google",
+      "label": "GSI id_token",
+      "variant": "dashed"
+    },
+    {
+      "id": "api-verify-google",
+      "from": "api",
+      "to": "google",
+      "label": "verify tokeninfo",
+      "variant": "security"
+    },
+    {
+      "id": "api-to-aisvc",
+      "from": "api",
+      "to": "aisvc",
+      "label": "chat(role, mode) · 403",
+      "labelAt": [
+        730,
+        574
+      ]
+    },
+    {
+      "id": "aisvc-to-ollama",
+      "from": "aisvc",
+      "to": "ollama",
+      "label": "POST /api/chat",
+      "labelAt": [
+        1060,
+        535
+      ]
+    },
+    {
+      "id": "api-to-db",
+      "from": "api",
+      "to": "db",
+      "label": "SQLAlchemy ORM"
+    },
+    {
+      "id": "aisvc-to-db",
+      "from": "aisvc",
+      "to": "db",
+      "label": "RAG lọc allowed_roles · inventory",
+      "labelAt": [
+        925,
+        548
+      ]
+    },
+    {
+      "id": "api-to-audit",
+      "from": "api",
+      "to": "audit",
+      "label": "ghi vết",
+      "labelAt": [
+        660,
+        548
+      ]
+    },
+    {
+      "id": "audit-to-db",
+      "from": "audit",
+      "to": "db",
+      "label": "audit_logs",
+      "labelAt": [
+        795,
+        704
+      ]
+    },
+    {
+      "id": "api-to-mysql",
+      "from": "api",
+      "to": "mysql",
+      "label": "DATABASE_URL MySQL",
+      "variant": "dashed",
+      "labelAt": [
+        660,
+        300
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Giao diện & vai trò",
+      "items": [
+        "React SPA: 3 dashboard theo role (/admin, /user, /technician)",
+        "AIChatPanel hiển thị nhãn phạm vi tri thức theo vai",
+        "Real-time: poll dữ liệu 3 giây + cảnh báo quá hạn"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Backend nghiệp vụ",
+      "items": [
+        "FastAPI: auth, users, devices, requests, maintenance, documents, stats, catalog, ai, audit",
+        "Mượn-trả 2 bước + luồng sự cố → Technician tiếp nhận → hoàn tất",
+        "AIService: persona theo vai, RAG lọc allowed_roles (BR-015), inventory context, safety_note",
+        "Gateway health-check Ollama qua /api/tags (trạng thái degraded khi AI offline)"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Dữ liệu",
+      "items": [
+        "SQLite lab.db (dev): 12 bảng — devices, borrow_requests, maintenance, documents, audit_logs…",
+        "MySQL 8 Docker qua init.sql (seed 25 thiết bị + 6 SOP)",
+        "documents.allowed_roles kiểm soát tri thức trước khi vào pipeline RAG"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Bảo mật",
+      "items": [
+        "JWT HS256 60 phút + bcrypt (không lưu plaintext)",
+        "Mode AI sai vai → 403; mọi lượt hỏi ghi audit AI_QUERY",
+        "SEC-05 pre-flight chặn DAN/PromptInject; untrusted-context delimiter; AI read-only (BR-011)"
+      ]
+    }
+  ]
+}

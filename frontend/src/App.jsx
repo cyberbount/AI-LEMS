@@ -3351,8 +3351,27 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
     );
   }, [data.requests, now]);
 
+  // Tổng quan chỉ hiển thị yêu cầu cần hành động (loại returned/rejected),
+  // sắp theo độ khẩn: quá hạn → chờ duyệt → chờ nhận trả → chờ bàn giao.
+  const actionableRequests = useMemo(() => {
+    const statusWeight = { pending: 1, return_pending: 2, approved: 3, borrowed: 4 };
+    const overdueOf = (r) => (r.status === "borrowed" && r.requested_to && new Date(r.requested_to) < now ? 0 : 9);
+    return (data.requests || [])
+      .filter((r) => r.status in statusWeight)
+      .sort(
+        (a, b) =>
+          overdueOf(a) - overdueOf(b) ||
+          statusWeight[a.status] - statusWeight[b.status] ||
+          new Date(b.created_at || 0) - new Date(a.created_at || 0)
+      );
+  }, [data.requests, now]);
+  const reqPendingCount = actionableRequests.filter((r) => r.status === "pending").length;
+  const reqReturnPendingCount = actionableRequests.filter((r) => r.status === "return_pending").length;
+  const reqApprovedCount = actionableRequests.filter((r) => r.status === "approved").length;
+
   const { user } = useAuth();
   const [toast, setToast] = useState(null);
+  const [reqFilter, setReqFilter] = useState("all");
   const [borrowModal, setBorrowModal] = useState({ open: false, device: null });
   const [incidentModal, setIncidentModal] = useState({ open: false, item: null });
 
@@ -3747,33 +3766,101 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
         />
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.25fr_.75fr]">
-        <Card className="p-5 sm:p-6 overflow-hidden">
+      <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_.9fr]">
+        <Card className="p-5 sm:p-6 overflow-hidden flex flex-col">
           <SectionTitle title="Yêu cầu cần xử lý & Bàn giao" />
-          {data.requests.length ? (
-            <RequestList 
-              items={data.requests} 
-              devices={data.devices}
-              users={data.users}
-              role="admin"
-              onApprove={(item) => updateRequest(item, "approved")} 
-              onReject={(item) => updateRequest(item, "rejected")} 
-              onHandover={handoverRequest}
-              onReturn={returnDevice}
-              onRecall={recallDevice}
-            />
+          {actionableRequests.length ? (
+            <>
+              {/* Chip lọc nhanh theo nhóm cần hành động */}
+              <div className="flex flex-wrap gap-2 mt-3">
+                {[
+                  { key: "all", label: "Tất cả", count: actionableRequests.length, tone: "border-border text-foreground" },
+                  { key: "overdue", label: "Quá hạn", count: overdueRequests.length, tone: overdueRequests.length ? "border-rose-300 text-rose-600 dark:border-rose-800 dark:text-rose-300" : "border-border text-muted-foreground" },
+                  { key: "pending", label: "Chờ duyệt", count: reqPendingCount, tone: reqPendingCount ? "border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-300" : "border-border text-muted-foreground" },
+                  { key: "return_pending", label: "Chờ nhận trả", count: reqReturnPendingCount, tone: reqReturnPendingCount ? "border-blue-300 text-blue-700 dark:border-blue-800 dark:text-blue-300" : "border-border text-muted-foreground" },
+                  { key: "approved", label: "Chờ bàn giao", count: reqApprovedCount, tone: reqApprovedCount ? "border-emerald-300 text-emerald-700 dark:border-emerald-800 dark:text-emerald-300" : "border-border text-muted-foreground" },
+                ].map((chip) => (
+                  <button
+                    key={chip.key}
+                    type="button"
+                    onClick={() => setReqFilter(chip.key)}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                      reqFilter === chip.key
+                        ? "bg-primary/10 text-primary border-primary/40 ring-1 ring-primary/30"
+                        : "bg-surface hover:bg-surface-elevated"
+                    } ${chip.tone}`}
+                  >
+                    {chip.label} <span className="font-mono">{chip.count}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Danh sách nén: tối đa 6 dòng theo độ khẩn, thao tác đầy đủ ở mục Yêu cầu mượn */}
+              <div className="mt-4 divide-y divide-border border-y border-border">
+                {(reqFilter === "all"
+                  ? actionableRequests
+                  : reqFilter === "overdue"
+                    ? overdueRequests
+                    : actionableRequests.filter((r) => r.status === reqFilter)
+                )
+                  .slice(0, 6)
+                  .map((r) => {
+                    const dev = data.devices.find((d) => d.id === r.device_id) || {};
+                    const borrower = (data.users || []).find((u) => u.id === r.user_id);
+                    const isOverdue = r.status === "borrowed" && r.requested_to && new Date(r.requested_to) < now;
+                    const statusLabel = { pending: "Chờ duyệt", return_pending: "Chờ nhận trả", approved: "Chờ bàn giao", borrowed: "Đang mượn" }[r.status] || r.status;
+                    const statusTone = isOverdue
+                      ? "text-rose-600 dark:text-rose-300"
+                      : { pending: "text-amber-600 dark:text-amber-300", return_pending: "text-blue-600 dark:text-blue-300", approved: "text-emerald-600 dark:text-emerald-300", borrowed: "text-muted-foreground" }[r.status];
+                    return (
+                      <div className="py-2.5 flex items-center gap-3" key={r.id}>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <p className="text-sm font-semibold text-foreground truncate">{dev.name || `Thiết bị #${r.device_id}`}</p>
+                            <span className="text-[11px] font-mono text-muted-foreground shrink-0">{dev.asset_code || "?"}</span>
+                            {isOverdue && (
+                              <span className="shrink-0 inline-flex items-center rounded-full bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 px-2 py-0.5 text-[11px] font-bold text-rose-600 dark:text-rose-300 animate-pulse">
+                                QUÁ HẠN · {formatOverdueDuration(now - new Date(r.requested_to))}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">
+                            {borrower?.full_name || `#${r.user_id}`} · {r.purpose}
+                          </p>
+                        </div>
+                        {r.status === "pending" ? (
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Button size="sm" className="h-7 px-2.5 text-xs" onClick={() => updateRequest(r, "approved")}>Duyệt</Button>
+                            <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs" onClick={() => updateRequest(r, "rejected")}>Từ chối</Button>
+                          </div>
+                        ) : (
+                          <span className={`shrink-0 text-[11px] font-bold ${statusTone}`}>{statusLabel}</span>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+              <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+                <span>
+                  Hiển thị {Math.min(6, reqFilter === "all" ? actionableRequests.length : reqFilter === "overdue" ? overdueRequests.length : actionableRequests.filter((r) => r.status === reqFilter).length)} /{" "}
+                  {reqFilter === "all" ? actionableRequests.length : reqFilter === "overdue" ? overdueRequests.length : actionableRequests.filter((r) => r.status === reqFilter).length} yêu cầu cần xử lý
+                </span>
+                <Button size="sm" variant="outline" onClick={() => onNavigate?.("Yêu cầu mượn")}>
+                  Xem tất cả ➔
+                </Button>
+              </div>
+            </>
           ) : (
-            <Empty text="Chưa có yêu cầu mượn." />
+            <Empty text="Không có yêu cầu nào cần xử lý. Tất cả đã hoàn tất." />
           )}
         </Card>
-        <Card className="p-5 sm:p-6 overflow-hidden">
-          <SectionTitle title="Tần suất sử dụng" />
-          <UsageChart usage={data.stats.usage_by_action} />
-        </Card>
-      </div>
-
-      <div className="mt-6">
-        <AIChatPanel title="AI Summary" mode="summary" starter="Tôi có thể tóm tắt tình trạng thiết bị, yêu cầu và bảo trì từ dữ liệu hiện có." />
+        <div className="flex flex-col gap-6 min-w-0">
+          <Card className="p-5 sm:p-6 overflow-hidden">
+            <SectionTitle title="Tần suất sử dụng" />
+            <UsageChart usage={data.stats.usage_by_action} />
+          </Card>
+          <AIChatPanel title="AI Summary" mode="summary" starter="Tôi có thể tóm tắt tình trạng thiết bị, yêu cầu và bảo trì từ dữ liệu hiện có." />
+        </div>
       </div>
       <ConfirmReturnModal open={confirmReturnModal.open} item={confirmReturnModal.item} device={data.devices.find((d) => d.id === confirmReturnModal.item?.device_id)} onClose={() => setConfirmReturnModal({ open: false, item: null })} onSubmit={handleConfirmReturn} />
       <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
@@ -4684,19 +4771,50 @@ function CopyButton({ text }) {
   );
 }
 
-function AIChatPanel({ title, starter, mode = "chat" }) {
+function AIChatPanel({ title, starter, mode = "chat", autoFocus = false }) {
   const [messages, setMessages] = useState([{ role: "assistant", content: starter, grounded: false, sources: [] }]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = React.useRef(null);
+  const inputRef = React.useRef(null);
   const abortControllerRef = React.useRef(null);
+  const { user } = useAuth();
+  const role = user?.role || "user";
 
-  const promptSuggestions = [
-    { label: "⚡ An toàn điện SOP-01", text: "Quy trình xử lý sự cố rò rỉ điện hoặc chập cháy trong phòng lab?" },
-    { label: "🔍 Máy hiện sóng SOP-02", text: "Hướng dẫn vận hành và cài đặt que đo máy hiện sóng Tektronix TBS1102B?" },
-    { label: "🔋 Nguồn DC SOP-03", text: "Cách thiết lập giới hạn dòng Current Limit trên nguồn DC Keysight E3631A?" },
-    { label: "📋 Quy định mượn trả SOP-04", text: "Quy định bàn giao và kiểm tra hoàn trả thiết bị phòng lab?" },
-  ];
+  const roleKnowledgeScope = {
+    admin: { label: "Phạm vi: Quản lý phòng lab", tone: "bg-violet-50 text-violet-700 border-violet-200/60 dark:bg-violet-950/50 dark:border-violet-900/50 dark:text-violet-300" },
+    manager: { label: "Phạm vi: Quản lý phòng lab", tone: "bg-violet-50 text-violet-700 border-violet-200/60 dark:bg-violet-950/50 dark:border-violet-900/50 dark:text-violet-300" },
+    technician: { label: "Phạm vi: Kỹ thuật viên", tone: "bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/50 dark:border-amber-900/50 dark:text-amber-300" },
+    user: { label: "Phạm vi: Người sử dụng", tone: "bg-blue-50 text-blue-700 border-blue-200/60 dark:bg-blue-950/50 dark:border-blue-900/50 dark:text-blue-300" },
+  }[role];
+
+  // Câu hỏi gợi ý riêng theo phạm vi tri thức của từng vai trò
+  const promptSuggestions = {
+    admin: [
+      { label: "📦 Liệt kê thiết bị", text: "Hãy liệt kê tất cả các thiết bị trong hệ thống cho tôi" },
+      { label: "📊 Tóm tắt vận hành", text: "Tóm tắt tình trạng thiết bị, yêu cầu mượn và bảo trì hiện tại" },
+      { label: "⚠️ Thiết bị cần kiểm tra", text: "Những thiết bị nào đang cần kiểm tra hoặc bảo trì?" },
+      { label: "📋 Quy định mượn trả SOP-04", text: "Quy định bàn giao và kiểm tra hoàn trả thiết bị phòng lab?" },
+    ],
+    manager: [
+      { label: "📦 Liệt kê thiết bị", text: "Hãy liệt kê tất cả các thiết bị trong hệ thống cho tôi" },
+      { label: "📊 Tóm tắt vận hành", text: "Tóm tắt tình trạng thiết bị, yêu cầu mượn và bảo trì hiện tại" },
+      { label: "⏰ Quá hạn mượn", text: "Hiện có bao nhiêu lượt mượn đã quá hạn chưa trả?" },
+      { label: "📋 Quy định mượn trả SOP-04", text: "Quy định bàn giao và kiểm tra hoàn trả thiết bị phòng lab?" },
+    ],
+    technician: [
+      { label: "🔧 Thiết bị cần xử lý", text: "Danh sách các thiết bị đang hỏng, đang bảo trì hoặc chờ kiểm tra" },
+      { label: "🔥 Chập cháy SOP-01", text: "Quy trình xử lý sự cố rò rỉ điện hoặc chập cháy trong phòng lab?" },
+      { label: "🔩 Hàn SMD & ESD SOP-05", text: "Nhiệt độ hàn SMD chuẩn và quy định an toàn tĩnh điện ESD?" },
+      { label: "🚨 Sự cố khẩn cấp SOP-06", text: "Quy trình xử lý sự cố thiết bị và kích hoạt bảo trì khẩn cấp?" },
+    ],
+    user: [
+      { label: "📦 Máy sẵn sàng mượn", text: "Liệt kê các thiết bị đang sẵn sàng để tôi mượn" },
+      { label: "⚡ An toàn điện SOP-01", text: "Quy trình xử lý sự cố rò rỉ điện hoặc chập cháy trong phòng lab?" },
+      { label: "🔍 Máy hiện sóng SOP-02", text: "Hướng dẫn vận hành và cài đặt que đo máy hiện sóng Tektronix TBS1102B?" },
+      { label: "📋 Quy định mượn trả SOP-04", text: "Quy định bàn giao và kiểm tra hoàn trả thiết bị phòng lab?" },
+    ],
+  }[role] || [];
 
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -4721,6 +4839,8 @@ function AIChatPanel({ title, starter, mode = "chat" }) {
     const next = [...messages, { role: "user", content: message }];
     setMessages(next);
     setInput("");
+    // Trả focus về ô nhập ngay sau khi gửi để gõ tiếp câu kế tiếp (như Messenger)
+    inputRef.current?.focus();
     setLoading(true);
     abortControllerRef.current = new AbortController();
     try {
@@ -4729,11 +4849,12 @@ function AIChatPanel({ title, starter, mode = "chat" }) {
         .map((m) => ({ role: m.role, content: String(m.content).trim() }))
         .slice(-10);
       const result = await api.chat(message, cleanHistory, mode, abortControllerRef.current.signal);
-      setMessages([...next, { 
-        role: "assistant", 
-        content: result.answer, 
-        grounded: result.grounded, 
-        sources: result.sources || [] 
+      setMessages([...next, {
+        role: "assistant",
+        content: result.answer,
+        grounded: result.grounded,
+        sources: result.sources || [],
+        safety_note: result.safety_note || null,
       }]);
     } catch (err) {
       console.error("AIChat error:", err);
@@ -4761,6 +4882,9 @@ function AIChatPanel({ title, starter, mode = "chat" }) {
             <p className="mt-0.5 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 truncate">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" /> Trực tuyến • Local Ollama
             </p>
+            <span className={`mt-1 inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold ${roleKnowledgeScope.tone}`}>
+              {roleKnowledgeScope.label}
+            </span>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -4806,6 +4930,11 @@ function AIChatPanel({ title, starter, mode = "chat" }) {
               <div className="flex-1">{item.content}</div>
               {item.role === "assistant" && <CopyButton text={item.content} />}
             </div>
+            {item.safety_note && (
+              <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200/70 dark:border-amber-900/60 px-2.5 py-1.5 text-[11px] font-medium text-amber-700 dark:text-amber-300">
+                <AlertTriangle size={12} className="shrink-0 mt-0.5" /> {item.safety_note}
+              </div>
+            )}
             {item.sources && item.sources.length > 0 && (
               <div className="mt-2.5 pt-2 border-t border-border flex flex-wrap items-center gap-1.5 text-[11px]">
                 <span className="font-semibold text-muted-foreground">Nguồn trích dẫn:</span>
@@ -4838,7 +4967,8 @@ function AIChatPanel({ title, starter, mode = "chat" }) {
       </div>
 
       <form className="flex gap-2 border-t border-border bg-surface p-3.5 sm:p-4" onSubmit={(e) => { e.preventDefault(); send(); }}>
-        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Hỏi về thiết bị, quy trình an toàn SOP..." disabled={loading} className="flex-1" />
+        {/* Không disable khi đang loading: cho phép soạn câu tiếp theo trong lúc AI trả lời */}
+        <Input ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} placeholder="Hỏi về thiết bị, quy trình an toàn SOP..." className="flex-1" autoFocus={autoFocus} />
         {loading ? (
           <Button type="button" variant="outline" onClick={stopGeneration} className="shrink-0 border-rose-400 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-xs">
             <X size={14} /> Dừng
@@ -4895,7 +5025,7 @@ function FloatingAssistant() {
     <div className="fixed bottom-5 right-5 z-40" style={{ transform: `translate(${position.x}px, ${position.y}px)` }}>
       {open && (
         <div className="mb-3 w-[min(400px,calc(100vw-2rem))] shadow-2xl rounded-2xl bg-surface border border-border overflow-hidden">
-          <AIChatPanel title="Trợ lý AI LyxLab" starter="Tôi đang ở đây để hỗ trợ tra cứu quy trình và thiết bị phòng lab." />
+          <AIChatPanel title="Trợ lý AI LyxLab" starter="Tôi đang ở đây để hỗ trợ tra cứu quy trình và thiết bị phòng lab." autoFocus />
         </div>
       )}
       <button

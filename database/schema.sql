@@ -94,6 +94,7 @@ CREATE TABLE documents (
     id INTEGER PRIMARY KEY,
     name VARCHAR(200) NOT NULL UNIQUE,
     description TEXT NOT NULL DEFAULT '',
+    allowed_roles VARCHAR(120) NOT NULL DEFAULT 'admin,manager,technician,user',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
