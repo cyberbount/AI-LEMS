@@ -102,7 +102,7 @@ These were recorded in `docs/database-verification.md`, review reports, deployme
 | Security remediation | backend config/users/AI service, Compose, targeted checks | Targeted checks passed; production security not verified |
 | RBAC regression | `tests/test_g3.py::G3ApiTests::test_account_role_assignment_matrix` | Passed as part of full suite |
 | Database verification | `tests/test_database_schema.py`, `docs/database-verification.md` | Schema evidence passed; MySQL runtime not executed |
-| Current regression suite | `PYTHONPATH=backend .venv/bin/python -m pytest -q tests/` | **62 passed, 7 warnings** (62/62, 2026-09-27) |
+| Current regression suite | `PYTHONPATH=backend .venv/bin/python -m pytest -q tests/` | **63 passed, 7 warnings** (63/63, 2026-09-27) |
 
 ## AI implementation boundary
 

@@ -50,6 +50,28 @@ class OperationsApiTests(unittest.TestCase):
         self.assertEqual(stats.status_code, 200)
         self.assertIn("maintenance_open", stats.json())
 
+    def test_stats_daily_activity_series(self):
+        from app.models import UsageHistory
+        from app.utils.tz import hanoi_now_naive
+        db = SessionLocal()
+        try:
+            db.add(UsageHistory(user_id=1, device_id=1, action="approved", occurred_at=hanoi_now_naive()))
+            db.commit()
+        finally:
+            db.close()
+        stats = self.client.get("/api/stats", headers=self.admin)
+        self.assertEqual(stats.status_code, 200)
+        daily = stats.json().get("daily_activity")
+        self.assertIsInstance(daily, list)
+        self.assertEqual(len(daily), 7)
+        for row in daily:
+            self.assertIn("date", row)
+            for key in ("approved", "borrowed", "returned", "rejected"):
+                self.assertIn(key, row)
+                self.assertGreaterEqual(row[key], 0)
+        self.assertGreaterEqual(daily[-1]["approved"], 1, "seed approved hom nay phai vao bucket approved")
+
 
 if __name__ == "__main__":
     unittest.main()
+

@@ -90,10 +90,16 @@ async def google_login(payload: GoogleLoginRequest, db: Db):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Google account email is not verified")
 
     settings = get_settings()
-    if settings.google_client_id:
-        token_aud = data.get("aud")
-        if token_aud != settings.google_client_id:
-            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Google token audience mismatch")
+    if not settings.google_client_id:
+        # Fail-closed: chưa cấu hình GOOGLE_CLIENT_ID thì từ chối luôn —
+        # không được bỏ qua kiểm tra audience (token của app Google khác sẽ lọt qua).
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            "Đăng nhập Google chưa được cấu hình trên máy chủ (thiếu GOOGLE_CLIENT_ID). Vui lòng dùng đăng nhập bằng tài khoản phòng lab.",
+        )
+    token_aud = data.get("aud")
+    if token_aud != settings.google_client_id:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Google token audience mismatch")
 
     user = db.query(User).filter(User.email == google_email).first()
     if not user:

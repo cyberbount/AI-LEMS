@@ -87,8 +87,8 @@ Trường `username` chấp nhận **tên đăng nhập hoặc email**.
 ```
 Token được xác thực với `https://oauth2.googleapis.com/tokeninfo`; email phải đã
 `email_verified`, **phải tồn tại sẵn trong hệ thống** và đang hoạt động — nếu chưa,
-tài khoản cần do quản lý cấp trước. `200` trả về Token; `401` token không hợp lệ;
-`403` email chưa được phân quyền / bị vô hiệu hóa.
+tài khoản cần do quản lý cấp trước. `200` trả về Token; `401` token không hợp lệ hoặc audience không khớp; `403` email chưa được phân quyền / bị vô hiệu hóa;
+`503` máy chủ chưa cấu hình GOOGLE_CLIENT_ID (fail-closed — không chấp nhận token không kiểm tra audience).
 
 ### GET /api/auth/me — thông tin tài khoản hiện tại
 ```json
@@ -278,7 +278,11 @@ Khoảng thời gian tùy chọn (phải truyền **cả hai hoặc không truy�
   "users": 8, "devices": 26, "requests": 15, "maintenance_open": 2,
   "usage": 24, "usage_frequency": 6,
   "selected_from": "2026-09-01T00:00:00+07:00", "selected_to": "2026-09-30T23:59:59+07:00",
-  "usage_by_action": { "BORROW": 10, "RETURN": 8, "INCIDENT": 1 }
+  "usage_by_action": { "BORROW": 10, "RETURN": 8, "INCIDENT": 1 },
+  "daily_activity": [
+    { "date": "22/09", "approved": 0, "borrowed": 1, "returned": 0, "rejected": 0 },
+    { "date": "23/09", "approved": 2, "borrowed": 1, "returned": 0, "rejected": 0 }
+  ]
 }
 ```
 

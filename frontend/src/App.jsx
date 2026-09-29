@@ -472,6 +472,8 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
 
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+  const gsiBtnRef = useRef(null);
+  const googleBusyRef = useRef(false);
 
   useEffect(() => {
     if (user && roles[user.role]) {
@@ -484,7 +486,8 @@ function Login() {
     if (!googleClientId) return;
 
     function handleGoogleCallback(response) {
-      if (!response?.credential) return;
+      if (!response?.credential || googleBusyRef.current) return;
+      googleBusyRef.current = true;
       setGoogleBusy(true);
       setNotice("");
       signInWithGoogle(response.credential)
@@ -495,6 +498,7 @@ function Login() {
           setNotice(err.message || "Tài khoản Google chưa được cấp phép trong hệ thống phòng lab.");
         })
         .finally(() => {
+          googleBusyRef.current = false;
           setGoogleBusy(false);
         });
     }
@@ -504,6 +508,16 @@ function Login() {
         client_id: googleClientId,
         callback: handleGoogleCallback,
       });
+      // Render nut Google chuan (khong phu thuoc One Tap prompt - avoid cooldown)
+      if (gsiBtnRef.current) {
+        window.google.accounts.id.renderButton(gsiBtnRef.current, {
+          theme: isDark ? "filled_black" : "outline",
+          size: "large",
+          width: 320,
+          text: "signin_with",
+          locale: "vi",
+        });
+      }
       return;
     }
 
@@ -517,6 +531,15 @@ function Login() {
           client_id: googleClientId,
           callback: handleGoogleCallback,
         });
+        if (gsiBtnRef.current) {
+          window.google.accounts.id.renderButton(gsiBtnRef.current, {
+            theme: isDark ? "filled_black" : "outline",
+            size: "large",
+            width: 320,
+            text: "signin_with",
+            locale: "vi",
+          });
+        }
       }
     };
     document.body.appendChild(script);
@@ -527,23 +550,9 @@ function Login() {
         document.body.removeChild(script);
       }
     };
-  }, [googleClientId, navigate, signInWithGoogle]);
+  }, [googleClientId, navigate, signInWithGoogle, isDark]);
 
-  function triggerGoogleLogin() {
-    setNotice("");
-    if (!googleClientId) {
-      setNotice(
-        "Chưa cấu hình Google Client ID (VITE_GOOGLE_CLIENT_ID). Vui lòng thêm Client ID từ Google Cloud Console vào biến môi trường để kích hoạt đăng nhập Google Workspace."
-      );
-      return;
-    }
 
-    if (window.google?.accounts?.id) {
-      window.google.accounts.id.prompt();
-    } else {
-      setNotice("Đang tải dịch vụ xác thực Google, vui lòng thử lại sau vài giây...");
-    }
-  }
 
   async function submit(event) {
     if (event) event.preventDefault();
@@ -621,28 +630,19 @@ function Login() {
             <h2 className="mt-1 text-2xl font-black tracking-tight">Đăng nhập hệ thống</h2>
             <p className="mt-1 text-xs text-muted-foreground">Vui lòng đăng nhập để truy cập tài nguyên phòng lab.</p>
 
-            {/* Real Google Workspace SSO Button */}
+            {/* Google Workspace SSO — nut chuan do Google render (tin cay hon One Tap prompt) */}
             <div className="mt-5">
-              <button
-                type="button"
-                onClick={triggerGoogleLogin}
-                disabled={googleBusy || busy}
-                className="w-full py-2.5 px-4 rounded-xl border border-border bg-surface-elevated hover:bg-muted text-foreground text-xs font-semibold transition-all flex items-center justify-center gap-2.5 shadow-sm disabled:opacity-50"
-              >
-                {googleBusy ? (
+              {googleBusy && (
+                <div className="w-full py-2.5 px-4 rounded-xl border border-border bg-surface-elevated text-xs font-semibold flex items-center justify-center gap-2.5">
                   <span className="inline-flex items-center gap-2"><Loader2 size={15} className="animate-spin text-blue-600" /> Đang xác thực với Google...</span>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                    </svg>
-                    <span>Đăng nhập với Google Workspace</span>
-                  </>
-                )}
-              </button>
+                </div>
+              )}
+              <div ref={gsiBtnRef} className={`flex justify-center min-h-[44px] ${googleBusy ? "hidden" : ""}`}></div>
+              {!googleClientId && (
+                <p className="text-[11px] text-center text-amber-600 dark:text-amber-400">
+                  Chưa cấu hình VITE_GOOGLE_CLIENT_ID — nút đăng nhập Google sẽ hiện khi có Client ID.
+                </p>
+              )}
             </div>
 
             <div className="relative my-5 flex items-center justify-center">
@@ -730,6 +730,8 @@ function DashboardLayout({ role }) {
   const { signOut, user, updateUser } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [active, setActive] = useState("Tổng quan");
+  const [focusTarget, setFocusTarget] = useState(null);
+  const navigateWithFocus = (section, focus) => { setActive(section); setFocusTarget(focus || null); };
   const [passwordModal, setPasswordModal] = useState(false);
   const [profileModal, setProfileModal] = useState(false);
   const [toast, setToast] = useState(null);
@@ -816,7 +818,7 @@ function DashboardLayout({ role }) {
           </div>
           <div className="ml-auto flex items-center gap-2.5 sm:gap-3">
             <ThemeToggle />
-            <NotificationDropdown onNavigate={setActive} role={role} />
+            <NotificationDropdown onNavigate={navigateWithFocus} role={role} />
             <button 
               type="button"
               onClick={() => setProfileModal(true)} 
@@ -829,7 +831,7 @@ function DashboardLayout({ role }) {
         </header>
 
         <main className="mx-auto max-w-[1440px] p-4 sm:p-7 overflow-x-hidden">
-          {role === "admin" ? <AdminDashboard section={active} onNavigate={setActive} /> : role === "user" ? <UserDashboard section={active} onNavigate={setActive} /> : <TechnicianDashboard section={active} onNavigate={setActive} />}
+          {role === "admin" ? <AdminDashboard section={active} onNavigate={navigateWithFocus} focusTarget={focusTarget} /> : role === "user" ? <UserDashboard section={active} onNavigate={navigateWithFocus} focusTarget={focusTarget} /> : <TechnicianDashboard section={active} onNavigate={navigateWithFocus} focusTarget={focusTarget} />}
         </main>
       </div>
 
@@ -940,7 +942,18 @@ function ConditionBadge({ condition }) {
 /* ------------------------------------------------------------------ */
 /* Workspace Section                                                   */
 /* ------------------------------------------------------------------ */
-function WorkspaceSection({ section, role, data, onBorrow, onComplete, onSchedule, onDownloadReportTXT, onPrintReportPDF, onNavigate, onUpdateDeviceStatus, onOpenMaintenanceForDevice }) {
+function WorkspaceSection({ section, role, data, onBorrow, onComplete, onSchedule, onDownloadReportTXT, onPrintReportPDF, onNavigate, onUpdateDeviceStatus, onOpenMaintenanceForDevice, focusId = null }) {
+  useEffect(() => {
+    if (!focusId || !focusId.maintenanceId) return;
+    const t = setTimeout(() => {
+      const el = document.getElementById(`mt-row-${focusId.maintenanceId}`);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.remove("flash-focus"); void el.offsetWidth; el.classList.add("flash-focus");
+      setTimeout(() => el.classList.remove("flash-focus"), 2600);
+    }, 180);
+    return () => clearTimeout(t);
+  }, [focusId]);
   const titles = {
     "Người dùng": ["Người dùng", "Danh sách người dùng hiện có trong hệ thống."],
     "Thiết bị": ["Thiết bị", "Tra cứu trạng thái thiết bị từ dữ liệu hiện tại."],
@@ -1030,13 +1043,13 @@ function WorkspaceSection({ section, role, data, onBorrow, onComplete, onSchedul
           </div>
         ))}</div> : <Empty text="Chưa có thiết bị từ API." />
       )}
-      {(section === "Yêu cầu mượn" || section === "Lượt mượn của tôi") && (data.requests.length ? <RequestList items={data.requests} devices={data.devices} users={data.users} role={role} onReturn={role === "user" ? data.onReturn : undefined} onHandover={data.onHandover} /> : <Empty text="Chưa có yêu cầu mượn." />)}
+      {(section === "Yêu cầu mượn" || section === "Lượt mượn của tôi") && (data.requests.length ? <RequestList items={data.requests} devices={data.devices} users={data.users} role={role} focusId={focusId} onReturn={role === "user" ? data.onReturn : undefined} onHandover={data.onHandover} /> : <Empty text="Chưa có yêu cầu mượn." />)}
       {(section === "Bảo trì" || section === "Lịch sử") && (maintenanceItems.length ? maintenanceItems.map((item) => {
         const dev = data.devices.find((d) => d.id === item.device_id) || {};
         const devName = dev.name ? `${dev.name} (${dev.asset_code})` : `Thiết bị #${item.device_id}`;
         const kindLabel = item.kind === "incident" ? "Báo cáo sự cố" : (item.kind === "inspection" ? "Kiểm tra định kỳ" : item.kind);
         return (
-        <div key={item.id} className="flex flex-wrap items-center gap-3 border-b border-border py-4 last:border-0 min-w-0">
+        <div key={item.id} id={`mt-row-${item.id}`} className="flex flex-wrap items-center gap-3 border-b border-border py-4 last:border-0 min-w-0">
           <Settings2 size={17} className="text-blue-600 dark:text-blue-400 shrink-0" />
           <span className="flex-1 text-sm font-semibold text-foreground truncate">{devName} • {kindLabel}</span>
           <StatusBadge status={item.status} />
@@ -1158,6 +1171,7 @@ function NotificationDropdown({ onNavigate, role }) {
             time: `Quá hạn ${timeText}`,
             type: "danger",
             targetSection: role === "user" ? "Lượt mượn của tôi" : "Yêu cầu mượn",
+            focus: { requestId: r.id },
             icon: AlertTriangle,
           });
         }
@@ -1191,6 +1205,7 @@ function NotificationDropdown({ onNavigate, role }) {
           time: new Date(r.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
           type: "success",
           targetSection: "Lượt mượn của tôi",
+          focus: { requestId: r.id },
           icon: CheckCircle2,
         });
       });
@@ -1207,6 +1222,7 @@ function NotificationDropdown({ onNavigate, role }) {
           time: "Cần kiểm tra gấp",
           type: "danger",
           targetSection: "Bảo trì",
+          focus: { maintenanceId: m.id },
           icon: AlertTriangle,
         });
       });
@@ -1232,7 +1248,7 @@ function NotificationDropdown({ onNavigate, role }) {
     }
     setOpen(false);
     if (onNavigate && n.targetSection) {
-      onNavigate(n.targetSection);
+      onNavigate(n.targetSection, n.focus || null);
     }
   };
 
@@ -1568,6 +1584,7 @@ function AdminAuditCenter({ onPrintReportPDF }) {
 function AdminSection({ 
   section, 
   data, 
+  focusId, 
   onRequestStatus, 
   onHandover,
   onReturnDevice,
@@ -1826,6 +1843,7 @@ function AdminSection({
           devices={data.devices}
           users={data.users}
           role="admin"
+          focusId={focusId}
           onApprove={(item) => onRequestStatus(item, "approved")} 
           onReject={(item) => onRequestStatus(item, "rejected")} 
           onHandover={onHandover}
@@ -1908,6 +1926,7 @@ function AdminSection({
       section={section} 
       role="admin" 
       data={data} 
+      focusId={focusId} 
       onDownloadReportTXT={onDownloadReportTXT}
       onPrintReportPDF={onPrintReportPDF}
       onNavigate={onNavigate}
@@ -3341,7 +3360,79 @@ function EquipmentQuickControlBoard({ devices = [], onUpdateStatus, onNavigate, 
 /* ------------------------------------------------------------------ */
 /* Admin dashboard                                                     */
 /* ------------------------------------------------------------------ */
-function AdminDashboard({ section = "Tổng quan", onNavigate }) {
+function ActivityPanel({ stats, devices, overdueCount, pendingCount, returnPendingCount, approvedCount, onNavigate, chipFocusMap = {} }) {
+  const daily = (stats && stats.daily_activity) || [];
+  const maxTotal = Math.max(1, ...daily.map((d) => (d.approved || 0) + (d.borrowed || 0) + (d.returned || 0) + (d.rejected || 0)));
+  const byStatus = (list) => devices.filter((d) => list.includes(d.status)).length;
+  const avail = byStatus(["available"]);
+  const borrowed = byStatus(["borrowed", "reserved", "returning"]);
+  const maint = byStatus(["maintenance", "pending_inspection", "in_progress", "replace_partial", "replace_full"]);
+  const other = Math.max(0, devices.length - avail - borrowed - maint);
+  const total = devices.length || 1;
+  const seg = [
+    { label: "Sẵn sàng", n: avail, color: "#16A34A" },
+    { label: "Đang mượn", n: borrowed, color: "#1267F4" },
+    { label: "Bảo trì / kiểm tra", n: maint, color: "#F59E0B" },
+    { label: "Khác", n: other, color: "#94A3B8" },
+  ];
+  const chips = [
+    { label: "Quá hạn", n: overdueCount },
+    { label: "Chờ duyệt", n: pendingCount },
+    { label: "Chờ nhận trả", n: returnPendingCount },
+    { label: "Chờ bàn giao", n: approvedCount },
+  ];
+  return (
+    <div>
+      <div className="flex items-end gap-3 h-[150px] px-1 pt-2">
+        {daily.map((d, i) => {
+          const ap = d.approved || 0, bo = d.borrowed || 0, ret = d.returned || 0, rj = d.rejected || 0;
+          const sum = ap + bo + ret + rj;
+          const h = (n) => `${Math.round((n / maxTotal) * 120)}px`;
+          const today = i === daily.length - 1;
+          return (
+            <div key={i} className="flex-1 flex flex-col items-center justify-end gap-1.5 h-full">
+              <span className="text-[11px] font-extrabold font-mono">{sum}</span>
+              <div className={`w-full max-w-[34px] flex flex-col-reverse overflow-hidden rounded-t-lg rounded-b-sm ${today ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`} style={{ height: Math.max(12, (sum / maxTotal) * 120) }}>
+                {rj > 0 && <i style={{ height: h(rj), background: "#94A3B8" }}></i>}
+                {ret > 0 && <i style={{ height: h(ret), background: "#34C3A6" }}></i>}
+                {bo > 0 && <i style={{ height: h(bo), background: "#7C3AED" }}></i>}
+                {ap > 0 && <i style={{ height: h(ap), background: "#1267F4" }}></i>}
+              </div>
+              <span className={`text-[10.5px] font-semibold ${today ? "text-primary font-extrabold" : "text-muted-foreground"}`}>{d.date}</span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex gap-4 mt-3 text-[11.5px] text-muted-foreground">
+        <span><i className="inline-block w-2.5 h-2.5 rounded-sm mr-1.5" style={{ background: "#1267F4" }}></i>Duyệt</span>
+        <span><i className="inline-block w-2.5 h-2.5 rounded-sm mr-1.5" style={{ background: "#7C3AED" }}></i>Bàn giao</span>
+        <span><i className="inline-block w-2.5 h-2.5 rounded-sm mr-1.5" style={{ background: "#34C3A6" }}></i>Hoàn trả</span>
+        <span><i className="inline-block w-2.5 h-2.5 rounded-sm mr-1.5" style={{ background: "#94A3B8" }}></i>Từ chối</span>
+      </div>
+      <div className="mt-4 text-[11.5px] text-muted-foreground">Phân bố trạng thái thiết bị hiện tại</div>
+      <div className="flex h-4 rounded-full overflow-hidden my-2.5">
+        {seg.filter((x) => x.n > 0).map((x, i) => (<i key={i} style={{ width: `${(x.n / total) * 100}%`, background: x.color }}></i>))}
+      </div>
+      <div className="flex flex-wrap gap-3 text-[11.5px] text-muted-foreground">
+        {seg.map((x, i) => (<span key={i}>● {x.label} <b className="font-mono">{x.n}</b></span>))}
+      </div>
+      <div className="flex flex-wrap gap-2 mt-4">
+        {chips.map((c, i) => (
+          <button key={i} type="button" onClick={() => onNavigate("Yêu cầu mượn", chipFocusMap[c.label] ? { requestId: chipFocusMap[c.label] } : null)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-xs font-semibold hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition">
+            {c.label} <b className="font-mono">{c.n}</b>
+          </button>
+        ))}
+        <button type="button" onClick={() => onNavigate("Bảo trì")}
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-xs font-semibold hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition">
+          Bảo trì <b className="font-mono">{maint}</b>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AdminDashboard({ section = "Tổng quan", onNavigate, focusTarget = null }) {
   const { data, offline, setData, refresh } = useDashboardData(true);
   const now = useRealtimeClock(3000);
   
@@ -3555,6 +3646,7 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
     <AdminSection 
       section={section} 
       data={data} 
+      focusId={focusTarget} 
       onRequestStatus={updateRequest} 
       onHandover={handoverRequest}
       onReturnDevice={returnDevice}
@@ -3639,7 +3731,7 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  onClick={() => onNavigate?.("Yêu cầu mượn")} 
+                  onClick={() => onNavigate?.("Yêu cầu mượn", overdueRequests[0] ? { requestId: overdueRequests[0].id } : null)}
                   className="border-rose-400 text-rose-600 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/60 font-bold text-xs"
                 >
                   Xem danh sách chi tiết ➔
@@ -3757,13 +3849,25 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
         );
       })()}
 
-      {/* Bảng kiểm soát nhanh thiết bị hiện hành (Đặc tả Đề tài 23) */}
+      {/* Hoạt động phòng lab: biểu đồ 7 ngày + phân bố trạng thái (thay bảng kiểm soát nhanh vốn trùng lặp mục Thiết bị) */}
       <div className="mt-6">
-        <EquipmentQuickControlBoard 
-          devices={data.devices} 
-          onUpdateStatus={updateDeviceStatus} 
-          onNavigate={onNavigate} 
-        />
+        <div className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+            <h3 className="text-[15px] font-bold">Hoạt động phòng lab — 7 ngày</h3>
+            <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 border border-blue-200/60 dark:border-blue-900/60 rounded-md px-2 py-0.5">Đề tài 23 · Real-time</span>
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">Tổng hợp từ lịch sử sử dụng — thay cho bảng kiểm soát nhanh, xem/sửa chi tiết từng máy ở mục Thiết bị.</p>
+          <ActivityPanel stats={data.stats} devices={data.devices} requests={data.requests}
+            overdueCount={overdueRequests.length} pendingCount={reqPendingCount}
+            returnPendingCount={reqReturnPendingCount} approvedCount={reqApprovedCount}
+            chipFocusMap={{
+              "Quá hạn": overdueRequests[0]?.id,
+              "Chờ duyệt": actionableRequests.find((r) => r.status === "pending")?.id,
+              "Chờ nhận trả": actionableRequests.find((r) => r.status === "return_pending")?.id,
+              "Chờ bàn giao": actionableRequests.find((r) => r.status === "approved")?.id,
+            }}
+            onNavigate={onNavigate} />
+        </div>
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_.9fr]">
@@ -3871,7 +3975,7 @@ function AdminDashboard({ section = "Tổng quan", onNavigate }) {
 /* ------------------------------------------------------------------ */
 /* User dashboard (Clear Borrow & Return Flow)                         */
 /* ------------------------------------------------------------------ */
-function UserDashboard({ section = "Tổng quan", onNavigate }) {
+function UserDashboard({ section = "Tổng quan", onNavigate, focusTarget = null }) {
   const { data, offline, setData } = useDashboardData();
   const { user } = useAuth();
   const now = useRealtimeClock(3000);
@@ -3979,6 +4083,7 @@ function UserDashboard({ section = "Tổng quan", onNavigate }) {
         onDownloadReportTXT={downloadReportTXT} 
         onPrintReportPDF={printReportPDF} 
         onNavigate={onNavigate}
+        focusId={focusTarget}
       />
       <BorrowModal open={borrowModal.open} device={borrowModal.device} onClose={() => setBorrowModal({ open: false, device: null })} onSubmit={handleConfirmBorrow} />
       <IncidentModal open={incidentModal.open} item={incidentModal.item} onClose={() => setIncidentModal({ open: false, item: null })} onSubmit={handleReportIncident} />
@@ -4365,7 +4470,7 @@ function MaintenanceModal({ open, mode, item, devices = [], onClose, onSubmit, o
   );
 }
 
-function TechnicianDashboard({ section = "Tổng quan", onNavigate }) {
+function TechnicianDashboard({ section = "Tổng quan", onNavigate, focusTarget = null }) {
   const { data, offline, setData, refresh } = useDashboardData();
   const { user } = useAuth();
   const [toast, setToast] = useState(null);
@@ -4424,6 +4529,7 @@ function TechnicianDashboard({ section = "Tổng quan", onNavigate }) {
         onDownloadReportTXT={downloadReportTXT} 
         onPrintReportPDF={printReportPDF} 
         onNavigate={onNavigate} 
+        focusId={focusTarget}
         onUpdateDeviceStatus={updateDeviceStatus}
         onOpenMaintenanceForDevice={(device) => setModal({ open: true, mode: 'create', item: { device_id: device.id, status: 'in_progress', kind: 'inspection', notes: '' } })}
       />
@@ -4560,7 +4666,18 @@ function TechnicianDashboard({ section = "Tổng quan", onNavigate }) {
 /* ------------------------------------------------------------------ */
 /* Shared Request List                                                 */
 /* ------------------------------------------------------------------ */
-function RequestList({ items, devices = [], users = [], onApprove, onReject, onHandover, onReturn, onRecall, role = "user" }) {
+function RequestList({ items, devices = [], users = [], onApprove, onReject, onHandover, onReturn, onRecall, role = "user", focusId = null }) {
+  const applyFlash = (id) => {
+    if (!id) return;
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.remove("flash-focus"); void el.offsetWidth; el.classList.add("flash-focus");
+      setTimeout(() => el.classList.remove("flash-focus"), 2600);
+    }, 180);
+  };
+  useEffect(() => { if (focusId && focusId.requestId) applyFlash(`rq-row-${focusId.requestId}`); }, [focusId]);
   const isManager = role === "admin" || role === "technician";
   const now = useRealtimeClock(3000);
 
@@ -4595,7 +4712,7 @@ function RequestList({ items, devices = [], users = [], onApprove, onReject, onH
         }) : null;
 
         return (
-          <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border p-4 min-w-0 transition ${isOverdue ? "border-rose-400 dark:border-rose-700 bg-rose-50/50 dark:bg-rose-950/30 ring-1 ring-rose-500/30 shadow-md" : "border-border bg-surface"}`} key={item.id}>
+          <div id={`rq-row-${item.id}`} className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border p-4 min-w-0 transition ${isOverdue ? "border-rose-400 dark:border-rose-700 bg-rose-50/50 dark:bg-rose-950/30 ring-1 ring-rose-500/30 shadow-md" : "border-border bg-surface"} ${focusId && focusId.requestId === item.id ? "flash-focus" : ""}`} key={item.id}>
             <div className="flex items-start gap-3.5 min-w-0 flex-1">
               <div className={`grid h-11 w-11 place-items-center rounded-xl shrink-0 mt-0.5 ${isOverdue ? "bg-rose-100 text-rose-600 dark:bg-rose-900/60 dark:text-rose-400" : "bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400"}`}>
                 <ClipboardCheck size={20} />

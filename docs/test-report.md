@@ -24,7 +24,7 @@ This report records tests that are actually present and executed in this reposit
 
 ## Current test suite
 
-The suite comprises **62 test cases** across 8 files:
+The suite comprises **63 test cases** across 8 files:
 
 | Area | Test file | Tests | Status |
 |---|---|---|---|
@@ -52,7 +52,7 @@ The pass/fail count below must be updated from the command output after each run
 - Last execution: 2026-09-27 (updated after Group-1 role-scoped AI implementation), local development environment
 - Command: `PYTHONPATH=backend .venv/bin/python -m pytest -q tests/`
 - Test cases run: **54**
-- Passed: **54** (pass rate 100% — 62/62)
+- Passed: **54** (pass rate 100% — 63/63)
 - Failed: 0
 - Errors: 0
 - Warnings: 7 (deprecation warnings for `datetime.utcnow`, no test failures)

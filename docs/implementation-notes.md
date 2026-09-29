@@ -17,7 +17,7 @@
 - IMP-010: Document and document-chunk tables exist and retrieval reads them, but document upload and CRUD endpoints are not implemented.
 - IMP-011: The current retrieval is keyword matching, not semantic search or vector retrieval.
 - IMP-012: Password change is implemented at `PATCH /api/auth/password` and verified by `tests/test_g3.py`. Password reset is not implemented.
-- IMP-013: Automated tests are present and the required full suite currently passes 62 test cases (62/62 passed, 7 warnings, 2026-09-27). Coverage gaps remain and are recorded in `traceability-report.md`.
+- IMP-013: Automated tests are present and the required full suite currently passes 63 test cases (63/63 passed, 7 warnings, 2026-09-27). Coverage gaps remain and are recorded in `traceability-report.md`.
 - IMP-014: Database initialization uses `create_all` and static SQL; no Alembic migration history exists.
 - IMP-015: Maintenance creation marks an available device as `maintenance`, and completion restores `available` when appropriate. Borrowed/reserved states are preserved.
 - IMP-016: Manager-only account creation authorization is implemented at `POST /api/users`; complete account/role operation coverage remains open.

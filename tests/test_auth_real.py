@@ -107,15 +107,22 @@ class RealAuthenticationTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 403)
         self.assertIn("bị khóa", resp.json()["detail"])
 
+    def _patched_settings(self):
+        stub = MagicMock()
+        stub.google_client_id = "test-google-client-id"
+        return stub
+
+    @patch("app.routers.auth.get_settings")
     @patch("httpx.AsyncClient.get")
-    def test_google_login_authorized_user_success(self, mock_get):
+    def test_google_login_authorized_user_success(self, mock_get, mock_settings):
+        mock_settings.return_value = self._patched_settings()
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.json.return_value = {
             "email": self.active_user_email,
             "email_verified": "true",
             "name": "Active Lab User",
-            "aud": get_settings().google_client_id,
+            "aud": "test-google-client-id",  # khop voi _patched_settings
         }
         mock_get.return_value = mock_resp
 
@@ -136,15 +143,17 @@ class RealAuthenticationTests(unittest.TestCase):
         self.assertEqual(me_resp.json()["email"], self.active_user_email)
         self.assertEqual(me_resp.json()["role"], "user")
 
+    @patch("app.routers.auth.get_settings")
     @patch("httpx.AsyncClient.get")
-    def test_google_login_unknown_user_rejected_with_403(self, mock_get):
+    def test_google_login_unknown_user_rejected_with_403(self, mock_get, mock_settings):
+        mock_settings.return_value = self._patched_settings()
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.json.return_value = {
             "email": f"stranger_{self.suffix}@unknown.com",
             "email_verified": True,
             "name": "Stranger",
-            "aud": get_settings().google_client_id,
+            "aud": "test-google-client-id",  # khop voi _patched_settings
         }
         mock_get.return_value = mock_resp
 
@@ -155,15 +164,17 @@ class RealAuthenticationTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 403)
         self.assertIn("chưa được phân quyền", resp.json()["detail"])
 
+    @patch("app.routers.auth.get_settings")
     @patch("httpx.AsyncClient.get")
-    def test_google_login_disabled_user_rejected_with_403(self, mock_get):
+    def test_google_login_disabled_user_rejected_with_403(self, mock_get, mock_settings):
+        mock_settings.return_value = self._patched_settings()
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.json.return_value = {
             "email": self.inactive_user_email,
             "email_verified": True,
             "name": "Disabled User",
-            "aud": get_settings().google_client_id,
+            "aud": "test-google-client-id",  # khop voi _patched_settings
         }
         mock_get.return_value = mock_resp
 
@@ -185,6 +196,25 @@ class RealAuthenticationTests(unittest.TestCase):
             json={"id_token": "fake_expired_token"},
         )
         self.assertEqual(resp.status_code, 401)
+
+    @patch("app.routers.auth.get_settings")
+    @patch("httpx.AsyncClient.get")
+    def test_google_login_fail_closed_without_client_id(self, mock_get, mock_settings):
+        stub = MagicMock()
+        stub.google_client_id = ""  # chua cau hinh -> tu choi, khong bo qua kiem tra aud
+        mock_settings.return_value = stub
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "email": f"anyone_{self.suffix}@gmail.com",
+            "email_verified": "true",
+            "name": "Anyone",
+            "aud": "some-other-app-client-id",
+        }
+        mock_get.return_value = mock_resp
+
+        resp = self.client.post("/api/auth/google", json={"id_token": "valid_looking_token"})
+        self.assertEqual(resp.status_code, 503)
 
     def test_rbac_backend_enforcement_blocks_unauthorized_roles(self):
         # Login as user
