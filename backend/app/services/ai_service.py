@@ -11,6 +11,7 @@ from app.models import (
     MaintenanceRecord,
     MaintenanceSchedule,
     UsageHistory,
+    User,
 )
 from app.utils.tz import hanoi_now_naive
 
@@ -49,6 +50,13 @@ MODE_ALLOWED_ROLES: dict[str, set[str]] = {
 INVENTORY_KEYWORDS = (
     "liệt kê", "danh sách thiết bị", "tất cả thiết bị", "các thiết bị",
     "kho thiết bị", "thiết bị nào", "list devices", "show devices",
+)
+
+# Từ khóa phát hiện ý định liên quan người dùng / thành viên / tài khoản
+USER_KEYWORDS = (
+    "người dùng", "thành viên", "tài khoản", "bao nhiêu người", "danh sách người",
+    "ai đang", "danh sách user", "users", "sinh viên", "giảng viên", "kỹ thuật viên",
+    "danh sách tài khoản", "số lượng người", "thành viên phòng lab", "ai là",
 )
 
 # Chủ đề an toàn → gắn safety_note vào phản hồi (đầu ra AI-01 theo mục 2.10 Báo cáo)
@@ -174,6 +182,10 @@ class AIService:
 
         lowered = message.lower()
 
+        # Ý định tra cứu thông tin / số lượng người dùng được ưu tiên ở MỌI mode:
+        if any(k in lowered for k in USER_KEYWORDS):
+            return AIService._users_context(db, user_role)
+
         # Ý định liệt kê thiết bị được ưu tiên ở MỌI mode (kể cả summary):
         # ngữ cảnh vẫn được xây theo phạm vi vai nên không rò rỉ dữ liệu.
         if any(k in lowered for k in INVENTORY_KEYWORDS):
@@ -181,6 +193,11 @@ class AIService:
 
         if mode == "summary":
             # Chỉ cán bộ quản lý được tóm tắt vận hành (đã chặn ở router, giữ đây để fail-closed)
+            user_count = db.query(User).count()
+            active_user_count = db.query(User).filter(User.is_active == True).count()
+            user_role_counts: dict[str, int] = {}
+            for r, cnt in db.query(User.role, func.count(User.id)).group_by(User.role).all():
+                user_role_counts[r] = cnt
             dev_count = db.query(Device).count()
             maint_count = db.query(MaintenanceRecord).filter(MaintenanceRecord.status == "open").count()
             status_counts: dict[str, int] = {}
@@ -193,13 +210,15 @@ class AIService:
             ).count()
             usage_total = db.query(UsageHistory).count()
             context = (
+                f"Tổng số tài khoản người dùng: {user_count} (đang hoạt động: {active_user_count}, theo vai trò: {user_role_counts}). "
                 f"Tổng số thiết bị trong hệ thống: {dev_count} (theo trạng thái: {status_counts}). "
                 f"Số phiếu bảo trì đang mở: {maint_count}. "
                 f"Yêu cầu mượn quá hạn chưa trả: {overdue}. "
                 f"Tổng lượt sử dụng đã ghi nhận: {usage_total}."
             )
-            sources = ["database:devices", "database:maintenance", "database:borrow_requests", "database:usage_history"]
+            sources = ["database:users", "database:devices", "database:maintenance", "database:borrow_requests", "database:usage_history"]
             source_details = [
+                {"title": "database:users", "snippet": f"{user_count} tài khoản ({user_role_counts})", "score": 1.0},
                 {"title": "database:devices", "snippet": f"{dev_count} thiết bị, phân bố trạng thái: {status_counts}", "score": 1.0},
                 {"title": "database:maintenance", "snippet": f"{maint_count} phiếu đang mở", "score": 1.0},
                 {"title": "database:borrow_requests", "snippet": f"{overdue} yêu cầu quá hạn", "score": 1.0},
@@ -228,6 +247,55 @@ class AIService:
 
         # chat / rag — truy hồi SOP theo phân quyền tri thức
         return AIService._rag_context(message, db, user_role)
+
+    @staticmethod
+    def _users_context(db: Session, user_role: str) -> tuple[str, list[str], list[dict]]:
+        """Ngữ cảnh thông tin người dùng theo phạm vi vai trò (RBAC an toàn, tuyệt đối không lộ password_hash)."""
+        users = db.query(User).order_by(User.id).all()
+        if not users:
+            return "Hệ thống hiện chưa có tài khoản người dùng nào.", ["database:users"], []
+
+        total = len(users)
+        active = sum(1 for u in users if u.is_active)
+        role_map = {
+            "admin": "Quản lý hệ thống (Admin)",
+            "manager": "Cán bộ quản lý phòng lab",
+            "technician": "Kỹ thuật viên bảo trì",
+            "user": "Sinh viên / Nghiên cứu viên",
+        }
+        role_counts: dict[str, int] = {}
+        for u in users:
+            role_counts[u.role] = role_counts.get(u.role, 0) + 1
+
+        role_summary = ", ".join(f"{cnt} {role_map.get(r, r)}" for r, cnt in role_counts.items())
+
+        if user_role in ("admin", "manager"):
+            # Quản lý được xem tổng số lượng, phân bố vai trò và danh sách tên/username
+            lines = [f"- @{u.username}: {u.full_name} ({role_map.get(u.role, u.role)})" for u in users]
+            context = (
+                f"Tổng số người dùng trong hệ thống phòng lab hiện tại là {total} người ({active} người đang hoạt động).\n"
+                f"Cơ cấu thành phần gồm: {role_summary}.\n"
+                f"Danh sách chi tiết toàn bộ {total} người dùng:\n" + "\n".join(lines)
+            )
+        elif user_role == "technician":
+            # Kỹ thuật viên xem tổng số và danh sách đồng nghiệp kỹ thuật viên
+            techs = [f"- {u.full_name} (@{u.username})" for u in users if u.role == "technician"]
+            context = (
+                f"Tổng số người dùng trong phòng lab là {total} người ({role_summary}).\n"
+                f"Đội ngũ kỹ thuật viên phụ trách ({len(techs)} người):\n" + "\n".join(techs)
+            )
+        else:
+            # Sinh viên / người dùng chỉ xem tổng quan số lượng thành viên chung, không xem danh sách cá nhân
+            context = (
+                f"Phòng lab hiện có tổng cộng {total} người dùng ({active} người đang hoạt động), "
+                f"bao gồm: {role_summary}."
+            )
+
+        sources = ["database:users"]
+        source_details = [
+            {"title": "database:users", "snippet": f"Tổng cộng {total} người dùng ({role_summary})", "score": 1.0}
+        ]
+        return context, sources, source_details
 
     @staticmethod
     def _inventory_context(db: Session, user_role: str) -> tuple[str, list[str], list[dict]]:
@@ -376,13 +444,15 @@ CẤU TRÚC PHẢN HỒI (CÔ ĐỌNG, DƯỚI 150 TỪ):
         personas = {
             "admin": (
                 "\n\nPHẠM VI NGƯỜI DÙNG HIỆN TẠI: QUẢN LÝ PHÒNG LAB (admin).\n"
-                "- Tập trung hỗ trợ vận hành: tổng quan kho thiết bị, duyệt mượn trả, thống kê, tình trạng bảo trì.\n"
-                "- Được trình bày dữ liệu vận hành từ DỮ LIỆU THAM KHẢO (thiết bị, yêu cầu, bảo trì, sử dụng)."
+                "- Bạn đang trao đổi trực tiếp với Quản lý phòng lab (Lab Manager). TUYỆT ĐỐI KHÔNG bảo họ liên hệ quản lý phòng lab vì chính họ là người quản lý!\n"
+                "- Tập trung hỗ trợ vận hành: tổng quan tài khoản người dùng/thành viên, kho thiết bị, duyệt mượn trả, thống kê, tình trạng bảo trì.\n"
+                "- Được trình bày đầy đủ dữ liệu vận hành từ DỮ LIỆU THAM KHẢO (người dùng, thiết bị, yêu cầu, bảo trì, sử dụng)."
             ),
             "manager": (
                 "\n\nPHẠM VI NGƯỜI DÙNG HIỆN TẠI: QUẢN LÝ PHÒNG LAB (manager).\n"
-                "- Tập trung hỗ trợ vận hành: tổng quan kho thiết bị, duyệt mượn trả, thống kê, tình trạng bảo trì.\n"
-                "- Được trình bày dữ liệu vận hành từ DỮ LIỆU THAM KHẢO (thiết bị, yêu cầu, bảo trì, sử dụng)."
+                "- Bạn đang trao đổi trực tiếp với Quản lý phòng lab (Lab Manager). TUYỆT ĐỐI KHÔNG bảo họ liên hệ quản lý phòng lab vì chính họ là người quản lý!\n"
+                "- Tập trung hỗ trợ vận hành: tổng quan tài khoản người dùng/thành viên, kho thiết bị, duyệt mượn trả, thống kê, tình trạng bảo trì.\n"
+                "- Được trình bày đầy đủ dữ liệu vận hành từ DỮ LIỆU THAM KHẢO (người dùng, thiết bị, yêu cầu, bảo trì, sử dụng)."
             ),
             "technician": (
                 "\n\nPHẠM VI NGƯỜI DÙNG HIỆN TẠI: KỸ THUẬT VIÊN BẢO TRÌ.\n"
