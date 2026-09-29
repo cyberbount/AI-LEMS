@@ -6,6 +6,7 @@ import {
   Eye, EyeOff, Loader2, Lock, User as UserIcon, Sun, Moon, KeyRound, ShieldCheck, FileText,
   FileDown, Printer, Copy, Check, Filter, Sparkles, QrCode, ExternalLink, Edit2, Trash2,
   Key, RefreshCw, CheckCheck, RotateCcw, UserPlus, UserX,
+  Activity, TrendingUp, Clock, ArrowUpRight, PieChart, Calendar,
 } from "lucide-react";
 import { Badge, Button, Card, Input, Modal, Select, Toast } from "./components/ui";
 import { api, clearSession, fallbackData, login, googleLogin } from "./lib/api";
@@ -3360,73 +3361,451 @@ function EquipmentQuickControlBoard({ devices = [], onUpdateStatus, onNavigate, 
 /* ------------------------------------------------------------------ */
 /* Admin dashboard                                                     */
 /* ------------------------------------------------------------------ */
-function ActivityPanel({ stats, devices, overdueCount, pendingCount, returnPendingCount, approvedCount, onNavigate, chipFocusMap = {} }) {
+function ActivityPanel({ stats, devices = [], overdueCount, pendingCount, returnPendingCount, approvedCount, onNavigate, chipFocusMap = {} }) {
   const daily = (stats && stats.daily_activity) || [];
+  const usage = (stats && stats.usage_by_action) || {};
+  const [hoveredDay, setHoveredDay] = useState(null);
+
+  // Compute 7-day operational metrics
   const maxTotal = Math.max(1, ...daily.map((d) => (d.approved || 0) + (d.borrowed || 0) + (d.returned || 0) + (d.rejected || 0)));
+  const totalApproved = daily.reduce((acc, d) => acc + (d.approved || 0), 0);
+  const totalBorrowed = daily.reduce((acc, d) => acc + (d.borrowed || 0), 0);
+  const totalReturned = daily.reduce((acc, d) => acc + (d.returned || 0), 0);
+  const totalRejected = daily.reduce((acc, d) => acc + (d.rejected || 0), 0);
+  const totalWeekVolume = totalApproved + totalBorrowed + totalReturned + totalRejected;
+
+  // Peak day
+  const peakDay = daily.length > 0
+    ? daily.reduce((prev, curr) => {
+        const pSum = (prev.approved || 0) + (prev.borrowed || 0) + (prev.returned || 0) + (prev.rejected || 0);
+        const cSum = (curr.approved || 0) + (curr.borrowed || 0) + (curr.returned || 0) + (curr.rejected || 0);
+        return cSum > pSum ? curr : prev;
+      }, daily[0])
+    : null;
+
+  // Completion rate
+  const completionRate = totalReturned + totalBorrowed > 0
+    ? Math.round((totalReturned / (totalReturned + totalBorrowed)) * 100)
+    : 100;
+
+  // Cumulative usage stats
+  const usageEntries = Object.entries(usage);
+  const totalUsageEvents = usageEntries.reduce((sum, [, count]) => sum + Number(count), 0);
+  const maxUsageCount = Math.max(1, ...usageEntries.map(([, count]) => Number(count)));
+
+  const actionLabels = {
+    returned: "Đã nhận trả kho",
+    borrowed: "Đang mượn (Bàn giao)",
+    approved: "Đã phê duyệt",
+    pending: "Chờ xét duyệt",
+    rejected: "Từ chối yêu cầu",
+  };
+
+  const actionStyles = {
+    returned: {
+      color: "bg-emerald-500",
+      dot: "bg-emerald-500",
+      badge: "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-900/60",
+    },
+    borrowed: {
+      color: "bg-blue-600",
+      dot: "bg-blue-600",
+      badge: "text-blue-700 bg-blue-50 dark:bg-blue-950/50 dark:text-blue-300 border-blue-200/60 dark:border-blue-900/60",
+    },
+    approved: {
+      color: "bg-violet-600",
+      dot: "bg-violet-600",
+      badge: "text-violet-700 bg-violet-50 dark:bg-violet-950/50 dark:text-violet-300 border-violet-200/60 dark:border-violet-900/60",
+    },
+    pending: {
+      color: "bg-amber-500",
+      dot: "bg-amber-500",
+      badge: "text-amber-800 bg-amber-50 dark:bg-amber-950/50 dark:text-amber-300 border-amber-200/60 dark:border-amber-900/60",
+    },
+    rejected: {
+      color: "bg-slate-400 dark:bg-slate-500",
+      dot: "bg-slate-400 dark:bg-slate-500",
+      badge: "text-slate-700 bg-slate-50 dark:bg-slate-900/50 dark:text-slate-300 border-slate-200/60 dark:border-slate-800",
+    },
+  };
+
+  // Device status segregation
   const byStatus = (list) => devices.filter((d) => list.includes(d.status)).length;
   const avail = byStatus(["available"]);
   const borrowed = byStatus(["borrowed", "reserved", "returning"]);
   const maint = byStatus(["maintenance", "pending_inspection", "in_progress", "replace_partial", "replace_full"]);
   const other = Math.max(0, devices.length - avail - borrowed - maint);
   const total = devices.length || 1;
+
   const seg = [
-    { label: "Sẵn sàng", n: avail, color: "#16A34A" },
-    { label: "Đang mượn", n: borrowed, color: "#1267F4" },
-    { label: "Bảo trì / kiểm tra", n: maint, color: "#F59E0B" },
-    { label: "Khác", n: other, color: "#94A3B8" },
+    { label: "Sẵn sàng trong kho", n: avail, color: "bg-emerald-500", dot: "bg-emerald-500", text: "text-emerald-700 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-900/60" },
+    { label: "Đang mượn / bàn giao", n: borrowed, color: "bg-blue-600", dot: "bg-blue-600", text: "text-blue-700 dark:text-blue-400", border: "border-blue-200 dark:border-blue-900/60" },
+    { label: "Bảo trì / kiểm tra", n: maint, color: "bg-amber-500", dot: "bg-amber-500", text: "text-amber-700 dark:text-amber-400", border: "border-amber-200 dark:border-amber-900/60" },
+    ...(other > 0 ? [{ label: "Khác", n: other, color: "bg-slate-400", dot: "bg-slate-400", text: "text-slate-700 dark:text-slate-400", border: "border-slate-200 dark:border-slate-800" }] : []),
   ];
+
   const chips = [
-    { label: "Quá hạn", n: overdueCount },
-    { label: "Chờ duyệt", n: pendingCount },
-    { label: "Chờ nhận trả", n: returnPendingCount },
-    { label: "Chờ bàn giao", n: approvedCount },
+    { label: "Quá hạn", n: overdueCount, tone: overdueCount > 0 ? "border-rose-400/80 bg-rose-50/70 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800" : "border-border bg-surface text-muted-foreground", dot: "bg-rose-500 animate-pulse" },
+    { label: "Chờ duyệt", n: pendingCount, tone: pendingCount > 0 ? "border-amber-400/80 bg-amber-50/70 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800" : "border-border bg-surface text-muted-foreground", dot: "bg-amber-500" },
+    { label: "Chờ nhận trả", n: returnPendingCount, tone: returnPendingCount > 0 ? "border-blue-400/80 bg-blue-50/70 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800" : "border-border bg-surface text-muted-foreground", dot: "bg-blue-500" },
+    { label: "Chờ bàn giao", n: approvedCount, tone: approvedCount > 0 ? "border-violet-400/80 bg-violet-50/70 text-violet-800 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800" : "border-border bg-surface text-muted-foreground", dot: "bg-violet-500" },
   ];
+
   return (
-    <div>
-      <div className="flex items-end gap-3 h-[150px] px-1 pt-2">
-        {daily.map((d, i) => {
-          const ap = d.approved || 0, bo = d.borrowed || 0, ret = d.returned || 0, rj = d.rejected || 0;
-          const sum = ap + bo + ret + rj;
-          const h = (n) => `${Math.round((n / maxTotal) * 120)}px`;
-          const today = i === daily.length - 1;
-          return (
-            <div key={i} className="flex-1 flex flex-col items-center justify-end gap-1.5 h-full">
-              <span className="text-[11px] font-extrabold font-mono">{sum}</span>
-              <div className={`w-full max-w-[34px] flex flex-col-reverse overflow-hidden rounded-t-lg rounded-b-sm ${today ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`} style={{ height: Math.max(12, (sum / maxTotal) * 120) }}>
-                {rj > 0 && <i style={{ height: h(rj), background: "#94A3B8" }}></i>}
-                {ret > 0 && <i style={{ height: h(ret), background: "#34C3A6" }}></i>}
-                {bo > 0 && <i style={{ height: h(bo), background: "#7C3AED" }}></i>}
-                {ap > 0 && <i style={{ height: h(ap), background: "#1267F4" }}></i>}
-              </div>
-              <span className={`text-[10.5px] font-semibold ${today ? "text-primary font-extrabold" : "text-muted-foreground"}`}>{d.date}</span>
+    <div className="space-y-6">
+      {/* 1. Mini KPI Metrics Ribbon */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="p-3.5 rounded-xl border border-border/70 bg-surface-elevated/40 flex items-center justify-between shadow-xs">
+          <div>
+            <div className="text-[11.5px] font-medium text-muted-foreground flex items-center gap-1.5">
+              <Activity size={14} className="text-blue-500" />
+              Tổng tương tác 7 ngày
             </div>
-          );
-        })}
+            <div className="text-xl font-bold font-mono mt-0.5 text-foreground">
+              {totalWeekVolume} <span className="text-xs font-normal text-muted-foreground">lượt</span>
+            </div>
+          </div>
+          <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-full border border-blue-200/50 dark:border-blue-900/50 font-mono">
+            ~{(totalWeekVolume / Math.max(1, daily.length)).toFixed(1)}/ngày
+          </span>
+        </div>
+
+        <div className="p-3.5 rounded-xl border border-border/70 bg-surface-elevated/40 flex items-center justify-between shadow-xs">
+          <div>
+            <div className="text-[11.5px] font-medium text-muted-foreground flex items-center gap-1.5">
+              <TrendingUp size={14} className="text-emerald-500" />
+              Ngày cao điểm nhất
+            </div>
+            <div className="text-xl font-bold font-mono mt-0.5 text-foreground">
+              {peakDay ? peakDay.date : "—"}{" "}
+              <span className="text-xs font-normal text-muted-foreground font-sans">
+                ({peakDay ? (peakDay.approved || 0) + (peakDay.borrowed || 0) + (peakDay.returned || 0) + (peakDay.rejected || 0) : 0} lượt)
+              </span>
+            </div>
+          </div>
+          <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200/50 dark:border-emerald-900/50">
+            Tải đỉnh
+          </span>
+        </div>
+
+        <div className="p-3.5 rounded-xl border border-border/70 bg-surface-elevated/40 flex items-center justify-between shadow-xs">
+          <div>
+            <div className="text-[11.5px] font-medium text-muted-foreground flex items-center gap-1.5">
+              <CheckCircle2 size={14} className="text-violet-500" />
+              Tỷ lệ hoàn tất trả
+            </div>
+            <div className="text-xl font-bold font-mono mt-0.5 text-foreground">
+              {completionRate}%{" "}
+              <span className="text-xs font-normal text-muted-foreground font-sans">
+                ({totalReturned}/{Math.max(1, totalReturned + totalBorrowed)})
+              </span>
+            </div>
+          </div>
+          <span className="text-[11px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/60 px-2 py-0.5 rounded-full border border-violet-200/50 dark:border-violet-900/50">
+            Luân chuyển
+          </span>
+        </div>
       </div>
-      <div className="flex gap-4 mt-3 text-[11.5px] text-muted-foreground">
-        <span><i className="inline-block w-2.5 h-2.5 rounded-sm mr-1.5" style={{ background: "#1267F4" }}></i>Duyệt</span>
-        <span><i className="inline-block w-2.5 h-2.5 rounded-sm mr-1.5" style={{ background: "#7C3AED" }}></i>Bàn giao</span>
-        <span><i className="inline-block w-2.5 h-2.5 rounded-sm mr-1.5" style={{ background: "#34C3A6" }}></i>Hoàn trả</span>
-        <span><i className="inline-block w-2.5 h-2.5 rounded-sm mr-1.5" style={{ background: "#94A3B8" }}></i>Từ chối</span>
+
+      {/* 2. Main Analytics Section: 7-Day Timeline Chart (Left) + Cumulative Usage Frequency (Right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Left Column: 7-Day Stacked Activity Chart */}
+        <div className="lg:col-span-7 xl:col-span-8 rounded-xl border border-border/70 bg-surface p-4 sm:p-5 relative flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <div className="flex items-center gap-2">
+                <BarChart3 size={15} className="text-primary" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                  Dòng chảy thao tác 7 ngày qua
+                </h4>
+              </div>
+              <span className="text-[11px] font-mono text-muted-foreground">
+                Đỉnh tải: <b className="text-foreground">{maxTotal}</b> lượt/ngày
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">
+              Theo dõi biến động lượt duyệt, bàn giao, nhận trả và từ chối theo từng ngày.
+            </p>
+          </div>
+
+          <div className="relative">
+            {/* Subtle grid background lines */}
+            <div className="absolute inset-x-2 top-4 bottom-8 flex flex-col justify-between pointer-events-none opacity-40">
+              <div className="border-b border-dashed border-border flex items-center justify-between text-[10px] text-muted-foreground/80 font-mono -mt-2">
+                <span>{maxTotal}</span>
+                <span>100%</span>
+              </div>
+              <div className="border-b border-dashed border-border flex items-center justify-between text-[10px] text-muted-foreground/80 font-mono -mt-2">
+                <span>{Math.round(maxTotal * 0.5)}</span>
+                <span>50%</span>
+              </div>
+              <div className="border-b border-border flex items-center justify-between text-[10px] text-muted-foreground/80 font-mono -mt-2">
+                <span>0</span>
+                <span>0%</span>
+              </div>
+            </div>
+
+            {/* Columns */}
+            <div className="relative z-10 flex items-end gap-1.5 sm:gap-3 h-[155px] pt-4 px-1">
+              {daily.map((d, i) => {
+                const ap = d.approved || 0;
+                const bo = d.borrowed || 0;
+                const ret = d.returned || 0;
+                const rj = d.rejected || 0;
+                const sum = ap + bo + ret + rj;
+                const today = i === daily.length - 1;
+                const isHovered = hoveredDay?.date === d.date;
+
+                const barH = sum > 0 ? Math.max(8, Math.round((sum / maxTotal) * 105)) : 0;
+                const hPct = (n) => (sum > 0 ? `${(n / sum) * 100}%` : "0%");
+
+                return (
+                  <div
+                    key={i}
+                    onMouseEnter={() => setHoveredDay(d)}
+                    onMouseLeave={() => setHoveredDay(null)}
+                    className={`flex-1 flex flex-col items-center justify-end h-full group cursor-pointer transition-all duration-200 rounded-lg p-1 ${
+                      isHovered ? "bg-primary/5 ring-1 ring-primary/30" : "hover:bg-surface-elevated/50"
+                    }`}
+                  >
+                    <span
+                      className={`text-[11px] font-mono mb-1 transition-transform duration-200 ${
+                        isHovered ? "scale-110 font-black text-primary" : today ? "font-bold text-primary" : "text-muted-foreground font-medium"
+                      }`}
+                    >
+                      {sum > 0 ? sum : "—"}
+                    </span>
+
+                    <div className="w-full max-w-[34px] h-[110px] flex items-end justify-center rounded-md bg-slate-100/70 dark:bg-slate-800/40 p-0.5">
+                      {sum > 0 ? (
+                        <div
+                          className={`w-full flex flex-col-reverse rounded-t-md overflow-hidden transition-all duration-300 ${
+                            today ? "ring-2 ring-primary ring-offset-1 ring-offset-background" : ""
+                          } ${isHovered ? "shadow-md brightness-105" : ""}`}
+                          style={{ height: `${barH}px` }}
+                        >
+                          {rj > 0 && <div style={{ height: hPct(rj) }} className="bg-slate-400 dark:bg-slate-500 w-full transition-all" title={`Từ chối: ${rj}`} />}
+                          {ret > 0 && <div style={{ height: hPct(ret) }} className="bg-emerald-500 dark:bg-emerald-400 w-full transition-all" title={`Hoàn trả: ${ret}`} />}
+                          {bo > 0 && <div style={{ height: hPct(bo) }} className="bg-violet-600 dark:bg-violet-500 w-full transition-all" title={`Bàn giao: ${bo}`} />}
+                          {ap > 0 && <div style={{ height: hPct(ap) }} className="bg-blue-600 dark:bg-blue-500 w-full transition-all" title={`Duyệt: ${ap}`} />}
+                        </div>
+                      ) : (
+                        <div className="w-full h-1 bg-border/60 rounded-full mb-0.5" />
+                      )}
+                    </div>
+
+                    <div className="mt-2 text-center">
+                      <span
+                        className={`inline-block text-[11px] font-medium transition-colors ${
+                          today
+                            ? "px-1.5 py-0.2 rounded-sm bg-primary/10 text-primary font-bold"
+                            : isHovered
+                            ? "text-foreground font-semibold"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        {d.date}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Dynamic Hover Breakdown or Legend */}
+          {hoveredDay ? (
+            <div className="mt-3 py-2 px-3 rounded-lg bg-surface-elevated border border-border/80 text-xs flex flex-wrap items-center justify-between gap-2 animate-in fade-in duration-150">
+              <span className="font-semibold text-foreground flex items-center gap-1.5">
+                <Calendar size={13} className="text-primary" />
+                Chi tiết ngày <b className="font-mono text-primary">{hoveredDay.date}</b>:
+              </span>
+              <div className="flex flex-wrap items-center gap-3 font-mono text-[11.5px]">
+                <span className="text-blue-600 dark:text-blue-400 font-medium">Duyệt: <b>{hoveredDay.approved || 0}</b></span>
+                <span className="text-violet-600 dark:text-violet-400 font-medium">Bàn giao: <b>{hoveredDay.borrowed || 0}</b></span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-medium">Hoàn trả: <b>{hoveredDay.returned || 0}</b></span>
+                <span className="text-slate-500 font-medium">Từ chối: <b>{hoveredDay.rejected || 0}</b></span>
+                <span className="text-foreground font-bold border-l border-border pl-2">
+                  Tổng: {(hoveredDay.approved || 0) + (hoveredDay.borrowed || 0) + (hoveredDay.returned || 0) + (hoveredDay.rejected || 0)} lượt
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center justify-between gap-3 mt-3 pt-3 border-t border-border/60 text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-xs bg-blue-600 dark:bg-blue-500 inline-block shadow-xs" />
+                  Duyệt <b className="font-mono text-foreground">({totalApproved})</b>
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-xs bg-violet-600 dark:bg-violet-500 inline-block shadow-xs" />
+                  Bàn giao <b className="font-mono text-foreground">({totalBorrowed})</b>
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500 dark:bg-emerald-400 inline-block shadow-xs" />
+                  Nhận trả <b className="font-mono text-foreground">({totalReturned})</b>
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-xs bg-slate-400 dark:bg-slate-500 inline-block shadow-xs" />
+                  Từ chối <b className="font-mono text-foreground">({totalRejected})</b>
+                </span>
+              </div>
+              <span className="text-[11px] text-muted-foreground italic hidden xl:inline">
+                * Di chuột vào từng cột để xem chi tiết
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Cumulative Usage Frequency (Tần suất tích lũy) */}
+        <div className="lg:col-span-5 xl:col-span-4 rounded-xl border border-border/70 bg-surface p-4 sm:p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <div className="flex items-center gap-2">
+                <Activity size={15} className="text-primary" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                  Cơ cấu tần suất thao tác
+                </h4>
+              </div>
+              <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary">
+                Tích lũy
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">
+              Tỷ trọng các hành động mượn trả từ khi khởi tạo phòng lab.
+            </p>
+
+            <div className="space-y-3">
+              {["returned", "borrowed", "approved", "pending", "rejected"].map((actionKey) => {
+                const count = Number(usage[actionKey] || 0);
+                const pct = totalUsageEvents > 0 ? ((count / totalUsageEvents) * 100).toFixed(1) : 0;
+                const barWidth = Math.max(3, Math.round((count / maxUsageCount) * 100));
+                const style = actionStyles[actionKey];
+
+                return (
+                  <div key={actionKey} className="group">
+                    <div className="mb-1 flex items-center justify-between text-xs">
+                      <span className="font-semibold text-foreground flex items-center gap-1.5">
+                        <span className={`w-2 h-2 rounded-full ${style.dot} shrink-0`} />
+                        <span>{actionLabels[actionKey]}</span>
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded border ${style.badge}`}>
+                          {pct}%
+                        </span>
+                        <span className="font-bold font-mono text-foreground shrink-0 text-right min-w-[45px]">
+                          {count} <span className="text-[10.5px] font-normal text-muted-foreground font-sans">lượt</span>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800/80 ring-1 ring-border/40 p-0.5">
+                      <div
+                        className={`h-full rounded-full ${style.color} transition-all duration-700 ease-out group-hover:brightness-110 shadow-xs`}
+                        style={{ width: `${barWidth}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
+            <span>Tổng cộng lịch sử:</span>
+            <span className="font-bold font-mono text-foreground">{totalUsageEvents} lượt thao tác</span>
+          </div>
+        </div>
       </div>
-      <div className="mt-4 text-[11.5px] text-muted-foreground">Phân bố trạng thái thiết bị hiện tại</div>
-      <div className="flex h-4 rounded-full overflow-hidden my-2.5">
-        {seg.filter((x) => x.n > 0).map((x, i) => (<i key={i} style={{ width: `${(x.n / total) * 100}%`, background: x.color }}></i>))}
+
+      {/* 3. Phân bố trạng thái kho thiết bị */}
+      <div className="rounded-xl border border-border/70 bg-surface p-4 sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2">
+            <PieChart size={15} className="text-primary" />
+            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+              Phân bố trạng thái kho thiết bị
+            </h4>
+          </div>
+          <span className="text-xs font-mono font-semibold text-muted-foreground">
+            Tổng cộng: <b className="text-foreground">{devices.length}</b> thiết bị
+          </span>
+        </div>
+
+        {/* Sleek Segmented Bar */}
+        <div className="h-3 rounded-full bg-slate-100 dark:bg-slate-800/80 overflow-hidden flex gap-0.5 p-0.5 ring-1 ring-border/50">
+          {seg
+            .filter((x) => x.n > 0)
+            .map((x, i) => (
+              <div
+                key={i}
+                className={`${x.color} h-full rounded-sm transition-all duration-500 hover:opacity-90`}
+                style={{ width: `${(x.n / total) * 100}%` }}
+                title={`${x.label}: ${x.n} máy (${((x.n / total) * 100).toFixed(1)}%)`}
+              />
+            ))}
+        </div>
+
+        {/* Status Breakdown Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-3.5">
+          {seg.map((x, i) => {
+            const pct = ((x.n / total) * 100).toFixed(1);
+            return (
+              <div
+                key={i}
+                onClick={() => onNavigate?.("Thiết bị")}
+                className={`p-2.5 rounded-lg border bg-surface-elevated/30 hover:bg-surface-elevated cursor-pointer transition flex flex-col justify-between ${x.border}`}
+              >
+                <div className="flex items-center gap-1.5 text-[11.5px] font-medium text-muted-foreground truncate">
+                  <span className={`w-2 h-2 rounded-full ${x.dot} shrink-0`} />
+                  <span className="truncate">{x.label}</span>
+                </div>
+                <div className="flex items-baseline justify-between mt-1">
+                  <span className="text-base font-bold font-mono text-foreground">{x.n}</span>
+                  <span className="text-[11px] font-mono text-muted-foreground font-semibold">{pct}%</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
-      <div className="flex flex-wrap gap-3 text-[11.5px] text-muted-foreground">
-        {seg.map((x, i) => (<span key={i}>● {x.label} <b className="font-mono">{x.n}</b></span>))}
-      </div>
-      <div className="flex flex-wrap gap-2 mt-4">
-        {chips.map((c, i) => (
-          <button key={i} type="button" onClick={() => onNavigate("Yêu cầu mượn", chipFocusMap[c.label] ? { requestId: chipFocusMap[c.label] } : null)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-xs font-semibold hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition">
-            {c.label} <b className="font-mono">{c.n}</b>
+
+      {/* 4. Action triggers for LabManager */}
+      <div>
+        <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2.5 flex items-center justify-between">
+          <span>Tác vụ vận hành cần lưu ý</span>
+          <span className="text-[11px] normal-case text-muted-foreground font-normal">Bấm để điều hướng nhanh đến danh mục</span>
+        </div>
+        <div className="flex flex-wrap gap-2.5">
+          {chips.map((c, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onNavigate("Yêu cầu mượn", chipFocusMap[c.label] ? { requestId: chipFocusMap[c.label] } : null)}
+              className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 ${c.tone}`}
+            >
+              <span className={`w-2 h-2 rounded-full ${c.dot}`} />
+              <span>{c.label}</span>
+              <span className="font-mono px-1.5 py-0.5 rounded-md bg-background/80 text-foreground font-bold text-[11px] shadow-xs">
+                {c.n}
+              </span>
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => onNavigate("Bảo trì")}
+            className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 ${
+              maint > 0
+                ? "border-amber-400/80 bg-amber-50/70 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800"
+                : "border-border bg-surface text-muted-foreground"
+            }`}
+          >
+            <span className={`w-2 h-2 rounded-full ${maint > 0 ? "bg-amber-500 animate-pulse" : "bg-muted-foreground"}`} />
+            <span>Bảo trì / Sửa chữa</span>
+            <span className="font-mono px-1.5 py-0.5 rounded-md bg-background/80 text-foreground font-bold text-[11px] shadow-xs">
+              {maint}
+            </span>
           </button>
-        ))}
-        <button type="button" onClick={() => onNavigate("Bảo trì")}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-xs font-semibold hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition">
-          Bảo trì <b className="font-mono">{maint}</b>
-        </button>
+        </div>
       </div>
     </div>
   );
@@ -3959,10 +4338,6 @@ function AdminDashboard({ section = "Tổng quan", onNavigate, focusTarget = nul
           )}
         </Card>
         <div className="flex flex-col gap-6 min-w-0">
-          <Card className="p-5 sm:p-6 overflow-hidden">
-            <SectionTitle title="Tần suất sử dụng" />
-            <UsageChart usage={data.stats.usage_by_action} />
-          </Card>
           <AIChatPanel title="AI Summary" mode="summary" starter="Tôi có thể tóm tắt tình trạng thiết bị, yêu cầu và bảo trì từ dữ liệu hiện có." />
         </div>
       </div>
