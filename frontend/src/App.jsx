@@ -401,23 +401,6 @@ const useAuth = () => useContext(AuthContext);
 function AuthProvider({ children }) {
   const [user, setUser] = useState(() => JSON.parse(sessionStorage.getItem("lab_user") || "null"));
 
-  useEffect(() => {
-    const token = sessionStorage.getItem("lab_token") || localStorage.getItem("lab_token");
-    if (token) {
-      api.me()
-        .then((freshUser) => {
-          if (freshUser) {
-            setUser(freshUser);
-            sessionStorage.setItem("lab_user", JSON.stringify(freshUser));
-            sessionStorage.setItem("lab_role", freshUser.role);
-          }
-        })
-        .catch(() => {
-          // Token expired or invalid
-        });
-    }
-  }, []);
-
   async function signIn(identifier, password) {
     const loggedIn = await login(identifier, password);
     setUser(loggedIn);
@@ -767,16 +750,6 @@ function DashboardLayout({ role }) {
   const [borrowModal, setBorrowModal] = useState({ open: false, device: null });
   const [incidentModal, setIncidentModal] = useState({ open: false, item: null });
   const profile = roles[role] || roles.admin;
-  const displayInitials = useMemo(() => {
-    if (user?.full_name) {
-      const parts = user.full_name.trim().split(/\s+/);
-      if (parts.length >= 2) {
-        return (parts[parts.length - 2][0] + parts[parts.length - 1][0]).toUpperCase();
-      }
-      return user.full_name.slice(0, 2).toUpperCase();
-    }
-    return profile.initials;
-  }, [user?.full_name, profile.initials]);
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors">
@@ -815,7 +788,7 @@ function DashboardLayout({ role }) {
               className="flex items-center gap-3 w-full text-left transition hover:opacity-80"
               title="Xem và chỉnh sửa hồ sơ cá nhân"
             >
-              <div className="avatar shrink-0">{displayInitials}</div>
+              <div className="avatar shrink-0">{profile.initials}</div>
               <div className="min-w-0 flex-1 overflow-hidden">
                 <p className="truncate text-sm font-bold text-foreground">{user?.full_name || profile.name}</p>
                 <p className="truncate text-xs text-muted-foreground">{profile.label}</p>
@@ -864,7 +837,7 @@ function DashboardLayout({ role }) {
               className="avatar cursor-pointer hover:ring-2 hover:ring-blue-500/40 transition shrink-0"
               title="Hồ sơ cá nhân"
             >
-              {displayInitials}
+              {profile.initials}
             </button>
           </div>
         </header>
@@ -2616,6 +2589,10 @@ function UserCreateModal({ open, onClose, onSubmit }) {
   async function submit(e) {
     e.preventDefault();
     if (!form.username || !form.password || !form.full_name) return;
+    if (form.password.length < 8) {
+      setError("Mật khẩu khởi tạo phải có tối thiểu 8 ký tự.");
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -2623,7 +2600,7 @@ function UserCreateModal({ open, onClose, onSubmit }) {
       setForm({ username: "", full_name: "", email: "", password: "", role: "user" });
       onClose();
     } catch (err) {
-      setError(err.message || "Không thể tạo tài khoản. Vui lòng kiểm tra lại thông tin.");
+      setError(typeof err.message === "string" ? err.message : "Không thể tạo tài khoản. Vui lòng kiểm tra lại thông tin.");
     } finally {
       setBusy(false);
     }
@@ -2654,7 +2631,7 @@ function UserCreateModal({ open, onClose, onSubmit }) {
           <Input
             value={form.full_name}
             onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-            placeholder="Ví dụ: Lê Minh Trí"
+            placeholder="Ví dụ: Lê Minh Huệ"
             className="mt-1.5"
             required
           />
@@ -2665,7 +2642,7 @@ function UserCreateModal({ open, onClose, onSubmit }) {
             <Input
               value={form.username}
               onChange={(e) => setForm({ ...form, username: e.target.value.toLowerCase().trim() })}
-              placeholder="ví dụ: user_k23"
+              placeholder="ví dụ: leminhhue"
               className="mt-1.5"
               required
             />
@@ -2679,6 +2656,7 @@ function UserCreateModal({ open, onClose, onSubmit }) {
             >
               <option value="user">Người sử dụng</option>
               <option value="technician">Kỹ thuật viên</option>
+              <option value="manager">Quản lý phòng lab</option>
             </Select>
           </label>
         </div>
@@ -2688,18 +2666,19 @@ function UserCreateModal({ open, onClose, onSubmit }) {
             type="email"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value.trim() })}
-            placeholder="ví dụ: user2@lab.local"
+            placeholder="ví dụ: lehue@local.lab"
             className="mt-1.5"
           />
         </label>
         <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
-          Mật khẩu khởi tạo
+          Mật khẩu khởi tạo (tối thiểu 8 ký tự)
           <Input
             type="password"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
-            placeholder="Nhập mật khẩu cho tài khoản"
+            placeholder="Nhập ít nhất 8 ký tự (ví dụ: matkhau123)"
             className="mt-1.5"
+            minLength={8}
             required
           />
         </label>

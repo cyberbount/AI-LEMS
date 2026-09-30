@@ -22,8 +22,25 @@ async function request(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, fetchOptions);
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const error = new Error(data.detail || `API error ${response.status}`);
+    let message = `Lỗi hệ thống (${response.status})`;
+    if (typeof data.detail === "string") {
+      message = data.detail;
+    } else if (Array.isArray(data.detail)) {
+      message = data.detail
+        .map((d) => {
+          const field = d.loc ? d.loc[d.loc.length - 1] : "";
+          if (field === "password") return "Mật khẩu phải có tối thiểu 8 ký tự.";
+          if (field === "username") return "Tên đăng nhập không hợp lệ (tối thiểu 3 ký tự).";
+          if (field === "email") return "Định dạng email không hợp lệ.";
+          return d.msg || "Dữ liệu không hợp lệ";
+        })
+        .join(". ");
+    } else if (data.detail && typeof data.detail === "object") {
+      message = data.detail.message || JSON.stringify(data.detail);
+    }
+    const error = new Error(message);
     error.status = response.status;
+    error.detail = data.detail;
     throw error;
   }
   return data;

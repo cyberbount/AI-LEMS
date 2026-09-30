@@ -23,11 +23,11 @@ def create_user(data: UserCreate, db: Db, admin: Annotated[User, Depends(require
     }
     creator_allowed_roles = allowed_roles_by_creator[admin.role]
     if data.role not in creator_allowed_roles:
-        raise HTTPException(403, "Insufficient permissions for requested role")
+        raise HTTPException(403, "Bạn không có quyền khởi tạo tài khoản với vai trò này")
     if data.role not in allowed_roles or not db.get(Role, data.role):
-        raise HTTPException(400, "Unsupported role")
+        raise HTTPException(400, "Vai trò không hợp lệ trong hệ thống")
     if db.query(User).filter((User.username == data.username) | (User.email == data.email)).first():
-        raise HTTPException(409, "Username or email already exists")
+        raise HTTPException(409, "Tên đăng nhập hoặc email này đã tồn tại trong hệ thống")
     user = User(
         username=data.username,
         email=data.email,
