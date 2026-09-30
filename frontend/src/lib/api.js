@@ -29,11 +29,19 @@ async function request(path, options = {}) {
   return data;
 }
 
+function normalizeUser(user) {
+  if (user && user.role === "manager") {
+    return { ...user, role: "admin" };
+  }
+  return user;
+}
+
 export async function login(username, password) {
   const data = await request("/api/auth/login", { method: "POST", body: new URLSearchParams({ username, password }) });
   sessionStorage.setItem("lab_token", data.access_token);
   localStorage.removeItem("lab_token");
-  return request("/api/auth/me");
+  const user = await request("/api/auth/me");
+  return normalizeUser(user);
 }
 
 export async function googleLogin(idToken) {
@@ -43,12 +51,13 @@ export async function googleLogin(idToken) {
   });
   sessionStorage.setItem("lab_token", data.access_token);
   localStorage.removeItem("lab_token");
-  return request("/api/auth/me");
+  const user = await request("/api/auth/me");
+  return normalizeUser(user);
 }
 
 
 export const api = {
-  me: () => request("/api/auth/me"),
+  me: async () => normalizeUser(await request("/api/auth/me")),
   devices: () => request("/api/devices"),
   createDevice: (payload) => request("/api/devices", { method: "POST", body: JSON.stringify(payload) }),
   updateDeviceStatus: (id, status, condition) => {

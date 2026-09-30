@@ -24,6 +24,8 @@ class ChatResponse(BaseModel):
     grounded: bool | None = None
     sources: list[str] = Field(default_factory=list)
     safety_note: str | None = None
+    user_role: str | None = None
+    suggestions: list[str] = Field(default_factory=list)
 
 
 DeviceStatus = Literal["available", "reserved", "borrowed", "maintenance", "returning", "pending_inspection", "in_progress", "replace_partial", "replace_full"]

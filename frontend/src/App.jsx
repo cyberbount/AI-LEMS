@@ -246,12 +246,23 @@ function BrandLogo({ variant, compact = false, className = "" }) {
 /* ------------------------------------------------------------------ */
 const roles = {
   admin: { label: "Quản lý phòng lab", initials: "QL", name: "Quản lý phòng lab", path: "/admin" },
+  manager: { label: "Quản lý phòng lab", initials: "QL", name: "Quản lý phòng lab", path: "/admin" },
   user: { label: "Người sử dụng", initials: "NS", name: "Người dùng", path: "/user" },
   technician: { label: "Kỹ thuật viên", initials: "KT", name: "Kỹ thuật viên", path: "/technician" },
 };
 
 const navItems = {
   admin: [
+    ["Tổng quan", LayoutDashboard],
+    ["Người dùng", Users],
+    ["Thiết bị", Cpu],
+    ["Bảo trì", Wrench],
+    ["Yêu cầu mượn", ClipboardCheck],
+    ["Nhật ký hệ thống", FileText],
+    ["Báo cáo", BarChart3],
+    ["Trợ lý AI", Bot],
+  ],
+  manager: [
     ["Tổng quan", LayoutDashboard],
     ["Người dùng", Users],
     ["Thiết bị", Cpu],

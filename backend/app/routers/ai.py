@@ -46,4 +46,6 @@ async def chat(request: ChatRequest, db: Db, user: Annotated[User, Depends(curre
         grounded=result.grounded,
         sources=result.sources or [],
         safety_note=result.safety_note,
+        user_role=getattr(result, "user_role", None) or user.role,
+        suggestions=getattr(result, "suggestions", None) or [],
     )
