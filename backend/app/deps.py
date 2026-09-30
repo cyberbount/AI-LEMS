@@ -24,8 +24,12 @@ def current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Db) -> User:
 
 
 def require_roles(*roles: str):
+    allowed = set(roles)
+    if "admin" in allowed or "manager" in allowed:
+        allowed.add("admin")
+        allowed.add("manager")
     def dependency(user: Annotated[User, Depends(current_user)]) -> User:
-        if user.role not in roles:
+        if user.role not in allowed:
             raise HTTPException(status_code=403, detail="Insufficient permissions")
         return user
     return dependency

@@ -61,8 +61,8 @@ def login(form: Annotated[OAuth2PasswordRequestForm, Depends()], db: Db):
         target_name=user.username,
         details=f"Đăng nhập hệ thống thành công (Vai trò: {user.role}).",
     )
-    db.commit()
-    return Token(access_token=create_access_token(user.username, user.role))
+    effective_role = "admin" if user.role == "manager" else user.role
+    return Token(access_token=create_access_token(user.username, effective_role))
 
 @router.post("/google", response_model=Token)
 async def google_login(payload: GoogleLoginRequest, db: Db):
@@ -128,6 +128,15 @@ async def google_login(payload: GoogleLoginRequest, db: Db):
 
 @router.get("/me", response_model=UserOut)
 def me(user: Annotated[User, Depends(current_user)]):
+    if user.role == "manager":
+        return UserOut(
+            id=user.id,
+            username=user.username,
+            email=user.email,
+            full_name=user.full_name,
+            role="admin",
+            is_active=user.is_active,
+        )
     return user
 
 @router.patch("/password", status_code=204)
