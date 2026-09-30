@@ -401,6 +401,23 @@ const useAuth = () => useContext(AuthContext);
 function AuthProvider({ children }) {
   const [user, setUser] = useState(() => JSON.parse(sessionStorage.getItem("lab_user") || "null"));
 
+  useEffect(() => {
+    const token = sessionStorage.getItem("lab_token") || localStorage.getItem("lab_token");
+    if (token) {
+      api.me()
+        .then((freshUser) => {
+          if (freshUser) {
+            setUser(freshUser);
+            sessionStorage.setItem("lab_user", JSON.stringify(freshUser));
+            sessionStorage.setItem("lab_role", freshUser.role);
+          }
+        })
+        .catch(() => {
+          // Token expired or invalid
+        });
+    }
+  }, []);
+
   async function signIn(identifier, password) {
     const loggedIn = await login(identifier, password);
     setUser(loggedIn);
@@ -750,6 +767,16 @@ function DashboardLayout({ role }) {
   const [borrowModal, setBorrowModal] = useState({ open: false, device: null });
   const [incidentModal, setIncidentModal] = useState({ open: false, item: null });
   const profile = roles[role] || roles.admin;
+  const displayInitials = useMemo(() => {
+    if (user?.full_name) {
+      const parts = user.full_name.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        return (parts[parts.length - 2][0] + parts[parts.length - 1][0]).toUpperCase();
+      }
+      return user.full_name.slice(0, 2).toUpperCase();
+    }
+    return profile.initials;
+  }, [user?.full_name, profile.initials]);
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors">
@@ -788,7 +815,7 @@ function DashboardLayout({ role }) {
               className="flex items-center gap-3 w-full text-left transition hover:opacity-80"
               title="Xem và chỉnh sửa hồ sơ cá nhân"
             >
-              <div className="avatar shrink-0">{profile.initials}</div>
+              <div className="avatar shrink-0">{displayInitials}</div>
               <div className="min-w-0 flex-1 overflow-hidden">
                 <p className="truncate text-sm font-bold text-foreground">{user?.full_name || profile.name}</p>
                 <p className="truncate text-xs text-muted-foreground">{profile.label}</p>
@@ -837,7 +864,7 @@ function DashboardLayout({ role }) {
               className="avatar cursor-pointer hover:ring-2 hover:ring-blue-500/40 transition shrink-0"
               title="Hồ sơ cá nhân"
             >
-              {profile.initials}
+              {displayInitials}
             </button>
           </div>
         </header>
