@@ -843,7 +843,7 @@ function DashboardLayout({ role }) {
         </header>
 
         <main className="mx-auto max-w-[1440px] p-4 sm:p-7 overflow-x-hidden">
-          {role === "admin" ? <AdminDashboard section={active} onNavigate={navigateWithFocus} focusTarget={focusTarget} /> : role === "user" ? <UserDashboard section={active} onNavigate={navigateWithFocus} focusTarget={focusTarget} /> : <TechnicianDashboard section={active} onNavigate={navigateWithFocus} focusTarget={focusTarget} />}
+          {role === "admin" || role === "manager" ? <AdminDashboard section={active} onNavigate={navigateWithFocus} focusTarget={focusTarget} /> : role === "user" ? <UserDashboard section={active} onNavigate={navigateWithFocus} focusTarget={focusTarget} /> : <TechnicianDashboard section={active} onNavigate={navigateWithFocus} focusTarget={focusTarget} />}
         </main>
       </div>
 
@@ -1191,7 +1191,7 @@ function NotificationDropdown({ onNavigate, role }) {
     });
 
     // 2. Chờ duyệt (Admin / Manager)
-    if (role === "admin") {
+    if (role === "admin" || role === "manager") {
       const pending = (data.requests || []).filter(r => r.status === "pending");
       if (pending.length > 0) {
         list.push({
@@ -1223,8 +1223,8 @@ function NotificationDropdown({ onNavigate, role }) {
       });
     }
 
-    // 4. Sự cố khẩn cấp (Technician & Admin)
-    if (role === "technician" || role === "admin") {
+    // 4. Sự cố khẩn cấp (Technician & Admin / Manager)
+    if (role === "technician" || role === "admin" || role === "manager") {
       (data.maintenance || []).filter(m => m.kind === "incident" && m.status === "open").forEach((m) => {
         const dev = (data.devices || []).find(d => d.id === m.device_id) || {};
         list.push({
@@ -5064,7 +5064,7 @@ function RequestList({ items, devices = [], users = [], onApprove, onReject, onH
     }, 180);
   };
   useEffect(() => { if (focusId && focusId.requestId) applyFlash(`rq-row-${focusId.requestId}`); }, [focusId]);
-  const isManager = role === "admin" || role === "technician";
+  const isManager = role === "admin" || role === "manager" || role === "technician";
   const now = useRealtimeClock(3000);
 
   return (

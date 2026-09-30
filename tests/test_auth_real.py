@@ -48,11 +48,13 @@ class RealAuthenticationTests(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        from app.models import AuditLog
         with SessionLocal() as db:
             items = db.query(User).filter(
                 User.username.in_([cls.active_user_name, cls.inactive_user_name])
             ).all()
             for item in items:
+                db.query(AuditLog).filter(AuditLog.user_id == item.id).delete()
                 db.delete(item)
             db.commit()
 
