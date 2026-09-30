@@ -134,7 +134,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     target_name VARCHAR(160) NOT NULL DEFAULT '',
     details TEXT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- ====================================================================
@@ -157,7 +157,9 @@ INSERT IGNORE INTO users (id, username, email, full_name, password_hash, role, i
 (5, 'user', 'user@lab.local', 'Sinh viên Bount (K23A)', '$2b$12$27.TiHCMLWQ0QLrgaJ3GeOpreV.p.H6jFfVbOUVWQGRl/0YYHPJyO', 'user', TRUE),
 (6, 'an.tb', 'an.tb@lab.local', 'Trần Bình An (K23A)', '$2b$12$27.TiHCMLWQ0QLrgaJ3GeOpreV.p.H6jFfVbOUVWQGRl/0YYHPJyO', 'user', TRUE),
 (7, 'ha.vt', 'ha.vt@lab.local', 'Vũ Thu Hà (NCV Lab Vi mạch)', '$2b$12$27.TiHCMLWQ0QLrgaJ3GeOpreV.p.H6jFfVbOUVWQGRl/0YYHPJyO', 'user', TRUE),
-(8, 'minh.dq', 'minh.dq@lab.local', 'Đặng Quang Minh (K23A)', '$2b$12$27.TiHCMLWQ0QLrgaJ3GeOpreV.p.H6jFfVbOUVWQGRl/0YYHPJyO', 'user', TRUE);
+(8, 'minh.dq', 'minh.dq@lab.local', 'Đặng Quang Minh (K23A)', '$2b$12$27.TiHCMLWQ0QLrgaJ3GeOpreV.p.H6jFfVbOUVWQGRl/0YYHPJyO', 'user', TRUE),
+(9, 'minhanh', 'minhanh@local.lab', 'Lê Minh Anh', '$2b$12$w.MobVQywmt0zjL1MsNwzOieNh3kOteD8foC.Bsxj.NhB0sNWViVy', 'user', TRUE),
+(10, 'manager', 'manager@lab.local', 'Quản Lý Phòng Lab', '$2b$12$urNrtWx4LvrkGLUvc/NKOuYDoShg.BlxBKdvwwA/QlsnoGQcaYRV6', 'manager', TRUE);
 
 -- 3. DEVICE GROUPS
 INSERT IGNORE INTO device_groups (id, name, description) VALUES
