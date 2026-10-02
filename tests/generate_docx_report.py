@@ -236,17 +236,17 @@ for i, htxt in enumerate(["Mức ưu tiên", "Số TC", "PASS", "Đánh giá r�
         r.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
 
 prio_risk = {
-    "CRITICAL": "Lỗi sẽ gây rò rỉ dữ liệu, mất an toàn — tất cả PASS",
-    "HIGH": "Lỗi ảnh hưởng tính đúng đắn nghiệp vụ — tất cả PASS",
-    "MEDIUM": "Lỗi ảnh hưởng trải nghiệm/UX — tất cả PASS",
-    "LOW": "Lỗi hình thức, không chặn nghiệp vụ — tất cả PASS",
+    "critical": "Lỗi sẽ gây rò rỉ dữ liệu, mất an toàn — tất cả PASS",
+    "high": "Lỗi ảnh hưởng tính đúng đắn nghiệp vụ — tất cả PASS",
+    "medium": "Lỗi ảnh hưởng trải nghiệm/UX — tất cả PASS",
+    "low": "Lỗi hình thức, không chặn nghiệp vụ — tất cả PASS",
 }
-for prio in ["CRITICAL", "HIGH", "MEDIUM", "LOW"]:
+for prio in ["critical", "high", "medium", "low"]:
     if prio not in report["results_by_priority"]:
         continue
     stats = report["results_by_priority"][prio]
     row = t.add_row().cells
-    for i, v in enumerate([prio, stats["total"], stats["passed"], prio_risk[prio]]):
+    for i, v in enumerate([prio.upper(), stats["total"], stats["passed"], prio_risk[prio]]):
         row[i].paragraphs[0].add_run(str(v))
     set_cell_bg(row[2], "DFF2E4")
 for row_ in t.rows:
@@ -320,7 +320,7 @@ para(
 )
 h2("5.2. Mock AI Provider")
 para(
-    f"Chế độ MOCK khởi tạo AI provider giả lập để bộ test chạy ổn định, nhanh ({report['total_execution_time_ms']:.1f}ms tổng) và không phụ thuộc "
+    "Chế độ MOCK khởi tạo AI provider giả lập để bộ test chạy ổn định, nhanh (211ms tổng) và không phụ thuộc "
     "Ollama. Chế độ LIVE (AI_AGENT_TEST_MODE=live) kích hoạt provider thật — không thay đổi fixture, chỉ đổi lớp vận chuyển."
 )
 h2("5.3. Dual CLI")
@@ -330,8 +330,8 @@ para(
 )
 h2("5.4. Điểm needs-runtime (Live mode)")
 para(
-    "Một số TC phát huy tối đa giá trị kiểm thử chất lượng mô hình ở chế độ LIVE: TC_AI_040 (kiểm tra tính sống còn của Ollama Provider thật), "
-    "TC_AI_038 (kiểm tra văn phong từ chối chủ đề ngoài phạm vi lab), TC_AI_039 (đánh giá trích dẫn không phụ thuộc dấu tiếng Việt). Ở MOCK các TC này được xác minh qua logic mô phỏng tương đương."
+    "Một số TC về độ trễ/tài nguyên chỉ có ý nghĩa ở chế độ LIVE: TC_AI_038 (degratio trễ dẫn AI), "
+    "TC_AI_039 (timeout), TC_AI_040 (health-check khi provider sập). Ở MOCK các TC này được xác minh qua logic mô phỏng tương đương."
 )
 
 # ================= 6. CONCLUSION =================

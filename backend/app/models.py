@@ -109,6 +109,7 @@ class DocumentChunk(Base):
     document_name: Mapped[str] = mapped_column(String(200), index=True)
     content: Mapped[str] = mapped_column(Text)
     chunk_index: Mapped[int] = mapped_column(Integer, default=0)
+    embedding: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class UsageHistory(Base):

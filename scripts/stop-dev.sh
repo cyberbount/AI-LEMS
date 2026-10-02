@@ -21,6 +21,9 @@ if [ -n "$UVICORN_PIDS" ]; then
     echo -e "${GREEN}[OK]${NC} Da dung FastAPI (PID: $(echo $UVICORN_PIDS | tr '\n' ' '))"
 fi
 pkill -f "uvicorn app.main:app" 2>/dev/null || true
+if command -v docker >/dev/null 2>&1 && docker ps -q --filter "name=lab_backend" 2>/dev/null | grep -q .; then
+    docker stop lab_backend >/dev/null 2>&1 || true
+fi
 
 # ── Cho port that su ranh (toi da 5 giay) ───────────────────────
 for i in $(seq 1 5); do

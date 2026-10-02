@@ -4266,97 +4266,8 @@ function AdminDashboard({ section = "Tổng quan", onNavigate, focusTarget = nul
         </div>
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_.9fr]">
-        <Card className="p-5 sm:p-6 overflow-hidden flex flex-col">
-          <SectionTitle title="Yêu cầu cần xử lý & Bàn giao" />
-          {actionableRequests.length ? (
-            <>
-              {/* Chip lọc nhanh theo nhóm cần hành động */}
-              <div className="flex flex-wrap gap-2 mt-3">
-                {[
-                  { key: "all", label: "Tất cả", count: actionableRequests.length, tone: "border-border text-foreground" },
-                  { key: "overdue", label: "Quá hạn", count: overdueRequests.length, tone: overdueRequests.length ? "border-rose-300 text-rose-600 dark:border-rose-800 dark:text-rose-300" : "border-border text-muted-foreground" },
-                  { key: "pending", label: "Chờ duyệt", count: reqPendingCount, tone: reqPendingCount ? "border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-300" : "border-border text-muted-foreground" },
-                  { key: "return_pending", label: "Chờ nhận trả", count: reqReturnPendingCount, tone: reqReturnPendingCount ? "border-blue-300 text-blue-700 dark:border-blue-800 dark:text-blue-300" : "border-border text-muted-foreground" },
-                  { key: "approved", label: "Chờ bàn giao", count: reqApprovedCount, tone: reqApprovedCount ? "border-emerald-300 text-emerald-700 dark:border-emerald-800 dark:text-emerald-300" : "border-border text-muted-foreground" },
-                ].map((chip) => (
-                  <button
-                    key={chip.key}
-                    type="button"
-                    onClick={() => setReqFilter(chip.key)}
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition ${
-                      reqFilter === chip.key
-                        ? "bg-primary/10 text-primary border-primary/40 ring-1 ring-primary/30"
-                        : "bg-surface hover:bg-surface-elevated"
-                    } ${chip.tone}`}
-                  >
-                    {chip.label} <span className="font-mono">{chip.count}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Danh sách nén: tối đa 6 dòng theo độ khẩn, thao tác đầy đủ ở mục Yêu cầu mượn */}
-              <div className="mt-4 divide-y divide-border border-y border-border">
-                {(reqFilter === "all"
-                  ? actionableRequests
-                  : reqFilter === "overdue"
-                    ? overdueRequests
-                    : actionableRequests.filter((r) => r.status === reqFilter)
-                )
-                  .slice(0, 6)
-                  .map((r) => {
-                    const dev = data.devices.find((d) => d.id === r.device_id) || {};
-                    const borrower = (data.users || []).find((u) => u.id === r.user_id);
-                    const isOverdue = r.status === "borrowed" && r.requested_to && new Date(r.requested_to) < now;
-                    const statusLabel = { pending: "Chờ duyệt", return_pending: "Chờ nhận trả", approved: "Chờ bàn giao", borrowed: "Đang mượn" }[r.status] || r.status;
-                    const statusTone = isOverdue
-                      ? "text-rose-600 dark:text-rose-300"
-                      : { pending: "text-amber-600 dark:text-amber-300", return_pending: "text-blue-600 dark:text-blue-300", approved: "text-emerald-600 dark:text-emerald-300", borrowed: "text-muted-foreground" }[r.status];
-                    return (
-                      <div className="py-2.5 flex items-center gap-3" key={r.id}>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <p className="text-sm font-semibold text-foreground truncate">{dev.name || `Thiết bị #${r.device_id}`}</p>
-                            <span className="text-[11px] font-mono text-muted-foreground shrink-0">{dev.asset_code || "?"}</span>
-                            {isOverdue && (
-                              <span className="shrink-0 inline-flex items-center rounded-full bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 px-2 py-0.5 text-[11px] font-bold text-rose-600 dark:text-rose-300 animate-pulse">
-                                QUÁ HẠN · {formatOverdueDuration(now - new Date(r.requested_to))}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground truncate mt-0.5">
-                            {borrower?.full_name || `#${r.user_id}`} · {r.purpose}
-                          </p>
-                        </div>
-                        {r.status === "pending" ? (
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <Button size="sm" className="h-7 px-2.5 text-xs" onClick={() => updateRequest(r, "approved")}>Duyệt</Button>
-                            <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs" onClick={() => updateRequest(r, "rejected")}>Từ chối</Button>
-                          </div>
-                        ) : (
-                          <span className={`shrink-0 text-[11px] font-bold ${statusTone}`}>{statusLabel}</span>
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
-              <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                <span>
-                  Hiển thị {Math.min(6, reqFilter === "all" ? actionableRequests.length : reqFilter === "overdue" ? overdueRequests.length : actionableRequests.filter((r) => r.status === reqFilter).length)} /{" "}
-                  {reqFilter === "all" ? actionableRequests.length : reqFilter === "overdue" ? overdueRequests.length : actionableRequests.filter((r) => r.status === reqFilter).length} yêu cầu cần xử lý
-                </span>
-                <Button size="sm" variant="outline" onClick={() => onNavigate?.("Yêu cầu mượn")}>
-                  Xem tất cả ➔
-                </Button>
-              </div>
-            </>
-          ) : (
-            <Empty text="Không có yêu cầu nào cần xử lý. Tất cả đã hoàn tất." />
-          )}
-        </Card>
-        <div className="flex flex-col gap-6 min-w-0">
-          <AIChatPanel title="AI Summary" mode="summary" starter="Tôi có thể tóm tắt tình trạng thiết bị, yêu cầu và bảo trì từ dữ liệu hiện có." />
-        </div>
+      <div className="mt-6">
+        <AIChatPanel title="AI Summary" mode="summary" starter="Tôi có thể tóm tắt tình trạng thiết bị, yêu cầu và bảo trì từ dữ liệu hiện có." />
       </div>
       <ConfirmReturnModal open={confirmReturnModal.open} item={confirmReturnModal.item} device={data.devices.find((d) => d.id === confirmReturnModal.item?.device_id)} onClose={() => setConfirmReturnModal({ open: false, item: null })} onSubmit={handleConfirmReturn} />
       <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
@@ -5280,6 +5191,68 @@ function CopyButton({ text }) {
   );
 }
 
+function FormattedMessageContent({ content }) {
+  if (!content) return null;
+
+  // Regex phát hiện thẻ tệp dạng [TEN-FILE.txt] hoặc bất kỳ tên file nào trong ngoặc vuông
+  const fileTagRegex = /\[([A-Za-z0-9_\-\u00C0-\u024F\u1EA0-\u1EF9\s\.\(\)]+\.(?:txt|pdf|csv|json|docx))\]/gi;
+
+  function downloadContentAsFile(targetFilename) {
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = targetFilename || "Bao_cao_LyxLab.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  const parts = [];
+  let lastIndex = 0;
+  const regex = new RegExp(fileTagRegex);
+  let match;
+
+  while ((match = regex.exec(content)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({ type: "text", text: content.slice(lastIndex, match.index) });
+    }
+    parts.push({ type: "file", filename: match[1] });
+    lastIndex = regex.lastIndex;
+  }
+  if (lastIndex < content.length) {
+    parts.push({ type: "text", text: content.slice(lastIndex) });
+  }
+
+  if (parts.length === 0 || (parts.length === 1 && parts[0].type === "text")) {
+    return <div className="whitespace-pre-line leading-relaxed">{content}</div>;
+  }
+
+  return (
+    <div className="whitespace-pre-line leading-relaxed">
+      {parts.map((p, idx) => {
+        if (p.type === "text") {
+          return <span key={idx}>{p.text}</span>;
+        }
+        return (
+          <span key={idx} className="my-2.5 block">
+            <button
+              type="button"
+              onClick={() => downloadContentAsFile(p.filename)}
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-3.5 py-2 text-xs font-semibold shadow-md transition cursor-pointer"
+              title={`Bấm để tải về file ${p.filename}`}
+            >
+              <FileDown size={15} />
+              <span>Tải về tệp: <b className="font-mono underline">{p.filename}</b></span>
+            </button>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 function AIChatPanel({ title, starter, mode = "chat", autoFocus = false }) {
   const [messages, setMessages] = useState([{ role: "assistant", content: starter, grounded: false, sources: [] }]);
   const [input, setInput] = useState("");
@@ -5436,7 +5409,9 @@ function AIChatPanel({ title, starter, mode = "chat", autoFocus = false }) {
               : "max-w-[92%] whitespace-pre-line rounded-xl bg-surface px-4 py-3.5 text-sm leading-6 text-foreground shadow-sm border border-border break-words"}
           >
             <div className="flex items-start justify-between gap-2">
-              <div className="flex-1">{item.content}</div>
+              <div className="flex-1">
+                <FormattedMessageContent content={item.content} />
+              </div>
               {item.role === "assistant" && <CopyButton text={item.content} />}
             </div>
             {item.safety_note && (

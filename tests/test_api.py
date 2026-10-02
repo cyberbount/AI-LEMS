@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.db import SessionLocal
-from app.models import Device
+from app.models import Device, BorrowRequest, MaintenanceRecord, MaintenanceSchedule, UsageHistory
 
 
 class ApiWorkflowTests(unittest.TestCase):
@@ -24,9 +24,15 @@ class ApiWorkflowTests(unittest.TestCase):
     def tearDownClass(cls):
         with SessionLocal() as db:
             items = db.query(Device).filter(Device.asset_code.like(f"{cls.asset_prefix}%")).all()
-            for item in items:
-                db.delete(item)
-            db.commit()
+            if items:
+                dev_ids = [item.id for item in items]
+                db.query(UsageHistory).filter(UsageHistory.device_id.in_(dev_ids)).delete(synchronize_session=False)
+                db.query(MaintenanceRecord).filter(MaintenanceRecord.device_id.in_(dev_ids)).delete(synchronize_session=False)
+                db.query(MaintenanceSchedule).filter(MaintenanceSchedule.device_id.in_(dev_ids)).delete(synchronize_session=False)
+                db.query(BorrowRequest).filter(BorrowRequest.device_id.in_(dev_ids)).delete(synchronize_session=False)
+                for item in items:
+                    db.delete(item)
+                db.commit()
 
     @classmethod
     def _login(cls, username, password):

@@ -60,6 +60,10 @@ else
         warn "Port 8000 bi giu boi process khong phuc vu (zombie). Dang don dep..."
         ss -tlnp 2>/dev/null | grep ':8000 ' | grep -oP 'pid=\K[0-9]+' | sort -u | xargs -r kill -9 2>/dev/null || true
         pkill -9 -f "uvicorn app.main:app" 2>/dev/null || true
+        if command -v docker >/dev/null 2>&1 && docker ps -q --filter "name=lab_backend" 2>/dev/null | grep -q .; then
+            warn "Phat hien Docker container lab_backend dang chiem port 8000. Dang dung container..."
+            docker stop lab_backend >/dev/null 2>&1 || true
+        fi
         sleep 1
     fi
     warn "Dang khoi dong FastAPI..."

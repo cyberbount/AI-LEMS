@@ -12,6 +12,7 @@ class OllamaProvider:
     def __init__(self, settings: Settings) -> None:
         self.base_url = settings.ollama_base_url.rstrip("/")
         self.model = settings.ollama_model
+        self.embedding_model = getattr(settings, "ollama_embedding_model", "bge-m3")
         self.timeout = settings.request_timeout_seconds
         self.num_predict = settings.ollama_num_predict
 
@@ -33,6 +34,50 @@ class OllamaProvider:
         if not content.strip():
             raise RuntimeError("Ollama returned an empty answer. Try a non-thinking/smaller model or increase num_predict.")
         return content
+
+    async def embed(self, text: str, model: str | None = None) -> list[float]:
+        target_model = model or self.embedding_model
+        payload = {"model": target_model, "prompt": text}
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.post(f"{self.base_url}/api/embeddings", json=payload)
+                if resp.status_code == 200:
+                    return resp.json().get("embedding", [])
+        except Exception:
+            pass
+        for fb_model in ("nomic-embed-text", "all-minilm"):
+            if fb_model == target_model:
+                continue
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    resp = await client.post(f"{self.base_url}/api/embeddings", json={"model": fb_model, "prompt": text})
+                    if resp.status_code == 200:
+                        return resp.json().get("embedding", [])
+            except Exception:
+                continue
+        return []
+
+    def embed_sync(self, text: str, model: str | None = None) -> list[float]:
+        target_model = model or self.embedding_model
+        payload = {"model": target_model, "prompt": text}
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                resp = client.post(f"{self.base_url}/api/embeddings", json=payload)
+                if resp.status_code == 200:
+                    return resp.json().get("embedding", [])
+        except Exception:
+            pass
+        for fb_model in ("nomic-embed-text", "all-minilm"):
+            if fb_model == target_model:
+                continue
+            try:
+                with httpx.Client(timeout=10.0) as client:
+                    resp = client.post(f"{self.base_url}/api/embeddings", json={"model": fb_model, "prompt": text})
+                    if resp.status_code == 200:
+                        return resp.json().get("embedding", [])
+            except Exception:
+                continue
+        return []
 
     async def health(self) -> bool:
         try:
